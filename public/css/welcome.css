@@ -1,0 +1,371 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background: url('../images/BACKGROUND.jpg') no-repeat center center/cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* SPLASH SCREEN */
+.splash-screen {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  background: url('../images/BACKGROUND.jpg') no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: opacity 0.6s ease;
+}
+
+.splash-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.splash-screen img {
+  width: 230px;
+  position: relative;
+  z-index: 2;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+/* CONTAINER */
+.container {
+  width: 100%;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+
+/* LOGO */
+.logo-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px;
+}
+
+.logo-circle img {
+  width: 350px;
+}
+
+/* CARD (form box) */
+.card {
+  background: rgba(10, 28, 68, 0.93);
+  padding: 40px 35px 35px;
+  border-radius: 18px;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  margin: 0 auto;
+  animation: fadeIn 0.6s ease;
+}
+
+.card h2 {
+  margin-bottom: 25px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* INPUTS */
+input, select {
+  width: 100%;
+  padding: 13px 14px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease;
+}
+
+input:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.6);
+}
+
+/* BUTTON */
+.btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 10px;
+  background-color: #ffd43b;
+  color: #0b1c44;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #f5c400;
+  transform: translateY(-2px);
+}
+
+/* LINKS (below login) */
+.links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+/* Toggle text (below signup) */
+.toggle-text {
+  margin-top: 18px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.toggle-text span {
+  color: #ffd43b;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ERROR MESSAGE */
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* RESPONSIVE TWEAKS */
+@media (max-width: 480px) {
+  .logo-circle {
+    width: 160px;
+    height: 160px;
+  }
+
+  .logo-circle img {
+    width: 130px;
+  }
+
+  .card {
+    padding: 30px 25px;
+    border-radius: 14px;
+  }
+
+  input, select, .btn {
+    font-size: 0.95rem;
+  }
+}
+
+/* Forgot / Reset Password Form */
+.subtitle {
+  font-size: 0.9rem;
+  color: #d9d9d9;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.skip-link {
+  display: block;
+  margin-top: 15px;
+  text-align: right;
+  color: #ffd43b;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.skip-link:hover {
+  text-decoration: underline;
+}
+
+.success {
+  color: #8bf58b;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+/* Role selection card styles */
+.role-selection-card {
+  background: rgba(10, 28, 68, 0.93);
+  padding: 40px;
+  border-radius: 18px;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  margin: 0 auto;
+  animation: fadeIn 0.6s ease;
+  text-align: center;
+}
+
+.role-selection-card h2 {
+  margin-bottom: 25px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.role-options {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 30px;
+}
+
+.role-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-align: center;
+}
+
+.role-option img {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.role-option p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+/* Gender options - Landscape (Horizontal) */
+.gender-options {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.gender-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-align: center;
+  width: 130px; /* Width of each gender option */
+}
+
+.gender-option img {
+  width: 100%; /* Make sure the image is responsive */
+  height: auto;
+  max-width: 100px; /* Limit max image size */
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.gender-option img:hover {
+  transform: scale(1.1); /* Slight zoom effect */
+}
+
+.gender-option p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 8px;
+}
+
+/* Character options - Landscape (Horizontal) */
+.character-options {
+  display: flex;
+  flex-direction: row; /* Arrange horizontally */
+  justify-content: center;
+  align-items: center;
+  gap: 35px; /* Add space between characters */
+}
+
+.character-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* Make the blue background wider to fit the row */
+#characterSelectionForm.card {
+  max-width: 650px; /* Increased width for horizontal layout */
+  padding: 41.5px;
+}
+
+.character-option img {
+  width: 190px; /* Increase image size for character selection */
+  height: auto;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.character-option img:hover {
+  transform: scale(1.1); /* Slight zoom effect */
+}
+
+.character-option p {
+  font-size: 1rem;
+  color: #fff;
+  margin-top: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  /* Gender options on smaller devices */
+  .gender-options {
+    flex-direction: row; /* Ensure gender options are side by side on mobile */
+    gap: 15px;
+  }
+
+  .gender-option img {
+    width: 80px;  /* Adjust image size */
+    max-width: 90px;
+  }
+
+  /* Character options for mobile */
+  .character-options {
+    flex-direction: column; /* Ensure character options remain vertical */
+    gap: 15px; /* Adjust gap */
+  }
+
+  .character-option img {
+    width: 90px; /* Limit size for smaller devices */
+  }
+}

@@ -1,0 +1,135 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: url('../images/BACKGROUND.jpg') no-repeat center center/cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Circle background behind logo */
+.logo-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px;
+}
+
+.logo-circle img {
+  width: 160px;
+}
+
+/* Card container */
+.card {
+  background: rgba(10, 28, 68, 0.92);
+  padding: 30px 25px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+  color: #fff;
+  text-align: center;
+}
+
+/* Inputs */
+input {
+  width: 100%;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  outline: none;
+}
+
+/* Buttons */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #ffcc00;
+  color: #0b1c44;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #e6b800;
+}
+
+/* Links */
+.links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.links a {
+  color: #fff;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+h2 {
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Fade transition for splash */
+.splash-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #0b1c44;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: opacity 0.6s ease;
+}
+
+.splash-screen img {
+  width: 220px;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+/* Role icons */
+.role-box {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+.role-option {
+  text-align: center;
+  cursor: pointer;
+}
+
+.role-option img {
+  width: 60px;
+  margin-bottom: 8px;
+}
+
+.role-option p {
+  margin: 0;
+  font-weight: 600;
+}
