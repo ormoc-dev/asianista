@@ -243,14 +243,7 @@
         /* Content */
         section { flex: 1; padding: 30px 40px 40px; }
 
-        .dashboard-shell {
-            background: radial-gradient(circle at top, rgba(191,197,219,0.7), rgba(241,241,224,0.9));
-            border-radius: 18px;
-            padding: 24px 26px 32px;
-            box-shadow: 0 14px 35px rgba(15,23,42,0.35);
-            border: 1px solid rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px);
-        }
+       
 
         @media (max-width: 768px) {
             aside { transform: translateX(-100%); }

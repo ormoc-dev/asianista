@@ -208,6 +208,21 @@
         color: #15803d;
     }
 
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .status-pending { background: rgba(245,158,11,0.15); color: #b45309; }
+    .status-approved { background: rgba(16,185,129,0.15); color: #065f46; }
+    .status-rejected { background: rgba(239,68,68,0.15); color: #991b1b; }
+
     .character-pill {
         font-size: 0.8rem;
         padding: 4px 9px;
@@ -415,6 +430,14 @@
             </div>
         </div>
 
+        {{-- Success/Status Alert --}}
+        @if (session('status'))
+            <div style="padding: 12px 18px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #065f46; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-check-circle"></i>
+                {{ session('status') }}
+            </div>
+        @endif
+
         {{-- quick stats --}}
         <div class="user-stats-row">
             <div class="user-stat-pill">
@@ -440,6 +463,7 @@
                         <th>Character</th>
                         <th>Email</th>
                         <th>XP / Level</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -503,24 +527,35 @@
                                     @endif
                                 </span>
                             </td>
+                            <td>
+                                @php
+                                    $status = $user->status ?? 'pending';
+                                    $statusClass = 'status-' . $status;
+                                @endphp
+                                <span class="status-badge {{ $statusClass }}">
+                                    <i class="fas @if($status === 'approved') fa-check-circle @elseif($status === 'rejected') fa-times-circle @else fa-hourglass-half @endif"></i>
+                                    {{ $status }}
+                                </span>
+                            </td>
                             <td style="text-align:right;">
                                 <div class="user-actions">
-                                    {{-- adjust route names to match your routes --}}
-                                    <a href="{{ route('admin.user-management.show', $user->id) }}" class="btn-icon view" title="View">
+                                    <a href="{{ route('admin.user-management.show', $user->id) }}" class="btn-icon view" title="View details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.user-management.edit', $user->id) }}" class="btn-icon edit" title="Edit">
+
+                                    <a href="{{ route('admin.user-management.edit', $user->id) }}" class="btn-icon edit" title="Edit hero">
                                         <i class="fas fa-edit"></i>
                                     </a>
+
                                     <form action="{{ route('admin.user-management.destroy', $user->id) }}" method="POST" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
                                         <button type="button"
-        class="btn-icon delete btn-delete-hero"
-        data-username="{{ $user->name }}"
-        title="Delete hero">
-    <i class="fas fa-trash-alt"></i>
-</button>
+                                                class="btn-icon delete btn-delete-hero"
+                                                data-username="{{ $user->name }}"
+                                                title="Delete hero">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -548,19 +583,16 @@
             This cannot be undone. Their progress, XP and records will be lost.
         </div>
         <div class="hero-modal-actions">
-            <button type="button"
-                    class="hero-modal-btn hero-modal-cancel"
-                    id="deleteHeroCancel">
+            <button type="button" class="hero-modal-btn hero-modal-cancel modal-close-btn">
                 <i class="fas fa-undo-alt"></i> Keep hero
             </button>
-            <button type="button"
-                    class="hero-modal-btn hero-modal-confirm"
-                    id="deleteHeroConfirm">
+            <button type="button" class="hero-modal-btn hero-modal-confirm" id="deleteHeroConfirm">
                 <i class="fas fa-fire-alt"></i> Banish
             </button>
         </div>
     </div>
 </div>
+
 
         </div>
     </div>
@@ -590,12 +622,31 @@
             });
         });
 
+        // --------- modal general behavior ----------
+        const modals = document.querySelectorAll('.hero-modal-backdrop');
+        const closeBtns = document.querySelectorAll('.modal-close-btn');
+
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modals.forEach(m => m.classList.add('hidden'));
+                pendingForm = null;
+            });
+        });
+
+        modals.forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    pendingForm = null;
+                }
+            });
+        });
+
         // --------- delete hero modal ----------
         const deleteButtons = document.querySelectorAll('.btn-delete-hero');
-        const modal = document.getElementById('deleteHeroModal');
+        const deleteModal = document.getElementById('deleteHeroModal');
         const heroNameSpan = document.getElementById('deleteHeroName');
-        const btnCancel = document.getElementById('deleteHeroCancel');
-        const btnConfirm = document.getElementById('deleteHeroConfirm');
+        const btnConfirmDelete = document.getElementById('deleteHeroConfirm');
 
         let pendingForm = null;
 
@@ -604,26 +655,13 @@
                 const username = this.getAttribute('data-username') || 'this hero';
                 heroNameSpan.textContent = username;
                 pendingForm = this.closest('form');
-                modal.classList.remove('hidden');
+                deleteModal.classList.remove('hidden');
             });
         });
 
-        btnCancel.addEventListener('click', function () {
-            modal.classList.add('hidden');
-            pendingForm = null;
-        });
-
-        btnConfirm.addEventListener('click', function () {
+        btnConfirmDelete.addEventListener('click', function () {
             if (pendingForm) {
                 pendingForm.submit();
-            }
-        });
-
-        // close modal by clicking outside card
-        modal.addEventListener('click', function (e) {
-            if (e.target === modal) {
-                modal.classList.add('hidden');
-                pendingForm = null;
             }
         });
     });

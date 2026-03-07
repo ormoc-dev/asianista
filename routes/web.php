@@ -25,6 +25,7 @@ use App\Http\Controllers\TargetAudienceController;
 use App\Http\Controllers\StudentMessagesController;
 use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\AdminUserManagementController;
+use App\Http\Controllers\AIAssistantController;
 
 
 /*
@@ -90,6 +91,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // edit
     Route::get('/user-management/{user}/edit', [AdminUserManagementController::class, 'edit'])
         ->name('user-management.edit');
+
+    // update
+    Route::put('/user-management/{user}', [AdminUserManagementController::class, 'update'])
+        ->name('user-management.update');
 
     // delete
     Route::delete('/user-management/{user}', [AdminUserManagementController::class, 'destroy'])
@@ -160,6 +165,12 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::get('/quizzes', [StudentQuizController::class, 'index'])->name('quizzes');
     Route::get('/quizzes/take/{id}', [StudentQuizController::class, 'take'])->name('quizzes.take');
     Route::post('/quizzes/submit/{id}', [StudentQuizController::class, 'submit'])->name('quizzes.submit');
+});
+
+// AI ASSISTANT ROUTES
+Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
+    Route::post('/generate-quest', [AIAssistantController::class, 'generateQuest'])->name('generate-quest');
+    Route::post('/generate-question', [AIAssistantController::class, 'generateQuestion'])->name('generate-question');
 });
 
 // ADMIN

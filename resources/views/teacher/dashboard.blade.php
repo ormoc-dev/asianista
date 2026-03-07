@@ -7,8 +7,9 @@
 
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-        <!-- FAVICON IN BROWSER TAB -->
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css">
+    
+    <!-- FAVICON IN BROWSER TAB -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <style>
@@ -340,20 +341,21 @@
     <!-- SIDEBAR -->
     <aside id="sidebar">
         <div>
-            <div class="sidebar-header">
-    @php
-        $profilePic = Auth::user()->profile_pic ?? 'default-pp.png';
-    @endphp
+    <div class="sidebar-header">
+        @php
+            $user = Auth::user();
+            $profilePic = $user->profile_pic ?? 'default-pp.png';
+            $userName = $user->name ?? 'Guest Teacher';
+        @endphp
 
-    <div class="logo-circle">
-        <img src="{{ asset('images/' . $profilePic) }}"
-             alt="Teacher Avatar"
-             class="sidebar-logo">
+        <div class="logo-circle">
+            <img src="{{ asset('images/' . $profilePic) }}"
+                 alt="Teacher Avatar"
+                 class="sidebar-logo">
+        </div>
+
+        <div class="player-tag">{{ $userName }}</div>
     </div>
-
-    <!-- <div class="player-tag">Teacher Portal</div> -->
-    <div class="player-tag">{{ Auth::user()->name }}</div>
-</div>
 
 
             <nav>
@@ -406,7 +408,7 @@
                 <div class="user-dropdown">
                     <button class="user-name" onclick="toggleDropdown()">
                         <i class="fas fa-user-circle"></i>
-                        {{ Auth::user()->name }}
+                        {{ Auth::user()->name ?? 'Guest' }}
                         <i class="fas fa-chevron-down" style="font-size:0.75rem;"></i>
                     </button>
                     <div id="userDropdownMenu" class="dropdown-menu">
@@ -424,7 +426,7 @@
                 @if (request()->routeIs('teacher.dashboard'))
                     <div class="shell-top">
                         <div class="shell-top-left">
-                            <h2>Welcome back, {{ Auth::user()->name }}!</h2>
+                            <h2>Welcome back, {{ Auth::user()->name ?? 'Teacher' }}!</h2>
                             <p>Review quests, guide your party, and keep your class progressing through the adventure.</p>
                         </div>
                         <div class="shell-pill">

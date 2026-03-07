@@ -43,11 +43,21 @@
     <!-- STEP 1: Quest Details -->
     <div class="form-step" id="step-1">
         <div class="form-container form-card">
-            <div class="form-header-icon">
-                <i class="fas fa-scroll"></i>
+            <div class="form-header-flex">
+                <div class="form-header-content">
+                    <div class="form-header-icon">
+                        <i class="fas fa-scroll"></i>
+                    </div>
+                    <div>
+                        <h2>Quest Details</h2>
+                        <p class="form-subtitle">Name your quest, describe the adventure, set difficulty and rewards.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-ai-reforge" onclick="openAIModal()">
+                    <i class="fas fa-magic"></i>
+                    Reforge with AI
+                </button>
             </div>
-            <h2>Quest Details</h2>
-            <p class="form-subtitle">Name your quest, describe the adventure, set difficulty and rewards.</p>
             <hr>
 
             <form class="quest-form" id="quest-form">
@@ -74,33 +84,60 @@
                             <i class="fas fa-swords"></i>
                             <select id="difficulty">
                                 <option value="easy">Easy (Warm-up)</option>
-                                <option value="medium">Medium (Standard Quest)</option>
+                                <option value="medium" selected>Medium (Standard Quest)</option>
                                 <option value="hard">Hard (Boss Battle)</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="rewards">
-                        <div class="reward">
-                            <label for="xp-reward">
-                                XP Reward
-                                <span class="reward-tag xp">XP</span>
-                            </label>
-                            <input type="number" id="xp-reward" value="100">
+                    <div class="form-group">
+                        <label for="quest-level">
+                            Quest Level
+                        </label>
+                        <div class="difficulty-select-wrap">
+                            <i class="fas fa-star"></i>
+                            <input type="number" id="quest-level" value="1" min="1" required style="width: 100%; border: none; background: transparent; color: var(--text-light); font-size: 0.95rem; font-family: inherit; outline: none;">
                         </div>
-                        <div class="reward">
-                            <label for="ab-reward">
-                                AB Reward
-                                <span class="reward-tag ab">AB</span>
-                            </label>
-                            <input type="number" id="ab-reward" value="50">
+                    </div>
+
+                    <div class="rewards-forge">
+                        <div class="reward-card xp">
+                            <div class="reward-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="reward-details">
+                                <label for="xp-reward">XP Reward</label>
+                                <div class="reward-input-wrap">
+                                    <input type="number" id="xp-reward" value="100">
+                                    <span class="reward-badge">XP</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="reward">
-                            <label for="gp-reward">
-                                GP Reward
-                                <span class="reward-tag gp">GP</span>
-                            </label>
-                            <input type="number" id="gp-reward" value="25">
+                        
+                        <div class="reward-card ab">
+                            <div class="reward-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="reward-details">
+                                <label for="ab-reward">AB Reward</label>
+                                <div class="reward-input-wrap">
+                                    <input type="number" id="ab-reward" value="50">
+                                    <span class="reward-badge">AB</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reward-card gp">
+                            <div class="reward-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="reward-details">
+                                <label for="gp-reward">GP Reward</label>
+                                <div class="reward-input-wrap">
+                                    <input type="number" id="gp-reward" value="25">
+                                    <span class="reward-badge">GP</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -143,6 +180,25 @@
             <h3>Quest Challenges</h3>
             <p class="form-subtitle">Create the puzzles, questions, and checks that students must conquer.</p>
             <hr>
+
+            <!-- AI QUESTION FORGE Section -->
+            <div class="ai-question-forge-container">
+                <div class="ai-forge-inner">
+                    <div class="ai-forge-header">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span>AI Question Forge</span>
+                    </div>
+                    <div class="ai-forge-body">
+                        <input type="text" id="ai-question-topic" placeholder="Question topic (e.g. Photosynthesis, Algebra)...">
+                        <button type="button" class="btn-ai-generate-single" onclick="generateSingleQuestionWithAI()">
+                            <i class="fas fa-sparkles"></i> Forge
+                        </button>
+                    </div>
+                </div>
+                <div id="ai-single-loading" class="ai-mini-loader" style="display:none;">
+                    <i class="fas fa-spinner fa-spin"></i> Weaving magic...
+                </div>
+            </div>
 
             <div class="question-form">
                 <div class="form-group">
@@ -313,10 +369,216 @@
     </div>
 </div>
 
+{{-- AI REFORGE MODAL --}}
+<div id="aiReforgeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box ai-modal-premium">
+        <div class="ai-modal-glow"></div>
+        
+        <div class="ai-modal-header">
+            <div class="ai-neural-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div>
+                <h3>Neural Quest Forge</h3>
+                <p>Consult the elders to weave a new adventure.</p>
+            </div>
+        </div>
+        
+        <div class="ai-modal-content">
+            <div class="form-group" style="text-align:left;">
+                <label class="ai-input-label">Quest Topic / Source Material</label>
+                <div class="ai-input-wrapper">
+                    <textarea id="ai-topic" placeholder="e.g., The secret history of the Phoenix, or an introduction to Algebra spells..." class="ai-hero-textarea"></textarea>
+                    <div class="ai-input-shadow"></div>
+                </div>
+            </div>
+
+            <div class="modal-buttons" style="margin-top:25px; gap:15px;">
+                <button onclick="closeAIModal()" class="btn-ai-cancel">
+                    <i class="fas fa-times"></i> Dismiss
+                </button>
+                <button onclick="generateWithAI()" id="btn-ai-generate" class="btn-ai-forge-premium">
+                    <i class="fas fa-sparkles"></i> Forge Content
+                </button>
+            </div>
+        </div>
+
+        <div id="ai-loading" style="display:none; margin-top:20px; text-align:center;">
+            <div class="ai-loader-container">
+                <div class="ai-ring"></div>
+                <div class="ai-spark"></div>
+            </div>
+            <p class="ai-loading-text">Synchronizing with the Neural Realm...</p>
+        </div>
+    </div>
+</div>
+
 <script>
 let questions = [];
 let optionCount = 0;
 let editingIndex = null;
+
+function openAIModal() {
+    document.getElementById('aiReforgeModal').style.display = 'flex';
+}
+
+function closeAIModal() {
+    document.getElementById('aiReforgeModal').style.display = 'none';
+    document.getElementById('ai-loading').style.display = 'none';
+}
+
+function generateWithAI() {
+    const topic = document.getElementById('ai-topic').value;
+    if (!topic) {
+        showCustomAlert("Please enter a topic for the forge.");
+        return;
+    }
+
+    const btn = document.getElementById('btn-ai-generate');
+    const loading = document.getElementById('ai-loading');
+    
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    fetch("{{ route('teacher.ai.generate-quest') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({
+            topic: topic,
+            difficulty: document.getElementById('difficulty').value
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            const data = result.data;
+            
+            // Populate Step 1
+            document.getElementById('quest-title').value = data.title;
+            document.getElementById('quest-description').value = data.description;
+            document.getElementById('xp-reward').value = data.xp_reward;
+            document.getElementById('ab-reward').value = data.ab_reward;
+            document.getElementById('gp-reward').value = data.gp_reward;
+            
+            // Sync topic to individual question generator
+            document.getElementById('ai-question-topic').value = topic;
+
+            // Populate Step 2
+            questions = data.challenges.map((c, i) => ({
+                id: `Q${i + 1}`,
+                text: c.text,
+                type: c.type,
+                points: c.points,
+                answer: c.answer,
+                options: c.options || [],
+                correctIndex: c.type === 'multiple-choice' ? c.options.indexOf(c.answer) : null
+            }));
+
+            displayAddedQuestions();
+            closeAIModal();
+            showCustomSuccess("AI has successfully reforged the quest content!", () => {
+                // Stay on current page but now it's populated
+            });
+        } else {
+            showCustomAlert("The Neural Link was interrupted. Please try again.");
+        }
+    })
+    .catch(error => {
+        console.error("AI Error:", error);
+        showCustomAlert("A mystical error occurred during the forge.");
+    })
+    .finally(() => {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    });
+}
+
+function generateSingleQuestionWithAI() {
+    let topic = document.getElementById('ai-question-topic').value;
+    const type = document.getElementById('question-type').value;
+    const questTitle = document.getElementById('quest-title').value;
+    
+    // Fallback to quest title if topic is missing
+    if (!topic && questTitle) {
+        topic = questTitle;
+        document.getElementById('ai-question-topic').value = topic;
+    }
+
+    if (!topic) {
+        showCustomAlert("Please enter a topic for the question.");
+        return;
+    }
+    if (!type) {
+        showCustomAlert("Please select a question type first.");
+        return;
+    }
+
+    const btn = document.querySelector('.btn-ai-generate-single');
+    const loading = document.getElementById('ai-single-loading');
+    
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    fetch("{{ route('teacher.ai.generate-question') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({
+            topic: topic,
+            type: type,
+            difficulty: document.getElementById('difficulty').value
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            const data = result.data;
+            
+            // Populate Fields
+            document.getElementById('question-text').value = data.text;
+            document.getElementById('points').value = data.points;
+
+            if (data.type === 'multiple-choice') {
+                document.getElementById('options-container').innerHTML = '';
+                optionCount = 0;
+                data.options.forEach((opt, idx) => {
+                    addOption();
+                    const inputs = document.querySelectorAll('#options-container input[type="text"]');
+                    const lastInput = inputs[inputs.length - 1];
+                    lastInput.value = opt;
+                    
+                    if (opt === data.answer) {
+                        const radios = document.querySelectorAll('#options-container input[type="radio"]');
+                        radios[radios.length - 1].checked = true;
+                    }
+                });
+                toggleQuestionFields();
+            } else {
+                document.querySelector('#identification-answer .correct-answer').value = data.answer;
+                toggleQuestionFields();
+            }
+            
+            showCustomSuccess("Question generated successfully! Review and click 'Add Question to Quest'.", () => {
+                // Stay on current page
+            });
+        } else {
+            showCustomAlert("The Neural Link was interrupted. Please try again.");
+        }
+    })
+    .catch(error => {
+        console.error("AI Error:", error);
+        showCustomAlert("A mystical error occurred during the forge.");
+    })
+    .finally(() => {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    });
+}
 
 function toggleQuestionFields() {
     const questionType = document.getElementById('question-type').value;
@@ -534,15 +796,22 @@ function displayAddedQuestions() {
     questions.forEach((question, index) => {
         const li = document.createElement('li');
         li.classList.add('question-item');
+        
+        // Icon based on type
+        const typeIcon = question.type === 'multiple-choice' ? 'fa-list-ul' : 'fa-font';
+        
         li.innerHTML = `
             <div class="question-content">
-                <strong>${question.id}:</strong> ${question.text}
-                <br>
-                <small>${question.type} - ${question.points} pts</small>
+                <h4><i class="fas ${typeIcon}" style="margin-right:8px; opacity:0.6;"></i> ${question.text}</h4>
+                <div class="question-meta">
+                    <span class="meta-tag">#${question.id}</span>
+                    <span class="meta-tag">${question.type.replace('-', ' ')}</span>
+                    <span class="meta-tag"><i class="fas fa-star" style="color:var(--accent);"></i> ${question.points} Points</span>
+                </div>
             </div>
             <div class="question-actions">
-                <button class="edit-btn" onclick="editQuestion(${index})">✏️ Edit</button>
-                <button class="delete-btn" onclick="deleteQuestion(${index})">🗑️ Delete</button>
+                <button class="edit-btn" onclick="editQuestion(${index})"><i class="fas fa-pen"></i></button>
+                <button class="delete-btn" onclick="deleteQuestion(${index})"><i class="fas fa-trash-alt"></i></button>
             </div>
         `;
         questionList.appendChild(li);
@@ -608,6 +877,14 @@ function previousStep(step) {
 function createQuest() {
     const step3 = document.getElementById('step-3');
     const selects = step3.querySelectorAll('select');
+    
+    // Validate Step 1
+    const formStep1 = document.getElementById('quest-form');
+    if (!formStep1.checkValidity()) {
+        formStep1.reportValidity();
+        showCustomAlert("Please fill in all required fields in Quest Details.");
+        return;
+    }
 
     for (let select of selects) {
         if (!select.checkValidity()) {
@@ -621,10 +898,50 @@ function createQuest() {
         return;
     }
 
-    const title = document.getElementById('quest-title').value;
-    const grade = document.getElementById('grade').value;
-    const section = document.getElementById('section').value;
-    showCustomSuccess(`Quest "${title}" created for Grade ${grade} - Section ${section}!`);
+    const questData = {
+        title: document.getElementById('quest-title').value,
+        description: document.getElementById('quest-description').value,
+        difficulty: document.getElementById('difficulty').value,
+        level: document.getElementById('quest-level').value,
+        xp_reward: document.getElementById('xp-reward').value,
+        ab_reward: document.getElementById('ab-reward').value,
+        gp_reward: document.getElementById('gp-reward').value,
+        assign_date: document.getElementById('assign-datetime').value,
+        due_date: document.getElementById('due-datetime').value,
+        grade_id: document.getElementById('grade').value,
+        section_id: document.getElementById('section').value,
+        questions: questions
+    };
+
+    const btn = document.querySelector('.create-quest-button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Forging Quest...';
+    btn.disabled = true;
+
+    fetch("{{ route('teacher.quest.store') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify(questData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            showCustomSuccess(result.message);
+        } else {
+            showCustomAlert(result.message || "An error occurred during creation.");
+        }
+    })
+    .catch(error => {
+        console.error("Error creating quest:", error);
+        showCustomAlert("A critical magic failure occurred. Please try again.");
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
 }
 
 function cancelQuest() {
@@ -786,6 +1103,241 @@ function loadSections(gradeId) {
         box-shadow: 0 12px 24px rgba(0,0,0,0.32);
     }
 
+    .form-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .form-header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .btn-ai-reforge {
+        background: linear-gradient(135deg, #7c3aed, #4812e8ff);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 999px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(124,58,237,0.3);
+        transition: all 0.2s;
+    }
+
+    .btn-ai-reforge:hover {
+        transform: translateY(-2px) rotate(-1deg);
+        box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+        filter: brightness(1.1);
+    }
+
+    /* AI PREMIUM MODAL STYLES */
+    .ai-modal-premium {
+        position: relative;
+        background: radial-gradient(circle at top right, #0f172a, #0b1121);
+        border-radius: 24px;
+        padding: 40px;
+        width: 100%;
+        max-width: 550px;
+        border: 1px solid rgba(96, 165, 250, 0.2);
+        box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+    }
+
+    .ai-modal-glow {
+        position: absolute;
+        top: -150px;
+        right: -150px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.15), transparent 70%);
+        pointer-events: none;
+    }
+
+    .ai-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .ai-neural-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: #fff;
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+        animation: neural-pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes neural-pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(59, 130, 246, 0.4); }
+        50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+    }
+
+    .ai-modal-header h3 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .ai-modal-header p {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .ai-input-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #60a5fa;
+        margin-bottom: 12px;
+    }
+
+    .ai-input-wrapper {
+        position: relative;
+    }
+
+    .ai-hero-textarea {
+        width: 100%;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px;
+        color: #fff;
+        font-size: 1rem;
+        line-height: 1.6;
+        resize: none;
+        transition: all 0.3s;
+        position: relative;
+        z-index: 2;
+    }
+
+    .ai-hero-textarea:focus {
+        outline: none;
+        border-color: #60a5fa;
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1);
+    }
+
+    .ai-input-shadow {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
+        border-radius: 16px;
+        z-index: 1;
+        opacity: 0;
+        transition: 0.3s;
+    }
+
+    .ai-hero-textarea:focus + .ai-input-shadow {
+        opacity: 1;
+    }
+
+    .btn-ai-forge-premium {
+        flex: 2;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+        transition: all 0.3s;
+    }
+
+    .btn-ai-forge-premium:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-ai-cancel {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 20px;
+        border-radius: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-ai-cancel:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+    }
+
+    /* AI LOADING ANIMATION */
+    .ai-loader-container {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        margin: 0 auto;
+    }
+
+    .ai-ring {
+        width: 100%;
+        height: 100%;
+        border: 3px solid rgba(96, 165, 250, 0.1);
+        border-top-color: #60a5fa;
+        border-radius: 50%;
+        animation: ai-spin 1s infinite linear;
+    }
+
+    .ai-spark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 15px;
+        height: 15px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 20px #60a5fa;
+        transform: translate(-50%, -50%);
+        animation: ai-glow 2s infinite alternate;
+    }
+
+    @keyframes ai-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes ai-glow {
+        from { opacity: 0.5; box-shadow: 0 0 10px #60a5fa; }
+        to { opacity: 1; box-shadow: 0 0 30px #60a5fa; }
+    }
+
+    .ai-loading-text {
+        font-size: 0.9rem;
+        color: #60a5fa;
+        font-weight: 600;
+        margin-top: 15px;
+        letter-spacing: 0.5px;
+    }
+
     /* Step indicator */
     .quest-steps {
         display: flex;
@@ -840,7 +1392,8 @@ function loadSections(gradeId) {
     }
 
     .quiz-container {
-        max-width: 920px;
+        width: 100%;
+        max-width: 1100px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
@@ -855,6 +1408,9 @@ function loadSections(gradeId) {
         border: 1px solid rgba(255,255,255,0.8);
         position: relative;
         overflow: hidden;
+    }
+    #ai-topic{
+        color:black;
     }
 
     .form-card::before {
@@ -1027,28 +1583,111 @@ function loadSections(gradeId) {
         width: 100%;
     }
 
-    .rewards {
+    .rewards-forge {
         display: flex;
-        gap: 12px;
+        gap: 15px;
         flex-wrap: wrap;
+        margin-top: 5px;
     }
 
-    .reward {
+    .reward-card {
         flex: 1;
-        min-width: 120px;
+        min-width: 140px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 20px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
-    .reward-tag {
-        padding: 2px 8px;
-        border-radius: 999px;
+    .reward-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        z-index: 0;
+    }
+
+    .reward-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .reward-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+    }
+
+    /* Color Themes */
+    .reward-card.xp .reward-icon { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+    .reward-card.ab .reward-icon { background: rgba(16, 185, 129, 0.15); color: #059669; }
+    .reward-card.gp .reward-icon { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+
+    .reward-card.xp:hover { border-color: rgba(59, 130, 246, 0.4); }
+    .reward-card.ab:hover { border-color: rgba(16, 185, 129, 0.4); }
+    .reward-card.gp:hover { border-color: rgba(245, 158, 11, 0.4); }
+
+    .reward-details {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .reward-details label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .reward-input-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+    }
+
+    .reward-input-wrap input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #1e293b;
+        padding: 0;
+        margin: 0;
+        outline: none;
+    }
+
+    .reward-badge {
         font-size: 0.7rem;
-        font-weight: 600;
+        font-weight: 900;
+        padding: 2px 6px;
+        border-radius: 6px;
         text-transform: uppercase;
     }
 
-    .reward-tag.xp { background: rgba(59,130,246,0.18); color: #1d4ed8; }
-    .reward-tag.ab { background: rgba(16,185,129,0.18); color: #047857; }
-    .reward-tag.gp { background: rgba(234,179,8,0.18); color: #92400e; }
+    .reward-card.xp .reward-badge { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .reward-card.ab .reward-badge { background: rgba(16, 185, 129, 0.1); color: #059669; }
+    .reward-card.gp .reward-badge { background: rgba(245, 158, 11, 0.1); color: #d97706; }
 
     .dates {
         display: flex;
@@ -1122,82 +1761,59 @@ function loadSections(gradeId) {
     }
 
     .added-questions-card {
-        background: rgba(15,23,42,0.9);
-        color: #e5edff;
-        border: 1px solid rgba(148,163,184,0.6);
-    }
-
-    .added-questions-card hr {
-        border-top-color: rgba(51,65,85,0.9);
-    }
-
-    .added-questions-card .form-subtitle {
-        color: #cbd5f5;
+        background: rgba(241, 241, 224, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        position: relative;
     }
 
     .added-questions-list {
-        background: rgba(15,23,42,0.65);
-        border-radius: 12px;
-        padding: 12px;
-        max-height: 250px;
+        background: rgba(15, 23, 42, 0.03);
+        border-radius: 16px;
+        padding: 15px;
+        max-height: 400px;
         overflow-y: auto;
-    }
-
-    .added-questions-list ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+        border: 1px inset rgba(0, 0, 0, 0.05);
     }
 
     .question-item {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 14px;
+        padding: 15px;
+        margin-bottom: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: rgba(15,23,42,0.85);
-        border: 1px solid rgba(148,163,184,0.7);
-        border-radius: 10px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.35);
-        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
 
-    .question-content small {
-        color: #cbd5f5;
+    .question-item:hover {
+        transform: translateX(5px);
+        border-color: var(--accent);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
     }
 
-    .question-actions {
+    .question-content h4 {
+        margin: 0 0 5px 0;
+        color: var(--primary);
+        font-size: 0.95rem;
+    }
+
+    .question-meta {
         display: flex;
-        gap: 6px;
+        gap: 10px;
+        font-size: 0.75rem;
+        color: #64748b;
     }
 
-    .edit-btn,
-    .delete-btn {
-        border: none;
-        padding: 6px 10px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 500;
-        transition: all 0.15s ease;
-    }
-
-    .edit-btn {
-        background-color: #3b82f6;
-        color: white;
-    }
-
-    .edit-btn:hover {
-        background-color: #2563eb;
-    }
-
-    .delete-btn {
-        background-color: #ef4444;
-        color: white;
-    }
-
-    .delete-btn:hover {
-        background-color: #dc2626;
+    .meta-tag {
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(0, 35, 102, 0.05);
+        font-weight: 600;
+        text-transform: uppercase;
     }
 
     .target-audience {
@@ -1216,19 +1832,23 @@ function loadSections(gradeId) {
     }
 
     .target-tip {
-        margin-top: 14px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        background: rgba(0,35,102,0.08);
-        color: var(--primary);
-        font-size: 0.85rem;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 16px;
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        color: #1e40af;
+        font-size: 0.88rem;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        line-height: 1.5;
     }
 
     .target-tip i {
-        color: var(--accent);
+        font-size: 1.2rem;
+        color: #3b82f6;
+        filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3));
     }
 
     .step-footer {
@@ -1293,21 +1913,27 @@ function loadSections(gradeId) {
     .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(15,23,42,0.7);
+        
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 2000;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .modal-box {
         background: #0b1020;
         border-radius: 18px;
         padding: 24px 26px;
-        width: 340px;
+        width: 700px;
         box-shadow: 0 14px 30px rgba(0,0,0,0.65);
         text-align: center;
-        color: #e5edff;
+        color: #fbfbfbff;
     }
 
     .modal-box h3 {
@@ -1369,21 +1995,90 @@ function loadSections(gradeId) {
     }
 
     @media (max-width: 768px) {
-        .quest-create-header {
-            flex-direction: column;
-        }
+        .quest-steps { gap: 10px; padding: 0 10px; }
+        .step-label { display: none; }
+        .form-card { padding: 25px; }
+        .rewards-forge { grid-template-columns: 1fr; }
+    }
 
-        .quest-create-header p {
-            max-width: 100%;
-        }
-
-        .quiz-container {
-            padding: 0;
-        }
-
-        .quest-steps {
-            flex-direction: column;
-        }
+    /* AI QUESTION FORGE STYLES */
+    .ai-question-forge-container {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .ai-forge-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .ai-forge-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 0.9rem;
+    }
+    .ai-forge-body {
+        display: flex;
+        gap: 10px;
+    }
+    .ai-forge-body input {
+        flex: 1;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        font-size: 0.9rem;
+    }
+    .btn-ai-generate-single {
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: #0b1020;
+        border: none;
+        border-radius: 8px;
+        padding: 0 20px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+        white-space: nowrap;
+    }
+    .btn-ai-generate-single:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+    }
+    .btn-ai-generate-single:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .ai-mini-loader {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: var(--accent);
+        text-align: center;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+    @media (max-width: 768px) {
+        .quest-steps { gap: 10px; padding: 0 10px; }
+        .step-label { display: none; }
+        .form-card { padding: 25px; }
+        .rewards-forge { grid-template-columns: 1fr; }
+        .quest-create-header { flex-direction: column; }
+        .quest-create-header p { max-width: 100%; }
+        .quiz-container { padding: 0; }
+        .quest-steps { flex-direction: column; }
     }
 </style>
 @endsection

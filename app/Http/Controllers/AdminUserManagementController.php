@@ -23,6 +23,25 @@ class AdminUserManagementController extends Controller
         return view('admin.user-management.edit', compact('user'));
     }
 
+    public function update(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'role' => 'required|in:admin,teacher,student',
+            'character' => 'nullable|string',
+            'level' => 'nullable|integer|min:1',
+            'xp' => 'nullable|integer|min:0',
+            'status' => 'required|in:pending,approved,rejected',
+        ]);
+
+        $user->update($validated);
+
+        return redirect()
+            ->route('admin.user-management')
+            ->with('status', 'Hero updated successfully in the realm!');
+    }
+
     public function destroy(User $user)
     {
         $user->delete();
