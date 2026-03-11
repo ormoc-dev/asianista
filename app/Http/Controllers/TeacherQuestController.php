@@ -12,8 +12,14 @@ class TeacherQuestController extends Controller
 {
     public function index()
     {
-        // Your logic for the quest page here
-        return view('teacher.quest.index');  // Ensure this view exists
+        $quests = Quest::with(['grade', 'section'])->latest()->get();
+        return view('teacher.quest.index', compact('quests'));
+    }
+
+    public function show(Quest $quest)
+    {
+        $quest->load(['questions', 'grade', 'section']);
+        return view('teacher.quest.show', compact('quest'));
     }
     public function create()
 {

@@ -18,4 +18,14 @@ class Quest extends Model
     {
         return $this->hasMany(QuestQuestion::class);
     }
+
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
+    }
 }

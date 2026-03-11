@@ -13,7 +13,7 @@
 
     <style>
         :root {
-            --primary: #002366;
+            --primary: #300675b1;
             --secondary: #262840;
             --light-bg: #BFC5DB;
             --card-bg: #F1F1E0;
@@ -21,33 +21,23 @@
             --accent-dark: #f5c400;
             --text-dark: #0b1020;
             --text-muted: #94a3b8;
+            --header-bg: rgba(255, 255, 255, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+        /* ... existing base styles ... */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 
         body {
             min-height: 100vh;
             display: flex;
-            background: url('/images/BACKGROUND.jpg') no-repeat center center fixed;
+            background-image: url('{{ asset('images/std-bg.png') }}');
             background-size: cover;
             color: var(--text-dark);
             position: relative;
             overflow-x: hidden;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at top, rgba(191,197,219,0.6), transparent 55%),
-                        linear-gradient(to bottom, rgba(0,35,102,0.7), rgba(0,35,102,0.2));
-            z-index: -1;
-        }
+      
 
         /* SIDEBAR */
         aside {
@@ -58,61 +48,83 @@
             flex-direction: column;
             justify-content: space-between;
             position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
+            top: 0; left: 0; bottom: 0;
             box-shadow: 12px 0 24px rgba(0, 0, 0, 0.35);
             z-index: 20;
-            transition: transform 0.3s ease;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+        }
+
+        aside.collapsed {
+            width: 90px;
         }
 
         .sidebar-header {
-            padding: 20px 15px 10px;
+            padding: 24px 15px 15px;
             text-align: center;
+            overflow: hidden;
         }
 
         .logo-circle {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 10px;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 20%, #ffffff, #e5ecff);
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 15px rgba(255, 212, 59, 0.5);
-            overflow: hidden; /* ✅ crop avatar nicely */
+            box-shadow: 0 0 15px rgba(255, 212, 59, 0.4);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        aside.collapsed .logo-circle {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
         }
 
         .sidebar-logo {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* ✅ make sure avatar fills the circle */
+            object-fit: cover;
             border-radius: 50%;
         }
 
         .player-tag {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1.2px;
             color: var(--accent);
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar-level, .xp-bar, .character-name {
+            transition: opacity 0.2s, max-height 0.3s;
+        }
+
+        aside.collapsed .player-tag,
+        aside.collapsed .sidebar-level,
+        aside.collapsed .xp-bar,
+        aside.collapsed .character-name {
+            opacity: 0;
+            pointer-events: none;
+            display: none;
         }
 
         .sidebar-level {
-            font-size: 0.85rem;
-            margin-top: 6px;
+            font-size: 0.8rem;
+            margin-top: 5px;
             color: #dbeafe;
         }
 
-        .sidebar-level span {
-            color: var(--accent);
-            font-weight: 600;
-        }
+        .sidebar-level span { color: var(--accent); font-weight: 600; }
 
         .xp-bar {
-            margin: 15px auto 0;
-            width: 85%;
-            height: 8px;
+            margin: 12px auto 0;
+            width: 80%;
+            height: 6px;
             border-radius: 999px;
             background: rgba(15,23,42,0.6);
             overflow: hidden;
@@ -121,70 +133,88 @@
         .xp-fill {
             width: 60%;
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), #ffe066, var(--accent-dark));
-            box-shadow: 0 0 12px rgba(255, 212, 59, 0.9);
+            background: linear-gradient(90deg, var(--accent), #ffe066);
         }
 
         nav {
-            padding: 15px 18px 20px;
+            padding: 10px 15px;
             flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         nav a {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
+            gap: 15px;
+            padding: 12px 18px;
             margin-bottom: 8px;
             text-decoration: none;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 500;
             color: #e2e8f0;
             border-radius: 12px;
-            position: relative;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        aside.collapsed nav a {
+            justify-content: center;
+            padding: 12px 0;
+            gap: 0;
         }
 
         nav a i {
-            width: 22px;
+            width: 24px;
             text-align: center;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            flex-shrink: 0;
         }
 
-        nav a::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: radial-gradient(circle at 0 0, rgba(255, 212, 59, 0.3), transparent 55%);
-            opacity: 0;
-            transition: opacity 0.2s ease;
+        nav a span {
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        aside.collapsed nav a span {
+            display: none;
         }
 
         nav a:hover,
         nav a.active {
-            background: rgba(15,23,42,0.7);
-            color: #fff;
-            transform: translateX(6px);
-            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+            
         }
 
-        nav a:hover::before,
-        nav a.active::before {
-            opacity: 1;
+        aside.collapsed nav a:hover,
+        aside.collapsed nav a.active {
+            transform: scale(1.1);
         }
 
-        nav a span {
-            position: relative;
-            z-index: 1;
+        .logout-link {
+            margin-top: auto;
+            color: #fca5a5;
+        }
+
+        .logout-link:hover {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
         }
 
         .sidebar-footer {
-            padding: 14px 10px 18px;
-            font-size: 0.8rem;
+            padding: 15px;
+            font-size: 0.7rem;
             text-align: center;
-            color: #cbd5e1;
-            background: rgba(15,23,42,0.75);
+            color: #94a3b8;
+            background: rgba(15,23,42,0.4);
+            white-space: nowrap;
+        }
+
+        aside.collapsed .sidebar-footer {
+            font-size: 0.5rem;
+            padding: 10px 5px;
         }
 
         /* MAIN */
@@ -193,267 +223,609 @@
             margin-left: 270px;
             display: flex;
             flex-direction: column;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        main.expanded {
+            margin-left: 90px;
+        }
+
+        /* HEADER - WHITE THEME */
         header {
-            padding: 16px 32px;
+            padding: 12px 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: var(--header-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             position: sticky;
             top: 0;
             z-index: 15;
-            backdrop-filter: blur(20px);
-            background: linear-gradient(90deg, rgba(0,35,102,0.96), rgba(38,40,64,0.96));
-            box-shadow: 0 6px 16px rgba(15,23,42,0.5);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(0, 35, 102, 0.05);
         }
 
         header h1 {
-            color: #e5edff;
-            font-size: 1.15rem;
-            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         header h1 i {
-            color: var(--accent);
-            font-size: 1.3rem;
-        }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--accent);
-            margin-right: 10px;
-            cursor: pointer;
+            color: var(--accent-dark);
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 20px;
         }
 
-        .notification-icon {
-            position: relative;
-            font-size: 1.45rem;
-            cursor: pointer;
-            color: #ffffff;
-        }
-
-        .notification-icon::after {
-            content: '3';
-            position: absolute;
-            top: -6px;
-            right: -9px;
-            background-color: #e11d48;
-            color: white;
-            font-size: 0.7rem;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 18px;
-            font-weight: 600;
-        }
-
-        .user-dropdown {
-            position: relative;
-        }
-
-        .user-name {
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            border: none;
-            color: #0b1020;
-            font-size: 0.95rem;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 999px;
+        .user-pill {
             display: flex;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+            gap: 10px;
+            padding: 6px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
-        .user-name i {
-            background: rgba(11,16,32,0.1);
-            border-radius: 50%;
-            padding: 4px;
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 115%;
-            min-width: 160px;
-            background-color: #0b1c44;
-            border-radius: 10px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
-            overflow: hidden;
-            z-index: 30;
-        }
-
-        .dropdown-menu.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 10px 14px;
-            color: #e2e8f0;
-            text-decoration: none;
-            display: block;
-            font-size: 0.9rem;
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--accent-dark);
-            color: #0b1020;
+        .user-pill i {
+            color: var(--primary);
+            font-size: 1.1rem;
         }
 
         section {
             flex: 1;
-            padding: 30px 40px 40px;
+            padding: 30px 40px;
         }
 
         .dashboard-shell {
-            background: radial-gradient(circle at top, rgba(191,197,219,0.7), rgba(241,241,224,0.9));
-            border-radius: 18px;
-            padding: 24px 26px 32px;
-            box-shadow: 0 14px 35px rgba(15,23,42,0.35);
-            border: 1px solid rgba(255,255,255,0.7);
+            background: rgba(255, 255, 255, 1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
+        }
+        .dashboard-shell-1 {
+            background: rgba(255, 255, 255, 1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            width: 500px;
+            height: 100%;
+        }
+
+        .character-name {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 2px;
+            font-weight: 500;
         }
 
         .shell-top {
+            margin-bottom: 25px;
+        }
+
+        /* RPG STATS - ICON BASED */
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-icon-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .icon-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .hp-heart {
+            color: #ef4444;
+            font-size: 1.2rem;
+            filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.3));
+            animation: heartBeat 1.5s infinite ease-in-out;
+        }
+
+        .hp-heart.empty {
+            color: #e2e8f0;
+            filter: none;
+            animation: none;
+        }
+
+        .xp-star {
+            color: #f59e0b;
+            font-size: 1.1rem;
+            filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.3));
+        }
+
+        .xp-star.empty {
+            color: #e2e8f0;
+            filter: none;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* POWERS GRID */
+        .powers-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 20px;
+            gap: 10px;
         }
 
-        .shell-top-left h2 {
-            font-size: 1.1rem;
+        .powers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .power-item {
+            background: #fafafa;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .power-item:hover {
+            border-color: var(--accent);
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .power-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(41, 0, 102, 0.05);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--primary);
+            font-size: 1.2rem;
         }
 
-        .shell-top-left p {
-            font-size: 0.9rem;
+        .power-info h4 {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            color: var(--text-dark);
+        }
+
+        .power-info p {
+            font-size: 0.7rem;
             color: var(--text-muted);
         }
 
-        .shell-pill {
-            padding: 8px 16px;
-            border-radius: 999px;
-            background: rgba(0,35,102,0.07);
+        /* QUIZ STATUS */
+        .quiz-card {
+            background: var(--primary);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .quiz-info h3 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .quiz-info p {
             font-size: 0.8rem;
-            color: var(--primary);
-            display: inline-flex;
+            opacity: 0.9;
+        }
+
+        .quiz-action {
+            background: var(--accent);
+            color: var(--text-dark);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .quiz-action:hover {
+            background: var(--accent-dark);
+            transform: scale(1.05);
+        }
+
+        /* QUEST CARD - DASHBOARD SPECIFIC */
+        .quest-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border-radius: 20px;
+            padding: 24px;
+            color: white;
+            border: 1px solid rgba(255, 212, 59, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+
+        .quest-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 212, 59, 0.05) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .quest-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .quest-card-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .quest-card-diff {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .quest-card-diff.easy { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .quest-card-diff.medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .quest-card-diff.hard { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .quest-card-body {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 24px;
+        }
+
+        .quest-card-body p {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .quest-card-rewards {
+            display: flex;
+            gap: 12px;
+        }
+
+        .reward-pill {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .shell-pill i{
-            color: var(--accent-dark);
-        }
+        .reward-pill.xp { color: #818cf8; }
+        .reward-pill.gp { color: #fbbf24; }
 
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px 22px;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 16px rgba(15,23,42,0.20);
+        .quest-card-footer {
             position: relative;
-            overflow: hidden;
+            z-index: 2;
         }
 
-        .card::after {
-            content: "";
-            position: absolute;
-            right: -40px;
-            top: -40px;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,212,59,0.35), transparent 60%);
-        }
-
-        .card h2 {
-            color: var(--primary);
-            font-size: 1.05rem;
-            margin-bottom: 8px;
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            border: none;
+        .btn-quest-action {
+            width: 100%;
+            background: var(--accent);
             color: #0b1020;
-            font-weight: 600;
-            padding: 8px 18px;
-            border-radius: 999px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
             text-decoration: none;
-            display: inline-flex;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+            cursor: pointer;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+        .btn-quest-action:hover {
+            background: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 212, 59, 0.3);
         }
 
-        @media (max-width: 992px) {
-            section {
-                padding: 20px 18px 26px;
-            }
-            .dashboard-shell {
-                padding: 18px 16px 24px;
-            }
+        .quest-status-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .quest-empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+        }
+
+        .quest-empty-state i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+
+        /* FLOATING AI ASSISTANT */
+        .ai-floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #0b1020;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: float-pulse 2s infinite ease-in-out;
+        }
+
+        .ai-floating-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        @keyframes float-pulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(255, 212, 59, 0.4); transform: translateY(0); }
+            50% { box-shadow: 0 4px 30px rgba(255, 212, 59, 0.6); transform: translateY(-5px); }
+        }
+
+        .ai-chat-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 500px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-chat-window.active {
+            display: flex;
+        }
+
+        .ai-chat-header {
+            padding: 15px 20px;
+            background: linear-gradient(90deg, rgba(0,35,102,0.9), rgba(38,40,64,0.9));
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+        }
+
+        .ai-chat-header .info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ai-chat-header .avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0b1020;
+            font-size: 1.1rem;
+        }
+
+        .ai-chat-header h4 { font-size: 0.95rem; margin: 0; }
+        .ai-chat-header p { font-size: 0.7rem; color: #94a3b8; margin: 0; }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .close-chat:hover { color: white; }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            animation: msgFade 0.3s ease-out;
+        }
+
+        @keyframes msgFade {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            border-bottom-left-radius: 2px;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            background: rgba(15,23,42,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .chat-input-area button {
+            width: 35px;
+            height: 35px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            color: #0b1020;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .chat-input-area button:hover { transform: scale(1.1); }
+        
+        .typing-indicator {
+            display: none;
+            padding: 5px 20px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-style: italic;
         }
 
         @media (max-width: 768px) {
-            aside {
-                transform: translateX(-100%);
-            }
-            aside.active {
-                transform: translateX(0);
-            }
-            .menu-toggle {
-                display: block;
-            }
-            main {
-                margin-left: 0;
-            }
-            header {
-                padding: 12px 16px;
-            }
-            .shell-top {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+            aside { transform: translateX(-100%); width: 270px !important; }
+            aside.mobile-active { transform: translateX(0); }
+            main { margin-left: 0 !important; }
+            header { padding: 10px 15px; }
+            .shell-top { grid-template-columns: 1fr; }
         }
-        .character-name {
-    font-size: 0.85rem;
-    margin-top: 4px;
-    color: #dbeafe;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
     </style>
 </head>
 <body>
@@ -466,24 +838,16 @@
                     $profilePic = Auth::user()->profile_pic ?? 'default-pp.png';
                 @endphp
                 <div class="logo-circle">
-                    {{-- ✅ show student's profile picture --}}
-                    <img src="{{ asset('images/' . $profilePic) }}"
-                         alt="Student Avatar"
-                         class="sidebar-logo">
+                    <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="sidebar-logo">
                 </div>
-                <!-- <div class="player-tag">Student Portal</div> -->
                 <div class="player-tag">{{ Auth::user()->name }}</div>
+                
+                @if (Auth::user()->character)
+                    <div class="character-name">{{ ucfirst(Auth::user()->character) }}</div>
+                @endif
 
-{{-- Character Name (only if exists) --}}
-@if (Auth::user()->character)
-    <div class="character-name">
-        {{ ucfirst(Auth::user()->character) }}
-    </div>
-@endif
-                <div class="sidebar-level">Level <span>05</span> • XP 3,420</div>
-                <div class="xp-bar">
-                    <div class="xp-fill"></div>
-                </div>
+                <div class="sidebar-level">Level <span>05</span> • 3,420 XP</div>
+                <div class="xp-bar"><div class="xp-fill"></div></div>
             </div>
 
             <nav>
@@ -494,19 +858,13 @@
                     <i class="fas fa-map-signs"></i><span>Quest</span>
                 </a>
                 <a href="{{ route('student.registration') }}" class="{{ request()->routeIs('student.registration') ? 'active' : '' }}">
-                    <i class="fas fa-id-card"></i><span>Registration &amp; Account</span>
+                    <i class="fas fa-id-card"></i><span>Registration</span>
                 </a>
-                <!-- <a href="{{ route('student.quizzes') }}" class="{{ request()->routeIs('student.quizzes') ? 'active' : '' }}">
-                    <i class="fas fa-scroll"></i><span>Assessment &amp; Activities</span>
-                </a> -->
                 <a href="{{ route('student.messages') }}" class="{{ request()->routeIs('student.messages') ? 'active' : '' }}">
                     <i class="fas fa-comments"></i><span>Messages</span>
                 </a>
                 <a href="{{ route('student.lessons') }}" class="{{ request()->routeIs('student.lessons') ? 'active' : '' }}">
-                    <i class="fas fa-book-open"></i><span>Lesson Access</span>
-                </a>
-                <a href="{{ route('student.ai-support') }}" class="{{ request()->routeIs('student.ai-support') ? 'active' : '' }}">
-                    <i class="fas fa-robot"></i><span>AI Support</span>
+                    <i class="fas fa-book-open"></i><span>Lessons</span>
                 </a>
                 <a href="{{ route('student.performance') }}" class="{{ request()->routeIs('student.performance') ? 'active' : '' }}">
                     <i class="fas fa-chart-line"></i><span>Performance</span>
@@ -514,84 +872,281 @@
                 <a href="{{ route('student.feedback') }}" class="{{ request()->routeIs('student.feedback') ? 'active' : '' }}">
                     <i class="fas fa-comment-dots"></i><span>Feedback</span>
                 </a>
+                
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
+                <a href="#" class="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </a>
             </nav>
         </div>
 
-        <div class="sidebar-footer">
-            © 2025 Level Up ASIANISTA
-        </div>
+        <div class="sidebar-footer">© 2025 Level Up ASIANISTA</div>
     </aside>
 
     <!-- MAIN -->
-    <main>
+    <main id="main-content">
         <header>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-                <h1>
-                    <i class="fas fa-gamepad"></i>
-                    Level Up ASIANISTA • Student
-                </h1>
+            <div class="header-left">
+                <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h1><i class="fas fa-gamepad"></i> Student Realm</h1>
             </div>
-
             <div class="header-right">
-                <div class="notification-icon">
-                    <i class="fas fa-bell"></i>
-                </div>
-
-                <div class="user-dropdown">
-                    <button class="user-name" onclick="toggleDropdown()">
-                        <i class="fas fa-user-circle"></i>
-                        {{ Auth::user()->name }}
-                        <i class="fas fa-chevron-down" style="font-size:0.75rem;"></i>
-                    </button>
-                    <div id="userDropdownMenu" class="dropdown-menu">
-                        <a href="#" class="dropdown-item">Profile</a>
-                        <a href="{{ url('/') }}" class="dropdown-item">Logout</a>
-                    </div>
+                <div class="user-pill">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ Auth::user()->name }}</span>
                 </div>
             </div>
         </header>
 
         <section>
-            <div class="dashboard-shell">
+            <div class="{{ request()->routeIs('student.dashboard') ? 'dashboard-shell-1' : 'dashboard-shell' }}">
+                <div class="shell-top">
+                        <div class="stats-container">
+                            <div class="stat-icon-group">
+                                <div class="stat-meta">
+                                    <span><i class="fas fa-heart"></i> Health</span>
+                                    <span>8 / 10 HP</span>
+                                </div>
+                                <div class="icon-row">
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="fas fa-heart hp-heart"></i>
+                                    <i class="far fa-heart hp-heart empty"></i>
+                                    <i class="far fa-heart hp-heart empty"></i>
+                                </div>
+                            </div>
 
-                {{-- Show hero only on the main dashboard page --}}
-                @if (request()->routeIs('student.dashboard'))
-                    <div class="shell-top">
-                        <div class="shell-top-left">
-                            <h2>Welcome back, {{ Auth::user()->name }}!</h2>
-                            <p>Continue your journey, complete quests, and earn more XP.</p>
+                            <div class="stat-icon-group">
+                                <div class="stat-meta">
+                                    <span><i class="fas fa-star"></i> Experience</span>
+                                    <span>Level 5 (3,420 XP)</span>
+                                </div>
+                                <div class="icon-row">
+                                    <i class="fas fa-star xp-star"></i>
+                                    <i class="fas fa-star xp-star"></i>
+                                    <i class="fas fa-star xp-star"></i>
+                                    <i class="fas fa-star xp-star"></i>
+                                    <i class="fas fa-star xp-star"></i>
+                                    <i class="far fa-star xp-star empty"></i>
+                                    <i class="far fa-star xp-star empty"></i>
+                                    <i class="far fa-star xp-star empty"></i>
+                                    <i class="far fa-star xp-star empty"></i>
+                                    <i class="far fa-star xp-star empty"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="shell-pill">
-                            <i class="fas fa-bolt"></i>
-                            Daily Streak: <strong>3</strong> days
+
+                        <div class="powers-title">
+                            <i class="fas fa-magic"></i> Available Powers
                         </div>
+                        <div class="powers-grid">
+                            <div class="power-item">
+                                <div class="power-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="power-info">
+                                    <h4>Wisdom Shield</h4>
+                                    <p>Passive defense</p>
+                                </div>
+                            </div>
+                            <div class="power-item">
+                                <div class="power-icon"><i class="fas fa-fire"></i></div>
+                                <div class="power-info">
+                                    <h4>Logic Blast</h4>
+                                    <p>Active power</p>
+                                </div>
+                            </div>
+                            <div class="power-item">
+                                <div class="power-icon"><i class="fas fa-brain"></i></div>
+                                <div class="power-info">
+                                    <h4>Neural surge</h4>
+                                    <p>Critical boost</p>
+                                </div>
+                            </div>
+                            <div class="power-item">
+                                <div class="power-icon"><i class="fas fa-feather-alt"></i></div>
+                                <div class="power-info">
+                                    <h4>Swift Mind</h4>
+                                    <p>Agility buff</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="quest-card">
+                            @if($activeQuest)
+                                <div class="quest-card-header">
+                                    <div class="quest-card-title">
+                                        <i class="fas fa-scroll"></i> Current Quest
+                                    </div>
+                                    <span class="quest-card-diff {{ strtolower($activeQuest->difficulty ?? 'medium') }}">
+                                        {{ $activeQuest->difficulty ?? 'Medium' }}
+                                    </span>
+                                </div>
+                                <div class="quest-card-body">
+                                    <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: white;">{{ $activeQuest->title }}</h3>
+                                    <p>{{ Str::limit($activeQuest->description, 100) }}</p>
+                                    
+                                    <div class="quest-card-rewards">
+                                        <div class="reward-pill xp">
+                                            <i class="fas fa-bolt"></i> +{{ $activeQuest->xp_reward ?? 0 }} XP
+                                        </div>
+                                        <div class="reward-pill gp">
+                                            <i class="fas fa-coins"></i> +{{ $activeQuest->gp_reward ?? 0 }} GP
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="quest-card-footer">
+                                    @if($activeAttempt && $activeAttempt->status === 'completed')
+                                        <div class="btn-quest-action" style="background: #10b981; color: white;">
+                                            <i class="fas fa-check-circle"></i> Quest Conquered
+                                        </div>
+                                        <center><small class="quest-status-badge">Completed on {{ $activeAttempt->updated_at->format('M d, Y') }}</small></center>
+                                    @elseif($activeAttempt && $activeAttempt->status === 'started')
+                                        <a href="{{ route('student.quest.play', [$activeQuest->id, $activeAttempt->current_question_id]) }}" class="btn-quest-action">
+                                            <i class="fas fa-play"></i> Continue Adventure
+                                        </a>
+                                        <center><small class="quest-status-badge">Status: In Progress</small></center>
+                                    @else
+                                        <a href="{{ route('student.quest.show', $activeQuest->id) }}" class="btn-quest-action">
+                                            <i class="fas fa-bolt"></i> Start Adventure
+                                        </a>
+                                        <center><small class="quest-status-badge">Status: Available</small></center>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="quest-empty-state">
+                                    <i class="fas fa-scroll"></i>
+                                    <p>No active quests at the moment.<br>Check back later for new adventures!</p>
+                                </div>
+                            @endif
+                        </div>
+
                     </div>
-                @endif
-
-                {{-- Page-specific content (Quest, Lessons, etc.) --}}
                 @yield('content')
-
             </div>
         </section>
-
     </main>
 
+    <!-- FLOATING AI ASSISTANT -->
+    <div class="ai-floating-btn" onclick="toggleAIChat()">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <div class="ai-chat-window" id="ai-chat-window">
+        <div class="ai-chat-header">
+            <div class="info">
+                <div class="avatar"><i class="fas fa-robot"></i></div>
+                <div>
+                    <h4>Neural Sage</h4>
+                    <p><i class="fas fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> Online</p>
+                </div>
+            </div>
+            <button class="close-chat" onclick="toggleAIChat()"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="chat-messages" id="floating-chat-messages">
+            <div class="message ai">
+                Greetings! I am the Neural Sage. How can I assist you in your quest today?
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="floating-typing-indicator">
+            The Sage is weaving wisdom...
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="floating-chat-input" placeholder="Ask anything..." autocomplete="off">
+            <button onclick="sendFloatingMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
     <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-
-        function toggleDropdown() {
-            document.getElementById('userDropdownMenu').classList.toggle('show');
-        }
-
-        document.addEventListener('click', function(e) {
-            const menu = document.getElementById('userDropdownMenu');
-            const btn = document.querySelector('.user-name');
-            if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                menu.classList.remove('show');
+        // Apply persisted sidebar state immediately to prevent flicker
+        (function() {
+            const sidebarState = localStorage.getItem('sidebarState');
+            if (sidebarState === 'collapsed') {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('main-content').classList.add('expanded');
             }
+        })();
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('mobile-active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
+                
+                // Persist the state
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+            }
+        }
+
+        // Floating AI Logic
+        let floatingHistory = [];
+        function toggleAIChat() {
+            document.getElementById('ai-chat-window').classList.toggle('active');
+        }
+
+        async function sendFloatingMessage() {
+            const input = document.getElementById('floating-chat-input');
+            const messages = document.getElementById('floating-chat-messages');
+            const indicator = document.getElementById('floating-typing-indicator');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            input.value = '';
+            appendFloatingMessage('user', text);
+            
+            indicator.style.display = 'block';
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const response = await fetch("{{ route('student.ai.chat') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        history: floatingHistory
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    appendFloatingMessage('ai', result.reply);
+                }
+            } catch (error) {
+                console.error("AI Error:", error);
+            } finally {
+                indicator.style.display = 'none';
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+
+        function appendFloatingMessage(role, text) {
+            const messages = document.getElementById('floating-chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', role);
+            msgDiv.innerText = text;
+            messages.appendChild(msgDiv);
+            
+            floatingHistory.push({ role: role === 'ai' ? 'assistant' : 'user', content: text });
+        }
+
+        document.getElementById('floating-chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendFloatingMessage();
         });
     </script>
 </body>

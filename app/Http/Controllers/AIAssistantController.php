@@ -199,4 +199,72 @@ class AIAssistantController extends Controller
 
         return $decoded;
     }
+
+    /**
+     * Handle student support chat requests.
+     */
+    public function studentChat(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000',
+            'history' => 'nullable|array'
+        ]);
+
+        $message = $request->input('message');
+        $history = $request->input('history', []);
+
+        try {
+            $aiResponse = $this->callGroqForStudentSupport($message, $history);
+            return response()->json([
+                'status' => 'success',
+                'reply' => $aiResponse
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Student AI Support Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The Neural Connection was lost.'
+            ], 500);
+        }
+    }
+
+    private function callGroqForStudentSupport($message, $history)
+    {
+        $apiKey = env('GROQ_API_KEY');
+        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+
+        $systemPrompt = "You are the 'Neural Sage' in the High Fantasy RPG world of ASIANISTA. 
+        Your role is to support students in their learning journey. 
+        Be encouraging, use light RPG-themed language (e.g., calling them 'heroes' or 'explorers'), 
+        and provide clear, helpful educational support. 
+        Keep your responses concise but immersive.";
+
+        $messages = [['role' => 'system', 'content' => $systemPrompt]];
+        
+        // Add history for context (limit to last 5 exchanges to save tokens)
+        $recentHistory = array_slice($history, -10);
+        foreach ($recentHistory as $chat) {
+            $messages[] = ['role' => $chat['role'], 'content' => $chat['content']];
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $message];
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => "Bearer {$apiKey}",
+            'Content-Type' => 'application/json',
+        ])->post($endpoint, [
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => $messages,
+            'temperature' => 0.7,
+            'max_tokens' => 800,
+            'stream' => false
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Groq Request Failed: ' . $response->body());
+        }
+
+        $result = $response->json();
+        return $result['choices'][0]['message']['content'] ?? 'The Sage is deep in meditation... (No response received)';
+    }
 }

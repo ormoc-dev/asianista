@@ -173,6 +173,10 @@ Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
     Route::post('/generate-question', [AIAssistantController::class, 'generateQuestion'])->name('generate-question');
 });
 
+Route::prefix('student/ai')->name('student.ai.')->group(function () {
+    Route::post('/chat', [AIAssistantController::class, 'studentChat'])->name('chat');
+});
+
 // ADMIN
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/quizzes', [AdminQuizController::class, 'index'])->name('quizzes');
@@ -234,17 +238,18 @@ Route::get('/profile', [UserController::class, 'showProfile'])->name('profile');
 
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quest', [TeacherQuestController::class, 'index'])->name('quest');
+    Route::get('/quest/create', [TeacherQuestController::class, 'create'])->name('quest.create');
+    Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');
+    Route::get('/quest/{quest}', [TeacherQuestController::class, 'show'])->name('quest.show');
 });
 
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/quest', [StudentQuestController::class, 'index'])->name('quest');
+    Route::get('/quest/{quest}', [StudentQuestController::class, 'show'])->name('quest.show');
+    Route::post('/quest/{quest}/start', [StudentQuestController::class, 'start'])->name('quest.start');
+    Route::get('/quest/{quest}/play/{question?}', [StudentQuestController::class, 'play'])->name('quest.play');
+    Route::post('/quest/{quest}/submit/{question}', [StudentQuestController::class, 'submitStep'])->name('quest.submit');
 });
-
-Route::post('/teacher/quest', [TeacherQuestController::class, 'store'])->name('teacher.quest.store');  // Store a new quest
-Route::get('/teacher/quests', [TeacherQuestController::class, 'list'])->name('teacher.quest.list');  // List all quests
-
-Route::get('/teacher/quest/create', [TeacherQuestController::class, 'create'])->name('teacher.quest.create');
-Route::post('/teacher/quest/create', [QuestController::class, 'createQuest'])->name('teacher.quest.create');
 
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])
         ->name('password.reset');

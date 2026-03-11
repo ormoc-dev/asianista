@@ -78,28 +78,34 @@
                 </div>
 
                 <div class="difficulty-and-rewards">
-                    <div class="form-group">
-                        <label for="difficulty">Difficulty</label>
-                        <div class="difficulty-select-wrap">
-                            <i class="fas fa-swords"></i>
+                <div class="difficulty-and-level">
+                    <div class="form-group flex-1">
+                        <label for="difficulty">
+                            <i class="fas fa-swords"></i> Difficulty
+                        </label>
+                        <div class="premium-input-wrap">
                             <select id="difficulty">
                                 <option value="easy">Easy (Warm-up)</option>
                                 <option value="medium" selected>Medium (Standard Quest)</option>
                                 <option value="hard">Hard (Boss Battle)</option>
                             </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group flex-1">
                         <label for="quest-level">
-                            Quest Level
+                            <i class="fas fa-star"></i> Quest Level
                         </label>
-                        <div class="difficulty-select-wrap">
-                            <i class="fas fa-star"></i>
-                            <input type="number" id="quest-level" value="1" min="1" required style="width: 100%; border: none; background: transparent; color: var(--text-light); font-size: 0.95rem; font-family: inherit; outline: none;">
+                        <div class="premium-input-wrap">
+                            <input type="number" id="quest-level" value="1" min="1" required>
+                            <div class="input-unit">LVL</div>
                         </div>
                     </div>
+                </div>
 
+                <div class="rewards-forge-container">
+                    <label class="section-label">Quest Rewards</label>
                     <div class="rewards-forge">
                         <div class="reward-card xp">
                             <div class="reward-icon">
@@ -141,6 +147,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
                 <!-- Date & Time -->
                 <div class="dates">
@@ -1532,55 +1539,84 @@ function loadSections(gradeId) {
         color: #b91c1c;
     }
 
-    .difficulty-and-rewards {
+    .difficulty-and-level {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-bottom: 5px;
     }
 
-    @media (min-width: 768px) {
-        .difficulty-and-rewards {
-            flex-direction: row;
-            gap: 18px;
-        }
+    .flex-1 { flex: 1; min-width: 200px; }
 
-        .difficulty-and-rewards .form-group {
-            flex: 1;
-        }
-
-        .rewards {
-            flex: 1.4;
-        }
+    .section-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--primary);
+        margin-bottom: 10px;
+        display: block;
+        opacity: 0.8;
     }
 
-    .difficulty-select-wrap,
-    .select-with-icon,
-    .points-input-wrap {
+    .premium-input-wrap {
+        position: relative;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 3px 6px 3px 8px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.7);
-        border: 1px solid #d1d5db;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1.5px solid rgba(0, 35, 102, 0.15);
+        border-radius: 14px;
+        padding: 2px 12px;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    .difficulty-select-wrap i,
-    .select-with-icon i,
-    .points-input-wrap i {
-        color: var(--primary);
-        font-size: 0.9rem;
+    .premium-input-wrap:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 35, 102, 0.1), 0 4px 12px rgba(0,0,0,0.05);
+        transform: translateY(-1px);
+        background: #fff;
     }
 
-    .difficulty-select-wrap select,
-    .select-with-icon select,
-    .points-input-wrap input {
+    .premium-input-wrap select,
+    .premium-input-wrap input {
+        width: 100%;
         border: none;
         background: transparent;
-        padding: 8px 8px 8px 2px;
+        padding: 10px 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--primary);
         outline: none;
-        font-size: 0.9rem;
-        width: 100%;
+        appearance: none;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: 15px;
+        pointer-events: none;
+        color: var(--primary);
+        font-size: 0.8rem;
+        opacity: 0.6;
+    }
+
+    .input-unit {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--primary);
+        background: rgba(0, 35, 102, 0.08);
+        padding: 4px 8px;
+        border-radius: 6px;
+        margin-left: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .rewards-forge-container {
+        margin-top: 10px;
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     .rewards-forge {

@@ -24,6 +24,7 @@
     </div>
 
     <!-- Empty State – if no quests yet -->
+    @if($quests->count() == 0)
     <div class="quest-empty-card">
         <div class="quest-empty-icon">
             <i class="fas fa-treasure-chest"></i>
@@ -43,6 +44,56 @@
             Begin Your First Quest
         </button>
     </div>
+    @else
+    <div class="quest-grid">
+        @foreach($quests as $quest)
+        <div class="quest-card">
+            <div class="quest-card-header">
+                <div class="quest-type-pill">
+                    <i class="fas fa-scroll"></i> {{ $quest->difficulty ?? 'Standard' }}
+                </div>
+                <div class="quest-actions">
+                    <button class="action-btn" title="Edit Quest"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete" title="Delete Quest"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="quest-card-body">
+                <h3>{{ $quest->title }}</h3>
+                <p class="quest-desc">{{ Str::limit($quest->description, 100) }}</p>
+                
+                <div class="quest-meta-info">
+                    <div class="meta-item">
+                        <i class="fas fa-users"></i>
+                        <span>{{ $quest->grade->name ?? 'N/A' }} - {{ $quest->section->name ?? 'N/A' }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Due: {{ \Carbon\Carbon::parse($quest->due_date)->format('M d, Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="quest-rewards-row">
+                    <div class="reward-pill xp">
+                        <i class="fas fa-star"></i> {{ $quest->xp_reward ?? 0 }} XP
+                    </div>
+                    <div class="reward-pill ab">
+                        <i class="fas fa-bolt"></i> {{ $quest->ab_reward ?? 0 }} AB
+                    </div>
+                    <div class="reward-pill gp">
+                        <i class="fas fa-coins"></i> {{ $quest->gp_reward ?? 0 }} GP
+                    </div>
+                </div>
+            </div>
+
+            <div class="quest-card-footer">
+                <div class="quest-level">Requirement: Level {{ $quest->level }}</div>
+                <a href="{{ route('teacher.quest.show', $quest->id) }}" class="btn-details">View Details</a>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
 
 </div>
 
@@ -210,6 +261,168 @@
     .btn-ghost-primary:hover {
         background: rgba(15,23,42,0.12);
         border-color: rgba(15,23,42,0.45);
+    }
+
+    /* Quest Grid & Cards */
+    .quest-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+    }
+
+    .quest-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid rgba(0,35,102,0.1);
+        box-shadow: 0 4px 15px rgba(0,35,102,0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .quest-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,35,102,0.1);
+        border-color: var(--accent);
+    }
+
+    .quest-card-header {
+        padding: 15px 20px;
+        background: #fafbfc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0,35,102,0.05);
+    }
+
+    .quest-type-pill {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--primary);
+        background: rgba(0,35,102,0.05);
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+
+    .quest-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: none;
+        background: #fff;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        color: var(--primary);
+        background: var(--accent);
+    }
+
+    .action-btn.delete:hover {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .quest-card-body {
+        padding: 20px;
+        flex-grow: 1;
+    }
+
+    .quest-card-body h3 {
+        font-size: 1.15rem;
+        color: var(--primary);
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .quest-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 20px;
+    }
+
+    .quest-meta-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.8rem;
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .meta-item i {
+        color: var(--accent-dark);
+        width: 16px;
+    }
+
+    .quest-rewards-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .reward-pill {
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .reward-pill.xp { background: #eef2ff; color: #4f46e5; }
+    .reward-pill.ab { background: #fffbeb; color: #d97706; }
+    .reward-pill.gp { background: #ecfdf5; color: #059669; }
+
+    .quest-card-footer {
+        padding: 15px 20px;
+        background: #fafbfc;
+        border-top: 1px solid rgba(0,35,102,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .quest-level {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    .btn-details {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .btn-details:hover {
+        text-decoration: underline;
     }
 
     @media (max-width: 768px) {
