@@ -541,8 +541,6 @@
     .battle-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(5px);
         z-index: 2000;
         display: none;
         align-items: center;
@@ -613,14 +611,14 @@
     /* FIRE SVG ANIMATIONS */
     .dragon-fire, .hero-fire {
         position: absolute;
-        width: 350px;
+        width: 450px;
         pointer-events: none;
         opacity: 0;
         z-index: 10;
     }
 
-    .dragon-fire { left: 160px; top: 20px; }
-    .hero-fire   { right: 160px; top: 20px; }
+    .dragon-fire { left: 260px; top: 20px; }
+    .hero-fire   { right: 260px; top: 20px; }
 
     .dragon-fire.active, .hero-fire.active {
         opacity: 1;
