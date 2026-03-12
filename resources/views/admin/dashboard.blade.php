@@ -261,14 +261,14 @@
         <div>
             <div class="sidebar-header">
                 @php
-                    $profilePic = Auth::user()->profile_pic ?? 'default-pp.png';
+                    $profilePic = Auth::user()?->profile_pic ?? 'default-pp.png';
                 @endphp
                 <div class="logo-circle">
                     <img src="{{ asset('images/' . $profilePic) }}"
                          alt="Admin Avatar"
                          class="sidebar-logo">
                 </div>
-                <div class="player-tag">{{ Auth::user()->name }}</div>
+                <div class="player-tag">{{ Auth::user()?->name ?? 'Admin' }}</div>
             </div>
 
             <nav>
@@ -326,7 +326,7 @@
                 <div class="user-dropdown">
                     <button class="user-name" onclick="toggleDropdown()">
                         <i class="fas fa-user-circle"></i>
-                        {{ Auth::user()->name }}
+                        {{ Auth::user()?->name ?? 'Admin' }}
                         <i class="fas fa-chevron-down" style="font-size:0.75rem;"></i>
                     </button>
                     <div id="userDropdownMenu" class="dropdown-menu">

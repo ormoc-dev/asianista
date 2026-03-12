@@ -49,57 +49,60 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 |--------------------------------------------------------------------------
 */
 
-// Group routes for student dashboard
-Route::prefix('student')->name('student.')->group(function () {
-    Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
-    Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
-    Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
-    Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
-    Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
-    Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
-    Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
+Route::middleware(['auth'])->group(function () {
+    // Group routes for student dashboard
+    Route::prefix('student')->name('student.')->group(function () {
+        Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
+        Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
+        Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
+        Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
+        Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
+        Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
+        Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
+    });
+
+    // Teacher routes
+    Route::prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
+        Route::get('/registration', [TeacherController::class, 'registration'])->name('registration');
+        Route::get('/lessons', [TeacherController::class, 'lessons'])->name('lessons');
+        Route::get('/quizzes', [TeacherController::class, 'quizzes'])->name('quizzes');
+        Route::get('/gamification', [TeacherController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
+        Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
+        Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
+        Route::get('/reports', [TeacherController::class, 'reports'])->name('reports');
+        Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
+    });
+
+    // Admin Routes
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/user-management', [AdminUserManagementController::class, 'index'])->name('user-management');
+        Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
+        Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
+        Route::get('/data', [AdminController::class, 'data'])->name('data');
+        Route::get('/security', [AdminController::class, 'security'])->name('security');
+        // show
+        Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
+            ->name('user-management.show');
+
+        // edit
+        Route::get('/user-management/{user}/edit', [AdminUserManagementController::class, 'edit'])
+            ->name('user-management.edit');
+
+        // update
+        Route::put('/user-management/{user}', [AdminUserManagementController::class, 'update'])
+            ->name('user-management.update');
+
+        // delete
+        Route::delete('/user-management/{user}', [AdminUserManagementController::class, 'destroy'])
+            ->name('user-management.destroy');
+    });
 });
 
-// Teacher routes
-Route::prefix('teacher')->name('teacher.')->group(function () {
-    Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
-    Route::get('/registration', [TeacherController::class, 'registration'])->name('registration');
-    Route::get('/lessons', [TeacherController::class, 'lessons'])->name('lessons');
-    Route::get('/quizzes', [TeacherController::class, 'quizzes'])->name('quizzes');
-    Route::get('/gamification', [TeacherController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
-    Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
-    Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
-    Route::get('/reports', [TeacherController::class, 'reports'])->name('reports');
-    Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
-});
-
-// Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/user-management', [AdminUserManagementController::class, 'index'])->name('user-management');
-    Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
-    Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
-    Route::get('/data', [AdminController::class, 'data'])->name('data');
-    Route::get('/security', [AdminController::class, 'security'])->name('security');
-    // show
-    Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
-        ->name('user-management.show');
-
-    // edit
-    Route::get('/user-management/{user}/edit', [AdminUserManagementController::class, 'edit'])
-        ->name('user-management.edit');
-
-    // update
-    Route::put('/user-management/{user}', [AdminUserManagementController::class, 'update'])
-        ->name('user-management.update');
-
-    // delete
-    Route::delete('/user-management/{user}', [AdminUserManagementController::class, 'destroy'])
-        ->name('user-management.destroy');
-});
 
 /*
 |--------------------------------------------------------------------------

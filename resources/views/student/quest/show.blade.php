@@ -10,6 +10,7 @@
             <h2>{{ $quest->title }}</h2>
             <div class="quest-meta-row">
                 <span class="meta-badge"><i class="fas fa-scroll"></i> {{ $quest->difficulty ?? 'Epic' }}</span>
+                <span class="meta-badge"><i class="fas fa-medal"></i> Level {{ $quest->level }}</span>
                 <span class="meta-badge"><i class="fas fa-star"></i> {{ $quest->xp_reward ?? 0 }} XP</span>
                 <span class="meta-badge"><i class="fas fa-coins"></i> {{ $quest->gp_reward ?? 0 }} GP</span>
             </div>
@@ -50,28 +51,75 @@
 
             <!-- Landmarks (Visual representation of progress) -->
             <div class="interactive-landmarks">
-                @foreach([
-                    ['name' => 'Gate of Entry', 'left' => 50, 'top' => 86, 'icon' => 'fa-mountain'],
-                    ['name' => 'Whispering Falls', 'left' => 25, 'top' => 55, 'icon' => 'fa-water'],
-                    ['name' => 'Compass Grove', 'left' => 15, 'top' => 66, 'icon' => 'fa-compass'],
-                    ['name' => 'Floating Reaches', 'left' => 40, 'top' => 40, 'icon' => 'fa-cloud'],
-                    ['name' => 'Sky-Isle Steps', 'left' => 55, 'top' => 60, 'icon' => 'fa-shoe-prints'],
-                    ['name' => 'Mystery Landmark', 'left' => 75, 'top' => 45, 'icon' => 'fa-question'],
-                    ['name' => 'Trivia Chamber', 'left' => 75, 'top' => 80, 'icon' => 'fa-brain'],
-                    ['name' => 'Library of Wisdom', 'left' => 85, 'top' => 65, 'icon' => 'fa-book'],
-                    ['name' => 'The Observatory', 'left' => 80, 'top' => 20, 'icon' => 'fa-crown'],
-                ] as $i => $landmark)
                 @php
-                    $isCompleted = ($progressPercent >= (($i + 1) / 9) * 100);
-                    $isActive = !$isCompleted && ($progressPercent >= ($i / 9) * 100);
+                    $positions = [
+                        ['left' => 50, 'top' => 86, 'icon' => 'fa-mountain', 'name' => 'Gate of Entry'],
+                        ['left' => 25, 'top' => 55, 'icon' => 'fa-water', 'name' => 'Whispering Falls'],
+                        ['left' => 15, 'top' => 66, 'icon' => 'fa-compass', 'name' => 'Compass Grove'],
+                        ['left' => 40, 'top' => 40, 'icon' => 'fa-cloud', 'name' => 'Floating Reaches'],
+                        ['left' => 55, 'top' => 60, 'icon' => 'fa-shoe-prints', 'name' => 'Sky-Isle Steps'],
+                        ['left' => 75, 'top' => 45, 'icon' => 'fa-question', 'name' => 'Mystery Landmark'],
+                        ['left' => 75, 'top' => 80, 'icon' => 'fa-brain', 'name' => 'Trivia Chamber'],
+                        ['left' => 85, 'top' => 65, 'icon' => 'fa-book', 'name' => 'Library of Wisdom'],
+                        ['left' => 80, 'top' => 20, 'icon' => 'fa-crown', 'name' => 'The Observatory'],
+                    ];
                 @endphp
-                <div class="landmark-node" style="left: {{ $landmark['left'] }}%; top: {{ $landmark['top'] }}%;">
-                    <div class="node-icon {{ $isCompleted ? 'finish' : ($isActive ? 'active' : 'locked') }}">
-                        <i class="fas {{ $isCompleted ? 'fa-check' : $landmark['icon'] }}"></i>
+
+                @for($lvl = 1; $lvl <= $quest->level; $lvl++)
+                @php
+                    $levelQuestions = $quest->questions->where('level', $lvl);
+                    $totalLvlQuestions = $levelQuestions->count();
+                    
+                    // NEW MORE ROBUST STATUS CALCULATION
+                    $isLvlCompleted = false;
+                    $isLvlCurrent = false;
+                    $isLvlLocked = true;
+                    $completedInLevel = 0;
+
+                    if ($status === 'completed') {
+                        $isLvlCompleted = true;
+                        $isLvlLocked = false;
+                        $completedInLevel = $totalLvlQuestions;
+                    } else if ($attempt && isset($currentQuestion)) {
+                        $currLvl = $currentQuestion->level;
+                        
+                        if ($lvl < $currLvl) {
+                            $isLvlCompleted = true;
+                            $isLvlLocked = false;
+                            $completedInLevel = $totalLvlQuestions;
+                        } else if ($lvl == $currLvl) {
+                            $isLvlCurrent = true;
+                            $isLvlLocked = false;
+                            
+                            // For the tooltip: count questions in this level before the current one
+                            $qIdsInLvl = $levelQuestions->pluck('id')->toArray();
+                            $currIdxInLvl = array_search($attempt->current_question_id, $qIdsInLvl);
+                            $completedInLevel = $currIdxInLvl !== false ? $currIdxInLvl : 0;
+                        }
+                    } else if ($lvl == 1) {
+                        // Not started, level 1 is active
+                        $isLvlCurrent = true;
+                        $isLvlLocked = false;
+                    }
+
+                    $pos = $positions[($lvl - 1) % count($positions)];
+                @endphp
+                <div class="landmark-node" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;" 
+                     @if(!$isLvlLocked) onclick="showLevelDetails({{ $lvl }}, {{ json_encode($levelQuestions->values()) }})" @endif>
+                    <div class="node-icon {{ $isLvlCompleted ? 'finish' : ($isLvlCurrent ? 'active' : 'locked') }}">
+                        <i class="fas {{ $isLvlCompleted ? 'fa-check' : ($isLvlCurrent ? 'fa-play' : 'fa-lock') }}"></i>
                     </div>
-                    <div class="node-tag">{{ $landmark['name'] }}</div>
+                    <div class="node-tag">Level {{ $lvl }}</div>
+                    <div class="node-tooltip">
+                        <strong>{{ $pos['name'] }}</strong><br>
+                        @if($isLvlLocked)
+                            <i class="fas fa-lock"></i> Locked Stage
+                        @else
+                            {{ $totalLvlQuestions }} Challenges ({{ $completedInLevel }}/{{ $totalLvlQuestions }})
+                        @endif
+                    </div>
                 </div>
-                @endforeach
+                @endfor
             </div>
 
             <!-- Action Floating Menu -->
@@ -84,9 +132,16 @@
                     <div class="progress-track"><div class="progress-fill" style="width: {{ $progressPercent }}%;"></div></div>
                 </div>
                 <div class="action-card-footer">
+                    @php
+                        $isExpired = $quest->due_date && \Carbon\Carbon::parse($quest->due_date)->isPast();
+                    @endphp
+
                     @if($status === 'completed')
                         <p>Quest Conquered! You are a true Hero of Neural Realm.</p>
                         <button class="btn-primary-action completed" disabled>Completed <i class="fas fa-check-circle"></i></button>
+                    @elseif($isExpired)
+                        <p class="text-secondary" style="font-size: 0.8rem; margin-bottom: 10px;"><strong>Deadline Passed:</strong> This mission is no longer available.</p>
+                        <button class="btn-primary-action expired" disabled style="background: #94a3b8; opacity: 0.7;">Expired <i class="fas fa-clock"></i></button>
                     @elseif($status === 'started')
                         <p>Current Step: {{ $currentQuestionIndex + 1 }} of {{ $totalQuestions }}</p>
                         <a href="{{ route('student.quest.play', $quest->id) }}" class="btn-primary-action">Continue Quest <i class="fas fa-play"></i></a>
@@ -100,6 +155,50 @@
                 </div>
             </div>
         </div>
+
+        <!-- LEVEL DETAILS MODAL -->
+        <div id="levelDetailsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-box level-details-modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-scroll"></i> Level <span id="modalLevel">1</span> Details</h3>
+                    <button onclick="closeLevelModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="modalQuestionsList" class="modal-questions-list">
+                    {{-- Questions will be injected here --}}
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeLevelModal()" class="btn-ok">Back to Map</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        function showLevelDetails(level, questions) {
+            document.getElementById('modalLevel').textContent = level;
+            const list = document.getElementById('modalQuestionsList');
+            if (list) {
+                list.innerHTML = '';
+                questions.forEach((q, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'modal-question-card';
+                    card.innerHTML = `
+                        <div class="modal-q-header">
+                            <span class="q-type-badge">${q.type.replace('-', ' ')}</span>
+                            <span class="q-points-badge">${q.points} PTS</span>
+                        </div>
+                        <p class="q-text">${q.question}</p>
+                    `;
+                    list.appendChild(card);
+                });
+            }
+            document.getElementById('levelDetailsModal').style.display = 'flex';
+        }
+
+        function closeLevelModal() {
+            const modal = document.getElementById('levelDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+        </script>
     </div>
 
     <!-- Side Content (Questions/Steps) -->
@@ -122,7 +221,7 @@
                     @else <i class="fas fa-lock"></i> @endif
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Step {{ $index + 1 }}</span>
+                    <span class="step-label">Step {{ $index + 1 }} (LVL {{ $step->level }})</span>
                     <h4>Objective {{ $index + 1 }}</h4>
                     <p>{{ Str::limit($step->question, 50) }}</p>
                 </div>
@@ -132,6 +231,7 @@
         </div>
     </div>
 </div>
+
 
 <style>
     .btn-primary-action.completed {
@@ -396,6 +496,126 @@
     .step-details p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.3; }
 
     .step-pts { font-size: 0.75rem; font-weight: 800; color: #4f46e5; }
+
+    /* MODAL STYLES */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+       
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .level-details-modal {
+        background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        width: 100%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 212, 59, 0.2);
+        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        border-radius: 20px;
+        padding: 30px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 15px;
+    }
+
+    .modal-header h3 {
+        color: var(--accent);
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .btn-close-modal {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .btn-close-modal:hover { color: #fff; }
+
+    .modal-questions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .modal-question-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    .modal-q-header {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .q-type-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        padding: 3px 8px;
+        border-radius: 5px;
+        text-transform: uppercase;
+    }
+
+    .q-points-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        background: rgba(255, 212, 59, 0.2);
+        color: var(--accent);
+        padding: 3px 8px;
+        border-radius: 5px;
+        text-transform: uppercase;
+    }
+
+    .q-text {
+        font-size: 1rem;
+        color: #e2e8f0;
+        line-height: 1.5;
+    }
+
+    .modal-footer {
+        margin-top: 25px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-ok {
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: #0b1020;
+        padding: 10px 22px;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+
+    @media (max-width: 768px) {
+        .quest-view-header { flex-direction: column; align-items: flex-start; }
+        .interactive-landmarks { transform: scale(0.6); transform-origin: top left; width: 166%; }
+        .map-action-card { width: 100%; position: static; margin-top: 20px; }
+        .level-details-modal { padding: 20px; }
+    }
 
     @media (max-width: 1200px) {
         .quest-view-container { grid-template-columns: 1fr; }

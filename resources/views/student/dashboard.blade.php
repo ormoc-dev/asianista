@@ -320,14 +320,32 @@
             backdrop-filter: blur(10px);
         }
         .dashboard-shell-1 {
+            width: 100%;
+            min-height: 80vh;
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 30px;
+            align-items: start;
+            /* Shell is now transparent */
+        }
+
+        .dashboard-left-col {
             background: rgba(255, 255, 255, 1);
             border-radius: 20px;
-            padding: 20px;
+            padding: 24px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
-            width: 500px;
-            height: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dashboard-right-col {
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
         }
 
         .character-name {
@@ -527,6 +545,109 @@
             to { transform: rotate(360deg); }
         }
 
+        /* TRANSPARENT MAP OVERLAY */
+        .transparent-map-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .transparent-map-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .map-overlay-container {
+            width: 90%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            animation: mapPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes mapPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .map-overlay-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            z-index: 2;
+        }
+
+        .map-overlay-header h3 { 
+            margin: 0; 
+            color: var(--accent); 
+            font-size: 1.5rem; 
+            text-shadow: 0 0 20px rgba(255, 212, 59, 0.3);
+        }
+
+        .btn-close-overlay {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close-overlay:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .map-content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Clean map background for overlay */
+        .map-content-scroll .map-frame {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .drawer-loader { 
+            text-align: center; 
+            margin-top: 150px; 
+            color: white; 
+        }
+
+        .spinner { 
+            width: 50px; 
+            height: 50px; 
+            border: 5px solid rgba(255, 255, 255, 0.1); 
+            border-top-color: var(--accent); 
+            border-radius: 50%; 
+            animation: spin 1s infinite linear; 
+            margin: 0 auto 20px; 
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .quest-card-header {
             display: flex;
             justify-content: space-between;
@@ -592,29 +713,332 @@
             z-index: 2;
         }
 
-        .btn-quest-action {
+        .btn-quest-action-preview {
             width: 100%;
-            background: var(--accent);
-            color: #0b1020;
+            background: rgba(255, 212, 59, 0.1);
+            color: var(--accent);
             text-align: center;
             padding: 12px;
             border-radius: 12px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 0.95rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: none;
-            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px dashed rgba(255, 212, 59, 0.3);
         }
 
-        .btn-quest-action:hover {
-            background: white;
-            transform: translateY(-3px);
+        .quest-card:hover .btn-quest-action-preview {
+            background: var(--accent);
+            color: #0b1020;
+            border-style: solid;
+            transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(255, 212, 59, 0.3);
+        }
+
+        .quest-card:hover { 
+            border-color: var(--accent); 
+            transform: translateY(-5px); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        /* REFINED MAP CARD STYLE */
+        .quest-map-card {
+            overflow: hidden;
+            width: auto;
+            display: flex;
+            flex-direction: column;
+            margin-right:-500px;
+        }
+
+       
+
+        .quest-map-card-body {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+
+        }
+
+        .embedded-map-section {
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .embedded-map-section.active {
+            opacity: 1;
+        }
+
+        .map-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Clean map background for dashboard card embedding */
+        .embedded-map-section .map-frame,
+        .embedded-map-section .map-exploration-area {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        /* Fix map scale in side col */
+        .embedded-map-section .interactive-landmarks {
+            transform: scale(0.9) !important;
+            transform-origin: center;
+        }
+
+        /* MODAL STYLES FOR EMBEDDED MAP */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .level-details-modal {
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 212, 59, 0.2);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .level-details-modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .level-details-modal .modal-header h3 {
+            color: var(--accent);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-question-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .modal-q-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .q-type-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 3px 8px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .q-points-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            background: rgba(255, 212, 59, 0.2);
+            color: var(--accent);
+            padding: 3px 8px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .q-text {
+            font-size: 1rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+        .btn-ok {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: #0b1020;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .btn-close-modal:hover { color: #fff; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* MAP FRAME & LANDMARK STYLES */
+        .map-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1000 / 600;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .map-background {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .map-svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .interactive-landmarks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .landmark-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .landmark-node:hover { 
+            transform: translate(-50%, -50%) scale(1.15); 
+            z-index: 20;
+        }
+
+        .node-icon {
+            width: 45px;
+            height: 45px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #64748b;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            border: 3px solid #fff;
+            position: relative;
+        }
+
+        .node-icon.active {
+            background: var(--accent);
+            color: #0b1020;
+            border-color: #fff;
+            box-shadow: 0 0 25px rgba(255,212,59,0.7);
+            animation: nodePulse 2s infinite;
+        }
+
+        .node-icon.locked { 
+            background: #475569; 
+            color: #94a3b8; 
+            border-color: #334155; 
+            box-shadow: none; 
+            opacity: 0.8;
+        }
+
+        .node-icon.finish { 
+            background: #1e293b; 
+            color: var(--accent); 
+            border-color: #334155; 
+        }
+
+        @keyframes nodePulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 212, 59, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 212, 59, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 212, 59, 0); }
+        }
+
+        .node-tag {
+            margin-top: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .node-tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .landmark-node:hover .node-tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: 130%;
         }
 
         .quest-status-badge {
@@ -825,6 +1249,8 @@
             main { margin-left: 0 !important; }
             header { padding: 10px 15px; }
             .shell-top { grid-template-columns: 1fr; }
+            .dashboard-shell-1 { grid-template-columns: 1fr; }
+            .dashboard-left-col { margin-bottom: 25px; }
         }
     </style>
 </head>
@@ -835,15 +1261,17 @@
         <div>
             <div class="sidebar-header">
                 @php
-                    $profilePic = Auth::user()->profile_pic ?? 'default-pp.png';
+                    $user = Auth::user();
+                    $profilePic = $user?->profile_pic ?? 'default-pp.png';
+                    $userName = $user?->name ?? 'Student';
                 @endphp
                 <div class="logo-circle">
                     <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="sidebar-logo">
                 </div>
-                <div class="player-tag">{{ Auth::user()->name }}</div>
+                <div class="player-tag">{{ $userName }}</div>
                 
-                @if (Auth::user()->character)
-                    <div class="character-name">{{ ucfirst(Auth::user()->character) }}</div>
+                @if ($user?->character)
+                    <div class="character-name">{{ ucfirst($user->character) }}</div>
                 @endif
 
                 <div class="sidebar-level">Level <span>05</span> • 3,420 XP</div>
@@ -893,14 +1321,16 @@
             <div class="header-right">
                 <div class="user-pill">
                     <i class="fas fa-user-circle"></i>
-                    <span>{{ Auth::user()->name }}</span>
+                    <span>{{ Auth::user()?->name ?? 'Student' }}</span>
                 </div>
             </div>
         </header>
 
         <section>
+            @if(request()->routeIs('student.dashboard'))
             <div class="{{ request()->routeIs('student.dashboard') ? 'dashboard-shell-1' : 'dashboard-shell' }}">
-                <div class="shell-top">
+                <div class="dashboard-left-col">
+                    <div class="shell-top">
                         <div class="stats-container">
                             <div class="stat-icon-group">
                                 <div class="stat-meta">
@@ -976,8 +1406,8 @@
                         </div>
 
 
-                        <div class="quest-card">
-                            @if($activeQuest)
+                        <div class="quest-card" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id ?? 0) }}')" style="cursor: pointer;">
+                            @if(isset($activeQuest) && $activeQuest)
                                 <div class="quest-card-header">
                                     <div class="quest-card-title">
                                         <i class="fas fa-scroll"></i> Current Quest
@@ -1000,22 +1430,9 @@
                                     </div>
                                 </div>
                                 <div class="quest-card-footer">
-                                    @if($activeAttempt && $activeAttempt->status === 'completed')
-                                        <div class="btn-quest-action" style="background: #10b981; color: white;">
-                                            <i class="fas fa-check-circle"></i> Quest Conquered
-                                        </div>
-                                        <center><small class="quest-status-badge">Completed on {{ $activeAttempt->updated_at->format('M d, Y') }}</small></center>
-                                    @elseif($activeAttempt && $activeAttempt->status === 'started')
-                                        <a href="{{ route('student.quest.play', [$activeQuest->id, $activeAttempt->current_question_id]) }}" class="btn-quest-action">
-                                            <i class="fas fa-play"></i> Continue Adventure
-                                        </a>
-                                        <center><small class="quest-status-badge">Status: In Progress</small></center>
-                                    @else
-                                        <a href="{{ route('student.quest.show', $activeQuest->id) }}" class="btn-quest-action">
-                                            <i class="fas fa-bolt"></i> Start Adventure
-                                        </a>
-                                        <center><small class="quest-status-badge">Status: Available</small></center>
-                                    @endif
+                                    <div class="btn-quest-action-preview">
+                                        View Map & Adventure <i class="fas fa-arrow-right"></i>
+                                    </div>
                                 </div>
                             @else
                                 <div class="quest-empty-state">
@@ -1023,11 +1440,32 @@
                                     <p>No active quests at the moment.<br>Check back later for new adventures!</p>
                                 </div>
                             @endif
-                        </div>
+                        </div> 
+                    </div> <!-- End shell-top -->
+                </div> <!-- End Left Column -->
 
+                <div class="dashboard-right-col">
+                    <!-- SEPARATE QUEST MAP CARD -->
+                    <div class="quest-map-card">
+                        
+                        <div class="quest-map-card-body">
+                            <div id="embedded-map-container" class="embedded-map-section">
+                                <div class="map-placeholder">
+                                    <i class="fas fa-compass" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                                    <p>Select your quest to reveal the path through ASIANISTA...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                @yield('content')
-            </div>
+                </div>
+            </div> <!-- End dashboard-shell-1 -->
+            @yield('content')
+            @else
+                <div class="dashboard-shell">
+                    @yield('content')
+                </div>
+            @endif
+
         </section>
     </main>
 
@@ -1148,6 +1586,52 @@
         document.getElementById('floating-chat-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendFloatingMessage();
         });
+        async function openQuestDrawer(url) {
+            if (url.includes('/0')) return; 
+            
+            const container = document.getElementById('embedded-map-container');
+            
+            // Start fade out/loading
+            container.style.opacity = '0';
+            
+            await new Promise(r => setTimeout(r, 300));
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const mapSection = doc.querySelector('.map-exploration-area');
+                    
+                    if (mapSection) {
+                        // We wrap it to ensure we can scroll or position if needed
+                        container.innerHTML = `<div class="embedded-map-wrap">${mapSection.outerHTML}</div>`;
+                        
+                        // Execute scripts (for modals, etc.)
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                            container.appendChild(newScript);
+                        });
+
+                        // Trigger slow fade in
+                        setTimeout(() => {
+                            container.classList.add('active');
+                            container.style.opacity = '1';
+                        }, 100);
+
+                    } else {
+                        container.innerHTML = '<div class="alert alert-warning">The map is hidden in mists.</div>';
+                        container.style.opacity = '1';
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = '<div class="alert alert-danger">Realm unreachable.</div>';
+                    container.style.opacity = '1';
+                });
+        }
     </script>
 </body>
 </html>

@@ -10,7 +10,7 @@ class QuestQuestion extends Model
     use HasFactory;
 
     protected $fillable = [
-        'quest_id', 'question', 'type', 'points', 'options', 'answer'
+        'quest_id', 'question', 'type', 'points', 'level', 'options', 'answer'
     ];
 
     protected $casts = [

@@ -19,9 +19,10 @@ class AIAssistantController extends Controller
 
         $topic = $request->input('topic');
         $difficulty = $request->input('difficulty', 'medium');
+        $totalLevels = $request->input('total_levels', 3);
 
         try {
-            $generatedData = $this->callGroqAPI($topic, $difficulty);
+            $generatedData = $this->callGroqAPI($topic, $difficulty, $totalLevels);
             return response()->json([
                 'status' => 'success',
                 'data' => $generatedData
@@ -35,7 +36,7 @@ class AIAssistantController extends Controller
         }
     }
 
-    private function callGroqAPI($topic, $difficulty)
+    private function callGroqAPI($topic, $difficulty, $totalLevels)
     {
         $apiKey = env('GROQ_API_KEY');
         $endpoint = "https://api.groq.com/openai/v1/chat/completions";
@@ -45,14 +46,15 @@ class AIAssistantController extends Controller
         
         Topic: {$topic}
         Difficulty: {$difficulty}
+        Total Stages: {$totalLevels}
         
         Requirements:
         1. Title: Creative RPG-style quest name.
         2. Description: Immersive narrative (2-3 sentences) turning the topic into a fantasy mission.
-        3. Challenges: 3 challenges related to the topic.
-           - At least 2 Multiple Choice (with 4 options and 1 correct answer).
-           - At least 1 Identification (short answer).
-        4. Rewards: Numeric values for XP (100-300), AB (20-60), GP (10-40) based on difficulty.
+        3. Challenges: Generate exactly one challenge for each stage from 1 to {$totalLevels}.
+           - For each level, provide either a Multiple Choice or Identification question.
+           - Ensure levels are sequential (1, 2, 3...).
+        4. Rewards: Numeric values for XP (100-300), AB (20-60), GP (10-40) based on complexity.
 
         JSON structure:
         {
@@ -64,15 +66,10 @@ class AIAssistantController extends Controller
             \"challenges\": [
                 {
                     \"text\": \"...\",
-                    \"type\": \"multiple-choice\",
+                    \"type\": \"multiple_choice\",
+                    \"level\": 1,
                     \"points\": 10,
                     \"options\": [\"...\", \"...\", \"...\", \"...\"],
-                    \"answer\": \"...\"
-                },
-                {
-                    \"text\": \"...\",
-                    \"type\": \"identification\",
-                    \"points\": 20,
                     \"answer\": \"...\"
                 }
             ]
@@ -117,7 +114,7 @@ class AIAssistantController extends Controller
     {
         $request->validate([
             'topic' => 'required|string|max:255',
-            'type' => 'required|string|in:multiple-choice,identification',
+            'type' => 'required|string|in:multiple_choice,identification',
             'difficulty' => 'nullable|string'
         ]);
 
@@ -155,15 +152,16 @@ class AIAssistantController extends Controller
         Requirements:
         1. Text: Creative RPG-style question/challenge text.
         2. Points: Suggested points (10-50 based on difficulty).
-        3. For 'multiple-choice': Return an array of 4 options and the correct answer string.
+        3. For 'multiple_choice': Return an array of 4 options and the correct answer string.
         4. For 'identification': Return the correct answer string.
 
         JSON structure:
         {
             \"text\": \"...\",
             \"type\": \"{$type}\",
+            \"level\": 1,
             \"points\": 10,
-            \"options\": [\"...\", \"...\", \"...\", \"...\"], // Only for multiple-choice
+            \"options\": [\"...\", \"...\", \"...\", \"...\"], // Only for multiple_choice
             \"answer\": \"...\"
         }
         

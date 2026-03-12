@@ -95,12 +95,13 @@
 
                     <div class="form-group flex-1">
                         <label for="quest-level">
-                            <i class="fas fa-star"></i> Quest Level
+                            <i class="fas fa-stairs"></i> Total Quest Levels
                         </label>
                         <div class="premium-input-wrap">
-                            <input type="number" id="quest-level" value="1" min="1" required>
-                            <div class="input-unit">LVL</div>
+                            <input type="number" id="quest-level" value="3" min="1" max="10" onchange="updateLevelProgressTracker()" required>
+                            <div class="input-unit">STAGES</div>
                         </div>
+                        <small class="helper-text">Defines how many nodes appear on the map.</small>
                     </div>
                 </div>
 
@@ -186,6 +187,11 @@
             </div>
             <h3>Quest Challenges</h3>
             <p class="form-subtitle">Create the puzzles, questions, and checks that students must conquer.</p>
+            
+            <!-- LEVEL PROGRESS TRACKER -->
+            <div class="level-progression-tracker" id="level-tracker">
+                {{-- Dynamic levels will be inserted here --}}
+            </div>
             <hr>
 
             <!-- AI QUESTION FORGE Section -->
@@ -219,7 +225,7 @@
                         <i class="fas fa-magic"></i>
                         <select id="question-type" onchange="toggleQuestionFields()" required>
                             <option value="" disabled selected hidden>Select Question Type</option>
-                            <option value="multiple-choice">Multiple Choice</option>
+                            <option value="multiple_choice">Multiple Choice</option>
                             <option value="identification">Identification</option>
                         </select>
                     </div>
@@ -240,6 +246,19 @@
                 <div id="identification-answer" class="question-options">
                     <label>Correct Answer</label>
                     <input type="text" class="correct-answer" placeholder="Enter the correct answer..." required/>
+                </div>
+
+                <div class="form-group points-group">
+                    <label for="question-level">
+                        Select Level
+                        <span class="badge-soft">Progression</span>
+                    </label>
+                    <div class="points-input-wrap">
+                        <i class="fas fa-stairs"></i>
+                        <select id="question-level" required>
+                            {{-- Populated by JS based on Total Levels --}}
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group points-group">
@@ -425,6 +444,36 @@ let questions = [];
 let optionCount = 0;
 let editingIndex = null;
 
+function updateLevelProgressTracker() {
+    const totalLevels = parseInt(document.getElementById('quest-level').value) || 1;
+    const tracker = document.getElementById('level-tracker');
+    const levelSelect = document.getElementById('question-level');
+    
+    // Update Tracker UI
+    tracker.innerHTML = '';
+    for (let i = 1; i <= totalLevels; i++) {
+        const hasQuestions = questions.some(q => q.level == i);
+        const dot = document.createElement('div');
+        dot.className = `level-dot ${hasQuestions ? 'active' : ''}`;
+        dot.innerHTML = `<span>${i}</span>`;
+        dot.title = `Level ${i}: ${hasQuestions ? 'Ready' : 'Empty'}`;
+        tracker.appendChild(dot);
+    }
+
+    // Update Question Level Dropdown
+    const currentVal = levelSelect.value;
+    levelSelect.innerHTML = '';
+    for (let i = 1; i <= totalLevels; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `Level ${i}`;
+        levelSelect.appendChild(opt);
+    }
+    if (currentVal && currentVal <= totalLevels) {
+        levelSelect.value = currentVal;
+    }
+}
+
 function openAIModal() {
     document.getElementById('aiReforgeModal').style.display = 'flex';
 }
@@ -455,7 +504,8 @@ function generateWithAI() {
         },
         body: JSON.stringify({
             topic: topic,
-            difficulty: document.getElementById('difficulty').value
+            difficulty: document.getElementById('difficulty').value,
+            total_levels: parseInt(document.getElementById('quest-level').value) || 3
         })
     })
     .then(response => response.json())
@@ -478,13 +528,15 @@ function generateWithAI() {
                 id: `Q${i + 1}`,
                 text: c.text,
                 type: c.type,
+                level: c.level || (i + 1),
                 points: c.points,
                 answer: c.answer,
                 options: c.options || [],
-                correctIndex: c.type === 'multiple-choice' ? c.options.indexOf(c.answer) : null
+                correctIndex: c.type === 'multiple_choice' ? c.options.indexOf(c.answer) : null
             }));
 
             displayAddedQuestions();
+            updateLevelProgressTracker();
             closeAIModal();
             showCustomSuccess("AI has successfully reforged the quest content!", () => {
                 // Stay on current page but now it's populated
@@ -548,9 +600,10 @@ function generateSingleQuestionWithAI() {
             
             // Populate Fields
             document.getElementById('question-text').value = data.text;
+            document.getElementById('question-level').value = data.level || 1;
             document.getElementById('points').value = data.points;
 
-            if (data.type === 'multiple-choice') {
+            if (data.type === 'multiple_choice') {
                 document.getElementById('options-container').innerHTML = '';
                 optionCount = 0;
                 data.options.forEach((opt, idx) => {
@@ -591,7 +644,7 @@ function toggleQuestionFields() {
     const questionType = document.getElementById('question-type').value;
     document.getElementById('multiple-choice-options').style.display = 'none';
     document.getElementById('identification-answer').style.display = 'none';
-    if (questionType === 'multiple-choice') {
+    if (questionType === 'multiple_choice') {
         document.getElementById('multiple-choice-options').style.display = 'block';
     } else if (questionType === 'identification') {
         document.getElementById('identification-answer').style.display = 'block';
@@ -627,6 +680,7 @@ function addQuestion() {
     const questionTextEl = document.getElementById('question-text');
     const questionTypeEl = document.getElementById('question-type');
     const pointsEl = document.getElementById('points');
+    const levelEl = document.getElementById('question-level');
 
     if (!questionTextEl.checkValidity()) {
         questionTextEl.reportValidity();
@@ -634,6 +688,10 @@ function addQuestion() {
     }
     if (!questionTypeEl.checkValidity()) {
         questionTypeEl.reportValidity();
+        return;
+    }
+    if (!levelEl.checkValidity()) {
+        levelEl.reportValidity();
         return;
     }
     if (!pointsEl.checkValidity()) {
@@ -644,12 +702,13 @@ function addQuestion() {
     const questionText = questionTextEl.value.trim();
     const questionType = questionTypeEl.value;
     const points = pointsEl.value.trim();
+    const level = levelEl.value.trim();
 
     let correctAnswer = "";
     let options = [];
     let correctIndex = null;
 
-    if (questionType === 'multiple-choice') {
+    if (questionType === 'multiple_choice') {
         const optionTextInputs = Array.from(
             document.querySelectorAll('#options-container input[type="text"]')
         );
@@ -689,10 +748,11 @@ function addQuestion() {
         const q = questions[editingIndex];
         q.text = questionText;
         q.type = questionType;
+        q.level = level;
         q.points = points;
         q.answer = correctAnswer;
 
-        if (questionType === 'multiple-choice') {
+        if (questionType === 'multiple_choice') {
             q.options = options;
             q.correctIndex = correctIndex;
         } else {
@@ -701,6 +761,7 @@ function addQuestion() {
         }
 
         displayAddedQuestions();
+        updateLevelProgressTracker();
         resetQuestionForm();
         editingIndex = null;
         document.querySelector('.add-question-button').textContent = '+ Add Question to Quest';
@@ -711,19 +772,21 @@ function addQuestion() {
         id: `Q${questions.length + 1}`,
         text: questionText,
         type: questionType,
+        level: level,
         points: points,
         answer: correctAnswer,
         options: [],
         correctIndex: null,
     };
 
-    if (questionType === 'multiple-choice') {
+    if (questionType === 'multiple_choice') {
         newQuestion.options = options;
         newQuestion.correctIndex = correctIndex;
     }
 
     questions.push(newQuestion);
     displayAddedQuestions();
+    updateLevelProgressTracker();
     resetQuestionForm();
 }
 
@@ -732,6 +795,7 @@ function editQuestion(index) {
 
     document.getElementById('question-text').value = question.text;
     document.getElementById('question-type').value = question.type;
+    document.getElementById('question-level').value = question.level || 1;
     document.getElementById('points').value = question.points;
 
     toggleQuestionFields();
@@ -792,6 +856,7 @@ function deleteQuestion(index) {
                 q.id = `Q${i + 1}`;
             });
             displayAddedQuestions();
+            updateLevelProgressTracker();
         }
     });
 }
@@ -812,6 +877,7 @@ function displayAddedQuestions() {
                 <h4><i class="fas ${typeIcon}" style="margin-right:8px; opacity:0.6;"></i> ${question.text}</h4>
                 <div class="question-meta">
                     <span class="meta-tag">#${question.id}</span>
+                    <span class="meta-tag">LVL ${question.level || 1}</span>
                     <span class="meta-tag">${question.type.replace('-', ' ')}</span>
                     <span class="meta-tag"><i class="fas fa-star" style="color:var(--accent);"></i> ${question.points} Points</span>
                 </div>
@@ -827,6 +893,7 @@ function displayAddedQuestions() {
 
 function resetQuestionForm() {
     document.getElementById('question-text').value = '';
+    document.getElementById('question-level').value = 1;
     document.getElementById('points').value = 10;
 
     const questionTypeSelect = document.getElementById('question-type');
@@ -870,6 +937,11 @@ function nextStep(step) {
 
     document.querySelectorAll('.form-step').forEach(s => s.style.display = 'none');
     document.getElementById(`step-${step}`).style.display = 'block';
+    
+    if (step === 2) {
+        updateLevelProgressTracker();
+    }
+
     updateStepIndicator(step);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -877,6 +949,11 @@ function nextStep(step) {
 function previousStep(step) {
     document.querySelectorAll('.form-step').forEach(s => s.style.display = 'none');
     document.getElementById(`step-${step}`).style.display = 'block';
+    
+    if (step === 2) {
+        updateLevelProgressTracker();
+    }
+
     updateStepIndicator(step);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -902,6 +979,20 @@ function createQuest() {
 
     if (questions.length === 0) {
         showCustomAlert("Please add at least one question before creating the quest.");
+        return;
+    }
+
+    // New validation: Ensure every level has at least one question
+    const totalLevels = parseInt(document.getElementById('quest-level').value);
+    const missingLevels = [];
+    for (let i = 1; i <= totalLevels; i++) {
+        if (!questions.some(q => q.level == i)) {
+            missingLevels.push(i);
+        }
+    }
+
+    if (missingLevels.length > 0) {
+        showCustomAlert(`Your quest map is incomplete! Please add at least one question to the following levels: ${missingLevels.join(', ')}`);
         return;
     }
 
@@ -2115,6 +2206,75 @@ function loadSections(gradeId) {
         .quest-create-header p { max-width: 100%; }
         .quiz-container { padding: 0; }
         .quest-steps { flex-direction: column; }
+    }
+    /* LEVEL PROGRESSION TRACKER */
+    .level-progression-tracker {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+        padding: 15px;
+        background: rgba(15, 23, 42, 0.05);
+        border-radius: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .level-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: white;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        cursor: help;
+        border: 3px solid transparent;
+    }
+
+    .level-dot.active {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .level-dot span {
+        font-size: 1.1rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .level-dot::after {
+        content: "STAGE";
+        position: absolute;
+        bottom: -22px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #94a3b8;
+        letter-spacing: 0.5px;
+    }
+
+    .level-dot.active::after {
+        color: #16a34a;
+    }
+
+    .level-dot:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        right: -15px;
+        width: 15px;
+        height: 2px;
+        background: #cbd5e1;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: -1;
+    }
+
+    .level-dot.active:not(:last-child)::before {
+        background: #22c55e;
     }
 </style>
 @endsection

@@ -43,8 +43,9 @@ class TeacherQuestController extends Controller
             'section_id' => 'required|integer',
             'questions' => 'required|array|min:1',
             'questions.*.text' => 'required|string',
-            'questions.*.type' => 'required|string|in:multiple-choice,identification',
+            'questions.*.type' => 'required|string|in:multiple_choice,identification',
             'questions.*.points' => 'required|integer',
+            'questions.*.level' => 'required|integer|min:1',
             'questions.*.answer' => 'required|string',
         ]);
 
@@ -70,6 +71,7 @@ class TeacherQuestController extends Controller
                     'question' => $q['text'],
                     'type' => $q['type'],
                     'points' => $q['points'],
+                    'level' => $q['level'],
                     'options' => isset($q['options']) ? $q['options'] : null,
                     'answer' => $q['answer'],
                 ]);

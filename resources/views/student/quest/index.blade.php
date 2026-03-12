@@ -59,6 +59,10 @@
                 
                 <div class="quest-item-meta">
                     <div class="meta-row">
+                        <i class="fas fa-medal"></i>
+                        <span>Requirement: Level {{ $quest->level }}</span>
+                    </div>
+                    <div class="meta-row">
                         <i class="fas fa-calendar-day"></i> 
                         <span>Assign: {{ \Carbon\Carbon::parse($quest->assign_date)->format('M d') }}</span>
                     </div>
@@ -73,16 +77,55 @@
                     <div class="rew-pill gp">+{{ $quest->gp_reward ?? 0 }} GP</div>
                 </div>
 
-                <a href="{{ route('student.quest.show', $quest->id) }}" class="btn-start-quest">
-                    Start Adventure <i class="fas fa-chevron-right"></i>
+                @php
+                    $attempt = $quest->attempts->first();
+                    $isCompleted = $attempt && $attempt->status === 'completed';
+                    $isExpired = !$isCompleted && $quest->due_date && \Carbon\Carbon::parse($quest->due_date)->isPast();
+                @endphp
+
+                <a href="{{ route('student.quest.show', $quest->id) }}" class="btn-start-quest {{ $isExpired ? 'expired' : ($isCompleted ? 'completed' : '') }}">
+                    @if($isCompleted)
+                        Quest Conquered <i class="fas fa-check-circle"></i>
+                    @elseif($isExpired)
+                        Mission Overdue <i class="fas fa-lock"></i>
+                    @else
+                        Start Adventure <i class="fas fa-chevron-right"></i>
+                    @endif
                 </a>
             </div>
         </div>
         @endforeach
     </div>
     @endif
-
 </div>
+
+<style>
+    .btn-start-quest.expired {
+        background: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    .btn-start-quest.expired:hover {
+        transform: none;
+        background: #94a3b8;
+    }
+    .btn-start-quest.completed:hover {
+        background: #059669;
+    }
+
+    .lvl-badge {
+        background: rgba(255, 212, 59, 0.2);
+        color: var(--accent);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid rgba(255, 212, 59, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
 
 <style>
     /* Header */

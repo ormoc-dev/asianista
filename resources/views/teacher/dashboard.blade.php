@@ -344,8 +344,8 @@
     <div class="sidebar-header">
         @php
             $user = Auth::user();
-            $profilePic = $user->profile_pic ?? 'default-pp.png';
-            $userName = $user->name ?? 'Guest Teacher';
+            $profilePic = $user?->profile_pic ?? 'default-pp.png';
+            $userName = $user?->name ?? 'Guest Teacher';
         @endphp
 
         <div class="logo-circle">
@@ -408,7 +408,7 @@
                 <div class="user-dropdown">
                     <button class="user-name" onclick="toggleDropdown()">
                         <i class="fas fa-user-circle"></i>
-                        {{ Auth::user()->name ?? 'Guest' }}
+                        {{ Auth::user()?->name ?? 'Guest' }}
                         <i class="fas fa-chevron-down" style="font-size:0.75rem;"></i>
                     </button>
                     <div id="userDropdownMenu" class="dropdown-menu">

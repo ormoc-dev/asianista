@@ -11,6 +11,7 @@
                 <h2>{{ $quest->title }}</h2>
                 <div class="play-quest-meta">
                     <span class="step-counter">Objective {{ $attempt->quest->questions->pluck('id')->search($question->id) + 1 }} of {{ $attempt->quest->questions->count() }}</span>
+                    <span class="lvl-badge"><i class="fas fa-medal"></i> LVL {{ $question->level }}</span>
                 </div>
             </div>
         </div>
@@ -78,14 +79,33 @@
         <div class="play-sidebar">
             <!-- Mini Map showing progress -->
             <div class="mini-map-card">
+                @php
+                    $positions = [
+                        ['left' => 50, 'top' => 86],
+                        ['left' => 25, 'top' => 55],
+                        ['left' => 15, 'top' => 66],
+                        ['left' => 40, 'top' => 40],
+                        ['left' => 55, 'top' => 60],
+                        ['left' => 75, 'top' => 45],
+                        ['left' => 75, 'top' => 80],
+                        ['left' => 85, 'top' => 65],
+                        ['left' => 80, 'top' => 20],
+                    ];
+                    $currentLvl = $question->level;
+                    $totalLvls = $quest->level;
+                    $pos = $positions[($currentLvl - 1) % count($positions)];
+                    
+                    // Detailed progress within the level can be ignored for the mini-map if we follow "only level" rule
+                    $progressPercent = ($currentLvl / $totalLvls) * 100;
+                @endphp
                 <h4>World Progress</h4>
                 <div class="mini-map-visual">
                     <img src="{{ asset('images/quest_map_bg.png') }}" class="mini-map-bg">
-                    <div class="current-node-pulse" style="left: 50%; top: 50%;"></div>
+                    <div class="current-node-pulse" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"></div>
                 </div>
                 <div class="progress-footer">
                     <div class="mini-progress-bar">
-                        <div class="mini-fill" style="width: 25%;"></div>
+                        <div class="mini-fill" style="width: {{ $progressPercent }}%;"></div>
                     </div>
                 </div>
             </div>
@@ -306,6 +326,19 @@
 
     .play-quest-info h2 { font-size: 1.4rem; color: var(--primary); font-weight: 800; margin-bottom: 4px; }
     .step-counter { font-size: 0.8rem; font-weight: 700; color: var(--secondary); opacity: 0.8; }
+    .lvl-badge { 
+        background: rgba(255, 212, 59, 0.15); 
+        color: var(--accent-dark); 
+        padding: 3px 12px; 
+        border-radius: 8px; 
+        font-size: 0.75rem; 
+        font-weight: 800; 
+        border: 1px solid rgba(255, 212, 59, 0.3);
+        margin-left: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
 
     .reward-preview .reward-item {
         background: #fffbeb;

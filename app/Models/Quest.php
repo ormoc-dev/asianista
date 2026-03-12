@@ -16,7 +16,7 @@ class Quest extends Model
 
     public function questions()
     {
-        return $this->hasMany(QuestQuestion::class);
+        return $this->hasMany(QuestQuestion::class)->orderBy('level')->orderBy('id');
     }
 
     public function grade()
@@ -27,5 +27,10 @@ class Quest extends Model
     public function section()
     {
         return $this->belongsTo(Section::class);
+    }
+
+    public function attempts()
+    {
+        return $this->hasMany(QuestAttempt::class);
     }
 }
