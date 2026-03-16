@@ -11,6 +11,10 @@
         <!-- FAVICON IN BROWSER TAB -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
+    <!-- Turbolinks for SPA navigation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js" defer></script>
+    @livewireStyles
+
     <style>
         :root {
             --primary: #300675b1;
@@ -1503,14 +1507,16 @@
     </div>
 
     <script>
-        // Apply persisted sidebar state immediately to prevent flicker
-        (function() {
+        // Apply persisted sidebar state on every Turbolinks navigation
+        function applySidebarState() {
             const sidebarState = localStorage.getItem('sidebarState');
             if (sidebarState === 'collapsed') {
                 document.getElementById('sidebar').classList.add('collapsed');
                 document.getElementById('main-content').classList.add('expanded');
             }
-        })();
+        }
+        applySidebarState();
+        document.addEventListener('turbolinks:load', applySidebarState);
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1633,5 +1639,8 @@
                 });
         }
     </script>
+
+    @livewireScripts
+    <script src="https://cdn.jsdelivr.net/gh/livewire/turbolinks@v0.1.x/dist/livewire-turbolinks.js" data-turbolinks-eval="false" data-turbo-eval="false"></script>
 </body>
 </html>
