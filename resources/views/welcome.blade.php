@@ -523,14 +523,23 @@ async function handleStudentSubmit(event) {
   }
 }
 
+if (loginFormElement) {
+  loginFormElement.addEventListener('submit', handleLoginSubmit);
+}
+
 async function handleLoginSubmit(event) {
   event.preventDefault();
 
   // clear old errors
   loginErrorContainer.innerHTML = '';
   const seenMessages = new Set();
+  let data = null;
 
+  // Show loading state
+  const originalBtnText = loginSubmitBtn.innerHTML;
   loginSubmitBtn.disabled = true;
+  loginSubmitBtn.classList.add('btn-loading');
+  loginSubmitBtn.innerHTML = '<span class="spinner-small"></span> LOGGING IN...';
 
   const formData = new FormData(loginFormElement);
 
@@ -545,7 +554,7 @@ async function handleLoginSubmit(event) {
     });
 
     if (response.status === 422) {
-      const data = await response.json();
+      data = await response.json();
       const errors = data.errors || {};
 
       Object.values(errors).forEach(messages => {
@@ -572,7 +581,7 @@ async function handleLoginSubmit(event) {
       return;
     }
 
-    const data = await response.json();
+    data = await response.json();
 
     if (data.success && data.redirect) {
       // successful login → go to dashboard
@@ -599,7 +608,12 @@ async function handleLoginSubmit(event) {
     p.textContent = 'Unable to log in. Please check your connection and try again.';
     loginErrorContainer.appendChild(p);
   } finally {
-    loginSubmitBtn.disabled = false;
+    // Restore button state if not redirected
+    if (!data || !data.redirect || window.location.href.indexOf(data.redirect) === -1) {
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.classList.remove('btn-loading');
+        loginSubmitBtn.innerHTML = 'LOG IN';
+    }
   }
 }
 

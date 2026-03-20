@@ -1306,7 +1306,7 @@
                 </a>
                 
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
-                <a href="#" class="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a href="#" class="logout-link" onclick="event.preventDefault(); showLogoutModal();">
                     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                 </a>
             </nav>
@@ -1642,5 +1642,132 @@
 
     @livewireScripts
     <script src="https://cdn.jsdelivr.net/gh/livewire/turbolinks@v0.1.x/dist/livewire-turbolinks.js" data-turbolinks-eval="false" data-turbo-eval="false"></script>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logoutConfirmationModal" class="student-modal-overlay" style="display: none;">
+        <div class="student-modal-box">
+            <div class="student-modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+            </div>
+            <div class="student-modal-body">
+                <p>Are you sure you want to end your adventure for today?</p>
+            </div>
+            <div class="student-modal-footer">
+                <button onclick="closeLogoutModal()" class="btn-student-cancel">Cancel</button>
+                <button onclick="document.getElementById('logout-form').submit();" class="btn-student-logout">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .student-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .student-modal-box {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 212, 59, 0.2);
+            color: white;
+            text-align: center;
+            animation: modalPopUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPopUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .student-modal-header h3 {
+            color: #ffd43b;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .student-modal-body p {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .student-modal-footer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-student-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-student-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-student-logout {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-student-logout:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'flex';
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutConfirmationModal').style.display = 'none';
+        }
+
+        // Close on overlay click
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('logoutConfirmationModal');
+            if (event.target == modal) {
+                closeLogoutModal();
+            }
+        });
+    </script>
 </body>
 </html>

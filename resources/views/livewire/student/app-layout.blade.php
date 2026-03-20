@@ -1,4 +1,25 @@
-<div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Realm | ASIANISTA</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- FAVICON IN BROWSER TAB -->
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js" defer></script>
+    
+    @livewireStyles
+    @stack('styles')
+    
+    <link rel="stylesheet" href="{{ asset('css/student-dashboard.css') }}">
+</head>
+<body>
     <!-- SIDEBAR -->
     <aside id="sidebar">
         <div>
@@ -45,7 +66,7 @@
                 </a>
                 
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
-                <a href="#" class="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a href="#" class="logout-link" onclick="event.preventDefault(); showLogoutModal();">
                     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                 </a>
             </nav>
@@ -70,146 +91,61 @@
         </header>
 
         <section>
-            @if(request()->routeIs('student.dashboard'))
-            <div class="{{ request()->routeIs('student.dashboard') ? 'dashboard-shell-1' : 'dashboard-shell' }}">
-                <div class="dashboard-left-col">
-                    <div class="shell-top">
-                        <div class="stats-container">
-                            <div class="stat-icon-group">
-                                <div class="stat-meta">
-                                    <span><i class="fas fa-heart"></i> Health</span>
-                                    <span>8 / 10 HP</span>
-                                </div>
-                                <div class="icon-row">
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="far fa-heart hp-heart empty"></i>
-                                    <i class="far fa-heart hp-heart empty"></i>
-                                </div>
-                            </div>
-
-                            <div class="stat-icon-group">
-                                <div class="stat-meta">
-                                    <span><i class="fas fa-star"></i> Experience</span>
-                                    <span>Level 5 (3,420 XP)</span>
-                                </div>
-                                <div class="icon-row">
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="powers-title">
-                            <i class="fas fa-magic"></i> Available Powers
-                        </div>
-                        <div class="powers-grid">
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-shield-alt"></i></div>
-                                <div class="power-info">
-                                    <h4>Wisdom Shield</h4>
-                                    <p>Passive defense</p>
-                                </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-fire"></i></div>
-                                <div class="power-info">
-                                    <h4>Logic Blast</h4>
-                                    <p>Active power</p>
-                                </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-brain"></i></div>
-                                <div class="power-info">
-                                    <h4>Neural surge</h4>
-                                    <p>Critical boost</p>
-                                </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-feather-alt"></i></div>
-                                <div class="power-info">
-                                    <h4>Swift Mind</h4>
-                                    <p>Agility buff</p>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="quest-card" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id ?? 0) }}')" style="cursor: pointer;">
-                            @if(isset($activeQuest) && $activeQuest)
-                                <div class="quest-card-header">
-                                    <div class="quest-card-title">
-                                        <i class="fas fa-scroll"></i> Current Quest
-                                    </div>
-                                    <span class="quest-card-diff {{ strtolower($activeQuest->difficulty ?? 'medium') }}">
-                                        {{ $activeQuest->difficulty ?? 'Medium' }}
-                                    </span>
-                                </div>
-                                <div class="quest-card-body">
-                                    <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: white;">{{ $activeQuest->title }}</h3>
-                                    <p>{{ Str::limit($activeQuest->description, 100) }}</p>
-                                    
-                                    <div class="quest-card-rewards">
-                                        <div class="reward-pill xp">
-                                            <i class="fas fa-bolt"></i> +{{ $activeQuest->xp_reward ?? 0 }} XP
-                                        </div>
-                                        <div class="reward-pill gp">
-                                            <i class="fas fa-coins"></i> +{{ $activeQuest->gp_reward ?? 0 }} GP
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="quest-card-footer">
-                                    <div class="btn-quest-action-preview">
-                                        View Map & Adventure <i class="fas fa-arrow-right"></i>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="quest-empty-state">
-                                    <i class="fas fa-scroll"></i>
-                                    <p>No active quests at the moment.<br>Check back later for new adventures!</p>
-                                </div>
-                            @endif
-                        </div> 
-                    </div> <!-- End shell-top -->
-                </div> <!-- End Left Column -->
-
-                <div class="dashboard-right-col">
-                    <!-- SEPARATE QUEST MAP CARD -->
-                    <div class="quest-map-card">
-                        
-                        <div class="quest-map-card-body">
-                            <div id="embedded-map-container" class="embedded-map-section">
-                                <div class="map-placeholder">
-                                    <i class="fas fa-compass" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                                    <p>Select your quest to reveal the path through ASIANISTA...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- End dashboard-shell-1 -->
-            @yield('content')
-            @else
-                <div class="dashboard-shell">
-                    @yield('content')
-                </div>
-            @endif
-
+            {{ $slot }}
         </section>
     </main>
 
-</div>
+    <!-- FLOATING AI ASSISTANT -->
+    <div class="ai-floating-btn" onclick="toggleAIChat()">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <div class="ai-chat-window" id="ai-chat-window">
+        <div class="ai-chat-header">
+            <div class="info">
+                <div class="avatar"><i class="fas fa-robot"></i></div>
+                <div>
+                    <h4>Neural Sage</h4>
+                    <p><i class="fas fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> Online</p>
+                </div>
+            </div>
+            <button class="close-chat" onclick="toggleAIChat()"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="chat-messages" id="floating-chat-messages">
+            <div class="message ai">
+                Greetings! I am the Neural Sage. How can I assist you in your quest today?
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="floating-typing-indicator">
+            The Sage is weaving wisdom...
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="floating-chat-input" placeholder="Ask anything..." autocomplete="off">
+            <button onclick="sendFloatingMessage('{{ route('student.ai.chat') }}', '{{ csrf_token() }}')"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logoutConfirmationModal" class="student-modal-overlay" style="display: none;">
+        <div class="student-modal-box">
+            <div class="student-modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirm Logout</h3>
+            </div>
+            <div class="student-modal-body">
+                <p>Are you sure you want to end your adventure for today?</p>
+            </div>
+            <div class="student-modal-footer">
+                <button onclick="closeLogoutModal()" class="btn-student-cancel">Cancel</button>
+                <button onclick="document.getElementById('logout-form').submit();" class="btn-student-logout">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    @livewireScripts
+    <script src="{{ asset('js/student-dashboard.js') }}"></script>
+    @stack('scripts')
+</body>
+</html>

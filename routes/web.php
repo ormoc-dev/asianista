@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController; // ✅ Added
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\TeacherLessonController;
 use App\Http\Controllers\StudentLessonController;
@@ -52,7 +53,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     // Group routes for student dashboard
     Route::prefix('student')->name('student.')->group(function () {
-        Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', \App\Http\Livewire\Student\Dashboard::class)->name('dashboard');
         Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
         Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
         Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
@@ -237,7 +238,7 @@ Route::post('/register/teacher', [AuthController::class, 'registerTeacher'])->na
 Route::post('/register/student/validate', [AuthController::class, 'validateStudentStepOne'])
     ->name('register.student.validate');
 
-Route::get('/profile', [UserController::class, 'showProfile'])->name('profile');
+// Route::get('/profile', [UserController::class, 'showProfile'])->name('profile'); // TODO: Create UserController
 
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quest', [TeacherQuestController::class, 'index'])->name('quest');

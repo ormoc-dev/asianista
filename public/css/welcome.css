@@ -369,3 +369,29 @@ input:focus, select:focus {
     width: 90px; /* Limit size for smaller devices */
   }
 }
+
+/* BUTTON LOADING STATE */
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.8 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(11, 28, 68, 0.2);
+  border-top: 3px solid #0b1c44;
+  border-radius: 50%;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+@keyframes btn-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

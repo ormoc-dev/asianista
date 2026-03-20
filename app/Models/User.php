@@ -60,6 +60,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Message::class);
     }
+
+    public function questAttempts()
+    {
+        return $this->hasMany(\App\Models\QuestAttempt::class);
+    }
     public function isOnline(): bool
 {
     if (!$this->last_seen_at) {

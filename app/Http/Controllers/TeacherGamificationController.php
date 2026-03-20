@@ -83,7 +83,18 @@ class TeacherGamificationController extends Controller
 
     public function store(Request $request)
     {
-        // Future logic: save challenge to DB
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'points' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+        ]);
+
+        \App\Models\Challenge::create([
+            'title' => $request->title,
+            'points' => $request->points,
+            'description' => $request->description,
+        ]);
+
         return redirect()->route('teacher.gamification.index')
                          ->with('success', '🎉 Challenge created successfully!');
     }
@@ -102,12 +113,26 @@ class TeacherGamificationController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'points' => 'required|integer|min:1',
+            'description' => 'nullable|string',
+        ]);
+
+        $challenge = \App\Models\Challenge::findOrFail($id);
+        $challenge->update([
+            'title' => $request->title,
+            'points' => $request->points,
+            'description' => $request->description,
+        ]);
+
         return redirect()->route('teacher.gamification.index')
                          ->with('success', '✅ Challenge updated successfully!');
     }
 
     public function destroy($id)
     {
+        \App\Models\Challenge::destroy($id);
         return redirect()->route('teacher.gamification.index')
                          ->with('success', '🗑 Challenge deleted successfully!');
     }
