@@ -94,13 +94,21 @@
                     $currentLvl = $question->level;
                     $totalLvls = $quest->level;
                     $pos = $positions[($currentLvl - 1) % count($positions)];
-                    
-                    // Detailed progress within the level can be ignored for the mini-map if we follow "only level" rule
                     $progressPercent = ($currentLvl / $totalLvls) * 100;
+                    
+                    // Map image
+                    $mapImage = $quest->map_image ?? 'quest_map_bg.png';
+                    $mapImageUrl = str_starts_with($mapImage, 'quest_maps/') 
+                        ? asset('storage/' . $mapImage) 
+                        : asset('images/' . $mapImage);
                 @endphp
                 <h4>World Progress</h4>
-                <div class="mini-map-visual">
-                    <img src="{{ asset('images/quest_map_bg.png') }}" class="mini-map-bg">
+                <div class="mini-map-visual" style="background-image: url('{{ $mapImageUrl }}'); background-size: cover; background-position: center;">
+                    <div class="map-particles">
+                        <span class="particle p1"></span>
+                        <span class="particle p2"></span>
+                        <span class="particle p3"></span>
+                    </div>
                     <div class="current-node-pulse" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"></div>
                 </div>
                 <div class="progress-footer">
@@ -503,8 +511,30 @@
         margin-bottom: 15px;
     }
     
-    .mini-map-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
-
+    .map-particles {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+    }
+    
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        animation: float-particle 8s infinite ease-in-out;
+    }
+    
+    .particle.p1 { left: 20%; top: 30%; animation-delay: 0s; }
+    .particle.p2 { left: 60%; top: 50%; animation-delay: 2s; }
+    .particle.p3 { left: 80%; top: 20%; animation-delay: 4s; }
+    
+    @keyframes float-particle {
+        0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+        50% { transform: translateY(-20px) scale(1.5); opacity: 1; }
+    }
+    
     .current-node-pulse {
         position: absolute;
         width: 15px;

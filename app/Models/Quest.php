@@ -10,7 +10,7 @@ class Quest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'difficulty', 'level', 'xp_reward', 'ab_reward', 'gp_reward',
+        'title', 'description', 'difficulty', 'map_image', 'level', 'xp_reward', 'ab_reward', 'gp_reward',
         'assign_date', 'due_date', 'grade_id', 'section_id', 'teacher_id'
     ];
 

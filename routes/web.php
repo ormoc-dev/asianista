@@ -27,6 +27,7 @@ use App\Http\Controllers\StudentMessagesController;
 use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\AdminUserManagementController;
 use App\Http\Controllers\AIAssistantController;
+use App\Http\Controllers\GradeController;
 
 
 /*
@@ -75,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
         Route::get('/reports', [TeacherController::class, 'reports'])->name('reports');
         Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
+        Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
     });
 
     // Admin Routes
@@ -179,6 +181,10 @@ Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
 
 Route::prefix('student/ai')->name('student.ai.')->group(function () {
     Route::post('/chat', [AIAssistantController::class, 'studentChat'])->name('chat');
+});
+
+Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
+    Route::post('/chat', [AIAssistantController::class, 'teacherChat'])->name('chat');
 });
 
 // ADMIN
@@ -308,4 +314,5 @@ Route::prefix('student')->name('student.')->group(function () {
         ->name('messages.destroy');
 
 });
+
 

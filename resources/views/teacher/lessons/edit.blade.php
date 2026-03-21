@@ -1,30 +1,45 @@
-@extends('teacher.dashboard')
+@extends('teacher.layouts.app')
+
+@section('title', 'Edit Lesson')
+@section('page-title', 'Edit Lesson')
 
 @section('content')
 <div class="card">
-    <h2>✏️ Edit Lesson</h2>
+    <div class="card-header">
+        <h2 class="card-title">Edit Lesson</h2>
+    </div>
+    <div class="card-body">
+        <form action="{{ route('teacher.lessons.update', $lesson->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('POST')
 
-    <form action="{{ route('teacher.lessons.update', $lesson->id) }}" method="POST" enctype="multipart/form-data" style="margin-top:20px;">
-        @csrf
+            <div class="form-group">
+                <label class="form-label">Lesson Title</label>
+                <input type="text" name="title" class="form-control" value="{{ $lesson->title }}" required>
+            </div>
 
-        <div style="margin-bottom:15px;">
-            <label style="display:block;font-weight:bold;margin-bottom:5px;">Lesson Title:</label>
-            <input type="text" name="title" value="{{ $lesson->title }}" required style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
-        </div>
+            <div class="form-group">
+                <label class="form-label">Section</label>
+                <input type="text" name="section" class="form-control" value="{{ $lesson->section }}">
+            </div>
 
-        <div style="margin-bottom:15px;">
-            <label style="display:block;font-weight:bold;margin-bottom:5px;">Section:</label>
-            <input type="text" name="section" value="{{ $lesson->section }}" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
-        </div>
+            <div class="form-group">
+                <label class="form-label">Replace File (optional)</label>
+                <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.ppt,.pptx">
+                @if($lesson->file_path)
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+                    Current file: <a href="{{ route('teacher.lessons.download', basename($lesson->file_path)) }}" style="color: var(--primary);">{{ basename($lesson->file_path) }}</a>
+                </p>
+                @endif
+            </div>
 
-        <div style="margin-bottom:15px;">
-            <label style="display:block;font-weight:bold;margin-bottom:5px;">Replace File (optional):</label>
-            <input type="file" name="file" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
-        </div>
-
-        <button type="submit" style="background:#4f46e5;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">
-            Update
-        </button>
-    </form>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <a href="{{ route('teacher.lessons.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Lesson
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 @endsection

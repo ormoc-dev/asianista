@@ -1,237 +1,98 @@
-@extends('teacher.dashboard')
+@extends('teacher.layouts.app')
+
+@section('title', 'Create Quiz')
+@section('page-title', 'Create Quiz')
+
+@push('styles')
+<style>
+    .question-card {
+        background: var(--bg-main);
+        padding: 20px;
+        margin-bottom: 16px;
+        border-radius: var(--radius-sm);
+        position: relative;
+        border-left: 4px solid var(--primary);
+    }
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+</style>
+@endpush
 
 @section('content')
-<div class="create-quiz-container">
-
-    <!-- Header -->
-    <div class="header">
-        <h2>🧩 Create New Quiz</h2>
-        <a href="{{ route('teacher.quizzes') }}" class="btn-secondary">← Back to Quizzes</a>
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Create New Quiz</h2>
+        <a href="{{ route('teacher.quizzes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
     </div>
-
-    <!-- Form Card -->
-    <div class="form-card">
+    <div class="card-body">
         <form action="{{ route('teacher.quizzes.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            <!-- Quiz Title -->
             <div class="form-group">
-                <label for="title">Quiz Title <span>*</span></label>
-                <input type="text" id="title" name="title" value="{{ old('title') }}" placeholder="Enter quiz title..." required>
-                @error('title') <small class="error-text">{{ $message }}</small> @enderror
+                <label class="form-label">Quiz Title <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="title" class="form-control" value="{{ old('title') }}" placeholder="Enter quiz title..." required>
+                @error('title') <small style="color: var(--danger);">{{ $message }}</small> @enderror
             </div>
 
-            <!-- Quiz Type -->
             <div class="form-group">
-                <label for="type">Quiz Type <span>*</span></label>
-                <select id="type" name="type" required>
+                <label class="form-label">Quiz Type <span style="color: var(--danger);">*</span></label>
+                <select name="type" class="form-control" required>
                     <option value="" disabled selected>Select quiz type</option>
                     <option value="quiz" {{ old('type') == 'quiz' ? 'selected' : '' }}>Regular Quiz</option>
                     <option value="pre-test" {{ old('type') == 'pre-test' ? 'selected' : '' }}>Pre-Test</option>
                     <option value="post-test" {{ old('type') == 'post-test' ? 'selected' : '' }}>Post-Test</option>
                 </select>
-                @error('type') <small class="error-text">{{ $message }}</small> @enderror
+                @error('type') <small style="color: var(--danger);">{{ $message }}</small> @enderror
             </div>
 
-            <!-- File Upload -->
             <div class="form-group">
-                <label for="file">Upload File (Optional)</label>
-                <input type="file" id="file" name="file" accept=".pdf,.docx,.pptx,.txt">
-                @error('file') <small class="error-text">{{ $message }}</small> @enderror
+                <label class="form-label">Upload File (Optional)</label>
+                <input type="file" name="file" class="form-control" accept=".pdf,.docx,.pptx,.txt">
+                @error('file') <small style="color: var(--danger);">{{ $message }}</small> @enderror
             </div>
 
-            <!-- Assign & Due Dates -->
-            <div class="form-group-dates">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="form-group">
-                    <label for="assign_date">Assign Date <span>*</span></label>
-                    <input type="datetime-local" id="assign_date" name="assign_date" value="{{ old('assign_date') }}" required>
-                    @error('assign_date') <small class="error-text">{{ $message }}</small> @enderror
+                    <label class="form-label">Assign Date <span style="color: var(--danger);">*</span></label>
+                    <input type="datetime-local" name="assign_date" class="form-control" value="{{ old('assign_date') }}" required>
                 </div>
                 <div class="form-group">
-                    <label for="due_date">Due Date <span>*</span></label>
-                    <input type="datetime-local" id="due_date" name="due_date" value="{{ old('due_date') }}" required>
-                    @error('due_date') <small class="error-text">{{ $message }}</small> @enderror
+                    <label class="form-label">Due Date <span style="color: var(--danger);">*</span></label>
+                    <input type="datetime-local" name="due_date" class="form-control" value="{{ old('due_date') }}" required>
                 </div>
             </div>
 
-            <!-- Description -->
             <div class="form-group">
-                <label for="description">Quiz Description</label>
-                <textarea id="description" name="description" rows="4" placeholder="Describe what this quiz is about...">{{ old('description') }}</textarea>
-                @error('description') <small class="error-text">{{ $message }}</small> @enderror
+                <label class="form-label">Quiz Description</label>
+                <textarea name="description" class="form-control" rows="4" placeholder="Describe what this quiz is about...">{{ old('description') }}</textarea>
             </div>
 
-            <!-- Questions -->
-            <h3>Questions</h3>
+            <h3 style="font-size: 1.1rem; margin: 24px 0 16px;"><i class="fas fa-question-circle" style="color: var(--primary);"></i> Questions</h3>
             <div id="questions-wrapper"></div>
 
-            <button type="button" class="btn-secondary" id="add-question-btn">➕ Add Question</button>
-            <button type="submit" class="btn-primary">💾 Save Quiz</button>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button type="button" class="btn btn-secondary" id="add-question-btn">
+                    <i class="fas fa-plus"></i> Add Question
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <a href="{{ route('teacher.quizzes') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Quiz
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
-<style>
-.create-quiz-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background-color: #f9fafb;
-    padding: 30px;
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.header h2 {
-    color: #1e3a8a;
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-.btn-secondary {
-    background-color: #e0e7ff;
-    color: #1e3a8a;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.btn-secondary:hover {
-    background-color: #c7d2fe;
-    transform: translateX(-2px);
-}
-
-.form-card {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    padding: 25px 30px;
-    transition: all 0.3s ease;
-}
-
-.form-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group-dates {
-    display: flex;
-    gap: 15px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #1e3a8a;
-}
-
-.form-group label span {
-    color: #dc2626;
-}
-
-input[type="text"],
-input[type="file"],
-input[type="datetime-local"],
-textarea,
-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    background-color: #f8fafc;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    background-color: #fff;
-}
-
-textarea {
-    resize: none;
-}
-
-.btn-primary {
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    margin-top: 15px;
-}
-
-.btn-primary:hover {
-    background-color: #1d4ed8;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-    transform: translateY(-2px);
-}
-
-.error-text {
-    color: #dc2626;
-    font-size: 0.85rem;
-}
-
-/* Questions styling */
-.question-card {
-    background:#f9fafb;
-    padding:20px;
-    margin-bottom:20px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.05);
-    position:relative;
-}
-
-.option-item {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:8px;
-}
-
-.remove-option-btn {
-    background:#f87171;
-    color:white;
-    border:none;
-    border-radius:4px;
-    cursor:pointer;
-    padding:3px 8px;
-}
-
-.remove-question-btn {
-    position:absolute;
-    top:10px;
-    right:10px;
-    background:#f87171;
-    color:white;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    padding:4px 8px;
-}
-</style>
-
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     let questionIndex = 0;
@@ -243,63 +104,65 @@ document.addEventListener('DOMContentLoaded', () => {
         qCard.classList.add('question-card');
         qCard.dataset.index = questionIndex;
         qCard.innerHTML = `
+            <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: 10px; right: 10px;" onclick="this.closest('.question-card').remove()">
+                <i class="fas fa-trash"></i>
+            </button>
             <div class="form-group">
-                <label>Question <span>*</span></label>
-                <input type="text" name="questions[${questionIndex}][question]" placeholder="Enter question..." required>
+                <label class="form-label">Question <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="questions[${questionIndex}][question]" class="form-control" placeholder="Enter question..." required>
             </div>
             <div class="form-group">
-                <label>Type</label>
-                <select name="questions[${questionIndex}][type]" class="question-type" data-index="${questionIndex}">
+                <label class="form-label">Type</label>
+                <select name="questions[${questionIndex}][type]" class="form-control question-type" data-index="${questionIndex}">
                     <option value="multiple_choice">Multiple Choice</option>
                     <option value="identification">Identification</option>
                 </select>
             </div>
             <div class="options-container">
-                <div class="form-group option-item">
-                    <input type="text" name="questions[${questionIndex}][options][]" placeholder="Option text" required>
-                    <button type="button" class="remove-option-btn">❌</button>
+                <label class="form-label">Options</label>
+                <div class="option-item">
+                    <input type="text" name="questions[${questionIndex}][options][]" class="form-control" placeholder="Option text" required>
+                    <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
                 </div>
-                <button type="button" class="btn-secondary add-option-btn">➕ Add Option</button>
-                <div class="form-group">
-                    <label>Correct Answer</label>
-                    <input type="text" name="questions[${questionIndex}][answer]" placeholder="Enter correct answer">
+                <button type="button" class="btn btn-sm btn-secondary add-option-btn" style="margin-top: 8px;">
+                    <i class="fas fa-plus"></i> Add Option
+                </button>
+                <div class="form-group" style="margin-top: 12px;">
+                    <label class="form-label">Correct Answer</label>
+                    <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter correct answer">
                 </div>
             </div>
             <div class="form-group identification-answer" style="display:none;">
-                <label>Answer</label>
-                <input type="text" name="questions[${questionIndex}][answer]" placeholder="Enter answer">
+                <label class="form-label">Answer</label>
+                <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter answer">
             </div>
-            <button type="button" class="btn-secondary remove-question-btn">🗑 Remove Question</button>
         `;
         wrapper.appendChild(qCard);
         questionIndex++;
     });
 
-    // Delegate remove question/option/add option
+    // Delegate events
     document.getElementById('questions-wrapper').addEventListener('click', e => {
-        if(e.target.classList.contains('remove-question-btn')){
-            e.target.closest('.question-card').remove();
-        }
-        if(e.target.classList.contains('remove-option-btn')){
+        if(e.target.closest('.remove-option-btn')) {
             e.target.closest('.option-item').remove();
         }
-        if(e.target.classList.contains('add-option-btn')){
+        if(e.target.closest('.add-option-btn')) {
             const card = e.target.closest('.question-card');
             const idx = card.dataset.index;
             const container = card.querySelector('.options-container');
             const newOpt = document.createElement('div');
-            newOpt.classList.add('form-group','option-item');
-            newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" placeholder="Option text" required>
-                                <button type="button" class="remove-option-btn">❌</button>`;
-            container.insertBefore(newOpt, e.target);
+            newOpt.classList.add('option-item');
+            newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" class="form-control" placeholder="Option text" required>
+                                <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>`;
+            container.insertBefore(newOpt, e.target.closest('.add-option-btn'));
         }
     });
 
     // Toggle question type
     document.getElementById('questions-wrapper').addEventListener('change', e => {
-        if(e.target.classList.contains('question-type')){
+        if(e.target.classList.contains('question-type')) {
             const card = e.target.closest('.question-card');
-            if(e.target.value === 'multiple_choice'){
+            if(e.target.value === 'multiple_choice') {
                 card.querySelector('.options-container').style.display = '';
                 card.querySelector('.identification-answer').style.display = 'none';
             } else {
@@ -310,4 +173,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+@endpush
 @endsection

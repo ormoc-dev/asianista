@@ -7,6 +7,7 @@ use App\Models\Grade;
 use App\Models\Quest;
 use App\Models\QuestQuestion;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherQuestController extends Controller
 {
@@ -47,13 +48,27 @@ class TeacherQuestController extends Controller
             'questions.*.points' => 'required|integer',
             'questions.*.level' => 'required|integer|min:1',
             'questions.*.answer' => 'required|string',
+            'map_image' => 'nullable|string',
         ]);
 
         try {
+            $mapImagePath = null;
+            
+            // Handle map image upload (base64)
+            if ($request->filled('map_image') && str_starts_with($request->map_image, 'data:image')) {
+                $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->map_image));
+                $fileName = 'quest_maps/' . uniqid() . '.png';
+                Storage::disk('public')->put($fileName, $imageData);
+                $mapImagePath = $fileName;
+            } elseif ($request->filled('map_image') && $request->map_image === 'default') {
+                $mapImagePath = 'quest_map_bg.png';
+            }
+
             $quest = Quest::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'difficulty' => $request->difficulty,
+                'map_image' => $mapImagePath,
                 'level' => $request->level,
                 'xp_reward' => $request->xp_reward,
                 'ab_reward' => $request->ab_reward,
@@ -77,17 +92,14 @@ class TeacherQuestController extends Controller
                 ]);
             }
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Quest created successfully!'
-            ]);
+            return redirect()->route('teacher.quest.index')
+                ->with('success', 'Quest created successfully!');
 
         } catch (\Exception $e) {
             Log::error('Quest Creation Error: ' . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to forge the quest. Magical interference detected.'
-            ], 500);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to forge the quest. Please try again.');
         }
     }
 }

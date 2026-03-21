@@ -1,159 +1,14 @@
-@extends('teacher.dashboard')
+@extends('teacher.layouts.app')
 
-@section('content')
-<div class="quest-details-container">
-    <div class="quest-details-header">
-        <a href="{{ route('teacher.quest') }}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Board
-        </a>
-        <div class="quest-title-area">
-            <h1>{{ $quest->title }}</h1>
-            <div class="quest-tags">
-                <span class="tag-pill"><i class="fas fa-scroll"></i> {{ $quest->difficulty ?? 'Epic' }}</span>
-                <span class="tag-pill"><i class="fas fa-medal"></i> Level {{ $quest->level }}</span>
-                <span class="tag-pill"><i class="fas fa-users"></i> {{ $quest->grade->name ?? 'N/A' }} - {{ $quest->section->name ?? 'N/A' }}</span>
-                <span class="tag-pill"><i class="fas fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($quest->due_date)->format('M d, Y') }}</span>
-            </div>
-        </div>
-    </div>
+@section('title', 'Quest Details')
+@section('page-title', 'Quest Details')
 
-    <div class="map-wrapper">
-        <div class="map-container">
-            <!-- Map Background -->
-            <img src="{{ asset('images/quest_map_bg.png') }}" alt="RPG Quest Map" class="map-bg">
-
-            <!-- SVG Path Layer -->
-            <svg class="map-paths" viewBox="0 0 1000 600">
-                <path d="M 500 520 L 250 330 L 150 400 L 400 240 L 550 360 L 750 270 L 750 480 L 850 390 L 800 120" 
-                      fill="none" stroke="rgba(255, 212, 59, 0.4)" stroke-width="4" stroke-dasharray="10,10" />
-            </svg>
-
-            <!-- Landmarks/Nodes -->
-            <div class="map-nodes">
-                @php
-                    $positions = [
-                        ['left' => 50, 'top' => 86, 'icon' => 'fa-mountain', 'label' => 'Starting Rock'],
-                        ['left' => 25, 'top' => 55, 'icon' => 'fa-water', 'label' => 'Whispering Waterfalls'],
-                        ['left' => 15, 'top' => 66, 'icon' => 'fa-compass', 'label' => 'Compass Grove'],
-                        ['left' => 40, 'top' => 40, 'icon' => 'fa-cloud', 'label' => 'Floating Reaches'],
-                        ['left' => 55, 'top' => 60, 'icon' => 'fa-shoe-prints', 'label' => 'Sky-Isle Steps'],
-                        ['left' => 75, 'top' => 45, 'icon' => 'fa-question', 'label' => 'The Question Marks'],
-                        ['left' => 75, 'top' => 80, 'icon' => 'fa-brain', 'label' => 'Trivia Chamber'],
-                        ['left' => 85, 'top' => 65, 'icon' => 'fa-book', 'label' => 'Library of Wisdom'],
-                        ['left' => 80, 'top' => 20, 'icon' => 'fa-star', 'label' => 'The Observatory'],
-                    ];
-                @endphp
-
-                @for($lvl = 1; $lvl <= $quest->level; $lvl++)
-                    @php
-                        $levelQuestions = $quest->questions->where('level', $lvl);
-                        $pos = $positions[($lvl - 1) % count($positions)];
-                        $isLast = ($lvl == $quest->level);
-                        $isFirst = ($lvl == 1);
-                    @endphp
-                    <div class="map-node {{ $isFirst ? 'node-start' : ($isLast ? 'node-end' : '') }}" 
-                         style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"
-                         onclick="showLevelDetails({{ $lvl }}, {{ json_encode($levelQuestions->values()) }})">
-                        <div class="node-marker">
-                            <i class="fas {{ $isLast ? 'fa-flag-checkered' : 'fa-fort-awesome' }}"></i>
-                        </div>
-                        <div class="node-label">Level {{ $lvl }}</div>
-                        <div class="node-tooltip">
-                            <strong>{{ $pos['label'] }}</strong><br>
-                            {{ $levelQuestions->count() }} Challenges Found<br>
-                            <span style="color: var(--accent-dark)">Worth {{ $levelQuestions->sum('points') }} PTS</span>
-                        </div>
-                    </div>
-                @endfor
-            </div>
-        </div>
-    </div>
-
-    <!-- Questions Sidebar/Section -->
-    <div class="quest-summary-panel">
-        <div class="rewards-summary">
-            <h3>Quest Rewards</h3>
-            <div class="reward-pills">
-                <div class="reward-pill xp"><i class="fas fa-star"></i> {{ $quest->xp_reward ?? 0 }} XP</div>
-                <div class="reward-pill ab"><i class="fas fa-bolt"></i> {{ $quest->ab_reward ?? 0 }} AB</div>
-                <div class="reward-pill gp"><i class="fas fa-coins"></i> {{ $quest->gp_reward ?? 0 }} GP</div>
-            </div>
-        </div>
-
-        <div class="questions-list">
-            <h3>Quest Components ({{ $quest->questions->count() }} Steps)</h3>
-            <div class="questions-grid">
-                @foreach($quest->questions as $index => $question)
-                <div class="question-mini-card">
-                    <span class="step-num">Step {{ $index + 1 }} (LVL {{ $question->level }})</span>
-                    <p>{{ Str::limit($question->question, 60) }}</p>
-                    <span class="step-pts">{{ $question->points }} PTS</span>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- LEVEL DETAILS MODAL -->
-<div id="levelDetailsModal" class="modal-overlay" style="display: none;">
-    <div class="modal-box level-details-modal">
-        <div class="modal-header">
-            <h3><i class="fas fa-scroll"></i> Level <span id="modalLevel">1</span> Challenges</h3>
-            <button onclick="closeLevelModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="modalQuestionsList" class="modal-questions-list">
-            {{-- Questions will be injected here --}}
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeLevelModal()" class="btn-ok">Close Journey</button>
-        </div>
-    </div>
-</div>
-
-<script>
-function showLevelDetails(level, questions) {
-    document.getElementById('modalLevel').textContent = level;
-    const list = document.getElementById('modalQuestionsList');
-    list.innerHTML = '';
-
-    if (questions.length === 0) {
-        list.innerHTML = '<p class="no-questions">No questions assigned to this level yet.</p>';
-    } else {
-        questions.forEach((q, i) => {
-            const card = document.createElement('div');
-            card.className = 'modal-question-card';
-            card.innerHTML = `
-                <div class="modal-q-header">
-                    <span class="q-type-badge">${q.type.replace('-', ' ')}</span>
-                    <span class="q-points-badge">${q.points} PTS</span>
-                </div>
-                <p class="q-text">${q.question}</p>
-                ${q.type === 'multiple_choice' ? `
-                    <div class="modal-q-options">
-                        ${q.options ? q.options.map(opt => `<div class="modal-opt ${opt === q.correct_answer ? 'correct' : ''}">${opt}</div>`).join('') : ''}
-                    </div>
-                ` : `
-                    <div class="modal-q-answer">Correct Answer: <strong>${q.correct_answer}</strong></div>
-                `}
-            `;
-            list.appendChild(card);
-        });
-    }
-    document.getElementById('levelDetailsModal').style.display = 'flex';
-}
-
-function closeLevelModal() {
-    document.getElementById('levelDetailsModal').style.display = 'none';
-}
-</script>
-
+@push('styles')
 <style>
     .quest-details-container {
         display: flex;
         flex-direction: column;
         gap: 30px;
-        padding: 20px;
     }
 
     .quest-details-header {
@@ -173,23 +28,24 @@ function closeLevelModal() {
         transition: color 0.2s;
     }
 
-    .btn-back:hover { color: var(--accent-dark); }
+    .btn-back:hover { color: var(--accent); }
 
     .quest-title-area h1 {
         font-size: 2rem;
-        color: var(--primary);
+        color: var(--text-primary);
         font-weight: 800;
         margin-bottom: 10px;
     }
 
     .quest-tags {
         display: flex;
+        flex-wrap: wrap;
         gap: 10px;
     }
 
     .tag-pill {
         padding: 6px 14px;
-        background: rgba(0, 35, 102, 0.05);
+        background: var(--bg-main);
         border-radius: 999px;
         font-size: 0.8rem;
         color: var(--primary);
@@ -203,17 +59,17 @@ function closeLevelModal() {
     .map-wrapper {
         width: 100%;
         background: #000;
-        border-radius: 24px;
+        border-radius: var(--radius);
         overflow: hidden;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        border: 4px solid #4a3728; /* Wood frame feel */
+        box-shadow: var(--shadow-lg);
+        border: 4px solid #4a3728;
     }
 
     .map-container {
         position: relative;
         width: 100%;
         aspect-ratio: 1000 / 600;
-        background-color: #f3e5ab; /* Parchment fall back */
+        background-color: #f3e5ab;
     }
 
     .map-bg {
@@ -271,8 +127,8 @@ function closeLevelModal() {
         border: 3px solid #fff;
     }
 
-    .node-start .node-marker { background: #10b981; color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
-    .node-end .node-marker { background: #ef4444; color: white; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); animation: node-glow 2s infinite ease-in-out; }
+    .node-start .node-marker { background: var(--success); color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+    .node-end .node-marker { background: var(--danger); color: white; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); animation: node-glow 2s infinite ease-in-out; }
 
     @keyframes node-glow {
         0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
@@ -288,23 +144,22 @@ function closeLevelModal() {
         font-size: 0.75rem;
         font-weight: 700;
         white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
 
     .node-tooltip {
         position: absolute;
         bottom: 120%;
         background: white;
-        color: var(--text-dark);
+        color: var(--text-primary);
         padding: 10px;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-size: 0.75rem;
         width: 150px;
         text-align: center;
         opacity: 0;
         pointer-events: none;
         transition: all 0.2s;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        box-shadow: var(--shadow-lg);
         z-index: 1000;
     }
 
@@ -332,14 +187,14 @@ function closeLevelModal() {
     }
 
     .rewards-summary {
-        background: #fff;
+        background: var(--bg-card);
         padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
-    .rewards-summary h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--primary); }
+    .rewards-summary h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--text-primary); }
 
     .reward-pills {
         display: flex;
@@ -349,7 +204,7 @@ function closeLevelModal() {
 
     .reward-pill {
         padding: 12px 20px;
-        border-radius: 12px;
+        border-radius: var(--radius-sm);
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -361,7 +216,7 @@ function closeLevelModal() {
     .reward-pill.ab { background: #fffbeb; color: #d97706; }
     .reward-pill.gp { background: #ecfdf5; color: #059669; }
 
-    .questions-list h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--primary); }
+    .questions-list h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--text-primary); }
 
     .questions-grid {
         display: grid;
@@ -370,10 +225,10 @@ function closeLevelModal() {
     }
 
     .question-mini-card {
-        background: #fff;
+        background: var(--bg-card);
         padding: 15px;
-        border-radius: 15px;
-        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -388,11 +243,11 @@ function closeLevelModal() {
     .step-num {
         font-size: 0.7rem;
         font-weight: 800;
-        color: var(--accent-dark);
+        color: var(--accent);
         text-transform: uppercase;
     }
 
-    .question-mini-card p { font-size: 0.85rem; color: var(--text-dark); line-height: 1.4; }
+    .question-mini-card p { font-size: 0.85rem; color: var(--text-primary); line-height: 1.4; }
 
     .step-pts {
         font-size: 0.7rem;
@@ -411,20 +266,16 @@ function closeLevelModal() {
         align-items: center;
         justify-content: center;
         z-index: 2000;
-        animation: fadeIn 0.3s ease-out;
     }
 
     .level-details-modal {
-        background: radial-gradient(circle at top right, #0f172a, #0b1121);
+        background: var(--bg-card);
         width: 100%;
         max-width: 650px;
         max-height: 85vh;
         overflow-y: auto;
-        border: 1px solid rgba(255, 212, 59, 0.2);
-        box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        border-radius: 20px;
+        border-radius: var(--radius);
         padding: 30px;
-        text-align: left !important;
     }
 
     .modal-header {
@@ -432,12 +283,12 @@ function closeLevelModal() {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 25px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid var(--border);
         padding-bottom: 15px;
     }
 
     .modal-header h3 {
-        color: var(--accent);
+        color: var(--primary);
         margin: 0;
         font-size: 1.5rem;
     }
@@ -445,13 +296,13 @@ function closeLevelModal() {
     .btn-close-modal {
         background: transparent;
         border: none;
-        color: #94a3b8;
+        color: var(--text-muted);
         font-size: 1.5rem;
         cursor: pointer;
         transition: color 0.2s;
     }
 
-    .btn-close-modal:hover { color: #fff; }
+    .btn-close-modal:hover { color: var(--text-primary); }
 
     .modal-questions-list {
         display: flex;
@@ -460,9 +311,9 @@ function closeLevelModal() {
     }
 
     .modal-question-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 15px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
         padding: 20px;
     }
 
@@ -476,8 +327,8 @@ function closeLevelModal() {
         font-size: 0.7rem;
         font-weight: 800;
         text-transform: uppercase;
-        background: rgba(59, 130, 246, 0.2);
-        color: #60a5fa;
+        background: #dbeafe;
+        color: #2563eb;
         padding: 4px 10px;
         border-radius: 6px;
     }
@@ -486,7 +337,7 @@ function closeLevelModal() {
         font-size: 0.7rem;
         font-weight: 800;
         text-transform: uppercase;
-        background: rgba(255, 212, 59, 0.2);
+        background: #fef3c7;
         color: var(--accent);
         padding: 4px 10px;
         border-radius: 6px;
@@ -494,7 +345,7 @@ function closeLevelModal() {
 
     .q-text {
         font-size: 1.05rem;
-        color: #e2e8f0;
+        color: var(--text-primary);
         line-height: 1.5;
         margin-bottom: 15px;
     }
@@ -506,26 +357,26 @@ function closeLevelModal() {
     }
 
     .modal-opt {
-        background: rgba(255,255,255,0.05);
+        background: var(--bg-card);
         padding: 8px 12px;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-size: 0.9rem;
-        color: #cbd5e1;
+        color: var(--text-secondary);
         border: 1px solid transparent;
     }
 
     .modal-opt.correct {
-        border-color: #22c55e;
-        background: rgba(34, 197, 94, 0.1);
-        color: #4ade80;
+        border-color: var(--success);
+        background: #d1fae5;
+        color: #059669;
     }
 
     .modal-q-answer {
         font-size: 0.95rem;
-        color: #94a3b8;
+        color: var(--text-secondary);
         padding: 10px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 8px;
+        background: var(--bg-card);
+        border-radius: var(--radius-sm);
     }
 
     .modal-footer {
@@ -534,28 +385,182 @@ function closeLevelModal() {
         justify-content: flex-end;
     }
 
-    .btn-ok {
-        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: #0b1020;
-        padding: 12px 25px;
-        border: none;
-        border-radius: 999px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: 0.2s;
-    }
-
-    .btn-ok:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255, 212, 59, 0.3);
-    }
-
     @media (max-width: 768px) {
         .quest-summary-panel { grid-template-columns: 1fr; }
-        .quest-details-container { padding: 10px; }
         .map-node { transform: translate(-50%, -50%) scale(0.6); }
         .map-node:hover { transform: translate(-50%, -50%) scale(0.75); }
         .modal-q-options { grid-template-columns: 1fr; }
     }
 </style>
+@endpush
+
+@section('content')
+<div class="quest-details-container">
+    <div class="quest-details-header">
+        <a href="{{ route('teacher.quest') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Board
+        </a>
+        <div class="quest-title-area">
+            <h1>{{ $quest->title }}</h1>
+            <div class="quest-tags">
+                <span class="tag-pill"><i class="fas fa-scroll"></i> {{ $quest->difficulty ?? 'Epic' }}</span>
+                <span class="tag-pill"><i class="fas fa-medal"></i> Level {{ $quest->level }}</span>
+                <span class="tag-pill"><i class="fas fa-users"></i> {{ $quest->grade->name ?? 'N/A' }} - {{ $quest->section->name ?? 'N/A' }}</span>
+                <span class="tag-pill"><i class="fas fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($quest->due_date)->format('M d, Y') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-wrapper">
+        <div class="map-container">
+            <!-- Map Background -->
+            @if($quest->map_image && $quest->map_image !== 'quest_map_bg.png')
+                <img src="{{ asset('storage/' . $quest->map_image) }}" alt="RPG Quest Map" class="map-bg">
+            @else
+                <img src="{{ asset('images/quest_map_bg.png') }}" alt="RPG Quest Map" class="map-bg">
+            @endif
+
+            <!-- Landmarks/Nodes -->
+            @php
+                $positions = [
+                    ['left' => 10, 'top' => 85, 'icon' => 'fa-mountain', 'label' => 'Starting Rock'],
+                    ['left' => 20, 'top' => 65, 'icon' => 'fa-water', 'label' => 'Whispering Waterfalls'],
+                    ['left' => 30, 'top' => 40, 'icon' => 'fa-compass', 'label' => 'Compass Grove'],
+                    ['left' => 42, 'top' => 55, 'icon' => 'fa-cloud', 'label' => 'Floating Reaches'],
+                    ['left' => 55, 'top' => 35, 'icon' => 'fa-shoe-prints', 'label' => 'Sky-Isle Steps'],
+                    ['left' => 68, 'top' => 50, 'icon' => 'fa-question', 'label' => 'The Question Marks'],
+                    ['left' => 75, 'top' => 70, 'icon' => 'fa-brain', 'label' => 'Trivia Chamber'],
+                    ['left' => 85, 'top' => 45, 'icon' => 'fa-book', 'label' => 'Library of Wisdom'],
+                    ['left' => 92, 'top' => 25, 'icon' => 'fa-star', 'label' => 'The Observatory'],
+                    ['left' => 88, 'top' => 15, 'icon' => 'fa-crown', 'label' => 'Victory Summit'],
+                ];
+                
+                // Prepare questions grouped by level for JavaScript
+                $questionsByLevel = [];
+                for ($lvl = 1; $lvl <= $quest->level; $lvl++) {
+                    $questionsByLevel[$lvl] = $quest->questions->where('level', $lvl)->values()->toArray();
+                }
+            @endphp
+
+            <div class="map-nodes">
+                @for($lvl = 1; $lvl <= $quest->level; $lvl++)
+                    @php
+                        $levelQuestions = $quest->questions->where('level', $lvl);
+                        $pos = $positions[($lvl - 1) % count($positions)];
+                        $isLast = ($lvl == $quest->level);
+                        $isFirst = ($lvl == 1);
+                        $nodeIcon = $isLast ? 'fa-flag-checkered' : ($isFirst ? 'fa-play' : $pos['icon']);
+                    @endphp
+                    <div class="map-node {{ $isFirst ? 'node-start' : ($isLast ? 'node-end' : '') }}" 
+                         style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"
+                         data-level="{{ $lvl }}">
+                        <div class="node-marker">
+                            <i class="fas {{ $nodeIcon }}"></i>
+                        </div>
+                        <div class="node-label">Level {{ $lvl }}</div>
+                        <div class="node-tooltip">
+                            <strong>{{ $pos['label'] }}</strong><br>
+                            {{ $levelQuestions->count() }} Challenges Found<br>
+                            <span style="color: var(--accent)">Worth {{ $levelQuestions->sum('points') }} PTS</span>
+                        </div>
+                    </div>
+                @endfor
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Sidebar/Section -->
+    <div class="quest-summary-panel">
+        <div class="rewards-summary">
+            <h3>Quest Rewards</h3>
+            <div class="reward-pills">
+                <div class="reward-pill xp"><i class="fas fa-star"></i> {{ $quest->xp_reward ?? 0 }} XP</div>
+                <div class="reward-pill ab"><i class="fas fa-bolt"></i> {{ $quest->ab_reward ?? 0 }} AB</div>
+                <div class="reward-pill gp"><i class="fas fa-coins"></i> {{ $quest->gp_reward ?? 0 }} GP</div>
+            </div>
+        </div>
+
+        <div class="questions-list">
+            <h3>Quest Components ({{ $quest->questions->count() }} Steps)</h3>
+            <div class="questions-grid">
+                @foreach($quest->questions as $index => $question)
+                <div class="question-mini-card">
+                    <span class="step-num">Step {{ $index + 1 }} (LVL {{ $question->level }})</span>
+                    <p>{{ Str::limit($question->question, 60) }}</p>
+                    <span class="step-pts">{{ $question->points }} PTS</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LEVEL DETAILS MODAL -->
+<div id="levelDetailsModal" class="modal-overlay" style="display: none;">
+    <div class="level-details-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-scroll"></i> Level <span id="modalLevel">1</span> Challenges</h3>
+            <button onclick="closeLevelModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="modalQuestionsList" class="modal-questions-list">
+            {{-- Questions will be injected here --}}
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeLevelModal()" class="btn btn-primary">Close Journey</button>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function showLevelDetails(level, questions) {
+    document.getElementById('modalLevel').textContent = level;
+    const list = document.getElementById('modalQuestionsList');
+    list.innerHTML = '';
+
+    if (questions.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">No questions assigned to this level yet.</p>';
+    } else {
+        questions.forEach((q, i) => {
+            const card = document.createElement('div');
+            card.className = 'modal-question-card';
+            card.innerHTML = `
+                <div class="modal-q-header">
+                    <span class="q-type-badge">${q.type.replace('-', ' ')}</span>
+                    <span class="q-points-badge">${q.points} PTS</span>
+                </div>
+                <p class="q-text">${q.question}</p>
+                ${q.type === 'multiple_choice' ? `
+                    <div class="modal-q-options">
+                        ${q.options ? q.options.map(opt => `<div class="modal-opt ${opt === q.answer ? 'correct' : ''}">${opt}</div>`).join('') : ''}
+                    </div>
+                ` : `
+                    <div class="modal-q-answer">Correct Answer: <strong>${q.answer}</strong></div>
+                `}
+            `;
+            list.appendChild(card);
+        });
+    }
+    document.getElementById('levelDetailsModal').style.display = 'flex';
+}
+
+function closeLevelModal() {
+    document.getElementById('levelDetailsModal').style.display = 'none';
+}
+
+// Questions data grouped by level (from PHP)
+const questionsByLevel = {{ json_encode($questionsByLevel) }};
+
+// Add click event listeners to all map nodes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.map-node').forEach(node => {
+        node.addEventListener('click', function() {
+            const level = this.getAttribute('data-level');
+            const questions = questionsByLevel[level] || [];
+            showLevelDetails(level, questions);
+        });
+    });
+});
+</script>
+@endpush
 @endsection

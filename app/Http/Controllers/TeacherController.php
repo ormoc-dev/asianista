@@ -46,6 +46,10 @@ class TeacherController extends Controller
         return view('teacher.reports');
     }
 
+    public function aiSupport() {
+        return view('teacher.ai-support.index');
+    }
+
     public function contentReview() {
         return view('teacher.content-review');
     }

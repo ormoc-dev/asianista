@@ -33,11 +33,16 @@
         }
         
         $progressPercent = $totalQuestions > 0 ? ($completedCount / $totalQuestions) * 100 : 0;
+        
+        // Map image
+        $mapImage = $quest->map_image ?? 'quest_map_bg.png';
+        $mapImageUrl = str_starts_with($mapImage, 'quest_maps/') 
+            ? asset('storage/' . $mapImage) 
+            : asset('images/' . $mapImage);
     @endphp
 
     <div class="map-exploration-area">
-        <div class="map-frame">
-            <img src="{{ asset('images/quest_map_bg.png') }}" alt="Quest Map" class="map-background">
+        <div class="map-frame" style="background-image: url('{{ $mapImageUrl }}'); background-size: cover; background-position: center;">
             
             <!-- Path System -->
             <svg class="map-svg-layer" viewBox="0 0 1000 600">
