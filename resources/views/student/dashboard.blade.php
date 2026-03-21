@@ -766,12 +766,14 @@
             align-items: center;
             justify-content: center;
             padding: 24px;
-
+            min-height: 500px;
+            width: 100%;
         }
 
         .embedded-map-section {
             width: 100%;
             height: 100%;
+            min-height: 450px;
             opacity: 0;
             transition: opacity 1s ease-in-out;
             display: flex;
@@ -791,16 +793,177 @@
         /* Clean map background for dashboard card embedding */
         .embedded-map-section .map-frame,
         .embedded-map-section .map-exploration-area {
-            background: transparent !important;
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;
+        }
+        
+        /* Wrapper for embedded map */
+        .embedded-map-wrap {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .embedded-map-wrap .map-exploration-area {
+            width: 100% !important;
+            height: auto !important;
+        }
+        
+        /* Preserve the map background image */
+        .embedded-map-section .map-frame {
+            background-color: transparent !important;
+            border-radius: 20px !important;
+            overflow: hidden !important;
+            width: 100% !important;
+            min-height: 400px !important;
+            aspect-ratio: 1000 / 600 !important;
+        }
+        
+        .embedded-map-wrap .map-frame {
+            width: 100% !important;
+            min-height: 450px !important;
+            aspect-ratio: 1000 / 600 !important;
+            background-size: cover !important;
+            background-position: center !important;
+        }
+        
+        /* Interactive landmarks container */
+        .embedded-map-wrap .interactive-landmarks {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 10 !important;
+        }
+        
+        /* Map exploration area styling */
+        .embedded-map-section .map-exploration-area {
+            position: relative !important;
+            width: 100% !important;
+        }
+        
+        /* Map SVG layer */
+        .embedded-map-section .map-svg-layer {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+            z-index: 5 !important;
+        }
+        
+        /* Landmarks styling */
+        .embedded-map-section .landmark-node {
+            cursor: pointer !important;
+        }
+        
+        /* Action card styling */
+        .embedded-map-section .map-action-card {
+            display: none !important;
         }
 
         /* Fix map scale in side col */
         .embedded-map-section .interactive-landmarks {
             transform: scale(0.9) !important;
             transform-origin: center;
+        }
+        
+        /* Landmark nodes */
+        .embedded-map-section .landmark-node {
+            position: absolute !important;
+            transform: translate(-50%, -50%) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            transition: transform 0.3s !important;
+        }
+        
+        .embedded-map-section .landmark-node:hover {
+            transform: translate(-50%, -50%) scale(1.1) !important;
+        }
+        
+        /* Node icons */
+        .embedded-map-section .node-icon {
+            width: 45px !important;
+            height: 45px !important;
+            background: #fff !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.2rem !important;
+            color: #64748b !important;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3) !important;
+            border: 3px solid #fff !important;
+        }
+        
+        .embedded-map-section .node-icon.active {
+            background: var(--accent) !important;
+            color: #0b1020 !important;
+            box-shadow: 0 0 25px rgba(255,212,59,0.7) !important;
+            animation: nodePulse 2s infinite !important;
+        }
+        
+        .embedded-map-section .node-icon.locked {
+            background: #475569 !important;
+            color: #94a3b8 !important;
+            border-color: #334155 !important;
+            opacity: 0.8 !important;
+        }
+        
+        .embedded-map-section .node-icon.finish {
+            background: #1e293b !important;
+            color: var(--accent) !important;
+            border-color: #334155 !important;
+        }
+        
+        /* Node tags */
+        .embedded-map-section .node-tag {
+            margin-top: 8px !important;
+            background: rgba(0, 0, 0, 0.85) !important;
+            color: white !important;
+            padding: 4px 10px !important;
+            border-radius: 6px !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Node tooltips */
+        .embedded-map-section .node-tooltip {
+            position: absolute !important;
+            bottom: 120% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: #1e293b !important;
+            color: white !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            font-size: 0.75rem !important;
+            white-space: nowrap !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4) !important;
+            z-index: 100 !important;
+        }
+        
+        .embedded-map-section .landmark-node:hover .node-tooltip {
+            opacity: 1 !important;
+            visibility: visible !important;
+            bottom: 130% !important;
+        }
+        
+        @keyframes nodePulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 212, 59, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 212, 59, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 212, 59, 0); }
         }
 
         /* MODAL STYLES FOR EMBEDDED MAP */
@@ -1750,6 +1913,84 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
         }
+
+        /* Level Details Modal Styles */
+        #levelDetailsModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #levelDetailsModal .level-details-modal {
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 212, 59, 0.2);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        #levelDetailsModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        #levelDetailsModal .modal-header h3 {
+            color: #ffd43b;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        #levelDetailsModal .btn-close-modal {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        #levelDetailsModal .btn-close-modal:hover { color: #fff; }
+
+        #levelDetailsModal .modal-questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #levelDetailsModal .modal-footer {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #levelDetailsModal .btn-ok {
+            background: linear-gradient(135deg, #ffd43b, #d97706);
+            color: #0b1020;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        #levelDetailsModal .btn-ok:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 212, 59, 0.4);
+        }
     </style>
 
     <script>
@@ -1761,11 +2002,50 @@
             document.getElementById('logoutConfirmationModal').style.display = 'none';
         }
 
+        // Level Details Modal Functions (for embedded quest map)
+        function showLevelDetails(level, questions) {
+            const modal = document.getElementById('levelDetailsModal');
+            const levelSpan = document.getElementById('modalLevel');
+            const list = document.getElementById('modalQuestionsList');
+            
+            if (levelSpan) levelSpan.textContent = level;
+            if (list) {
+                list.innerHTML = '';
+                if (questions && questions.length > 0) {
+                    questions.forEach((q, i) => {
+                        const card = document.createElement('div');
+                        card.className = 'modal-question-card';
+                        card.style.cssText = 'background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; margin-bottom: 10px;';
+                        card.innerHTML = `
+                            <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 0.65rem; font-weight: 800; background: rgba(59,130,246,0.2); color: #60a5fa; padding: 3px 8px; border-radius: 5px; text-transform: uppercase;">${q.type ? q.type.replace('-', ' ') : 'Question'}</span>
+                                <span style="font-size: 0.65rem; font-weight: 800; background: rgba(255,212,59,0.2); color: #ffd43b; padding: 3px 8px; border-radius: 5px; text-transform: uppercase;">${q.points} PTS</span>
+                            </div>
+                            <p style="font-size: 1rem; color: #e2e8f0; line-height: 1.5; margin: 0;">${q.question}</p>
+                        `;
+                        list.appendChild(card);
+                    });
+                } else {
+                    list.innerHTML = '<p style="color: #94a3b8; text-align: center;">No questions available for this level.</p>';
+                }
+            }
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeLevelModal() {
+            const modal = document.getElementById('levelDetailsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
         // Close on overlay click
         window.addEventListener('click', function(event) {
-            const modal = document.getElementById('logoutConfirmationModal');
-            if (event.target == modal) {
+            const logoutModal = document.getElementById('logoutConfirmationModal');
+            const levelModal = document.getElementById('levelDetailsModal');
+            if (event.target == logoutModal) {
                 closeLogoutModal();
+            }
+            if (event.target == levelModal) {
+                closeLevelModal();
             }
         });
     </script>
