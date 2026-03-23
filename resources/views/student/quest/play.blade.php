@@ -17,6 +17,11 @@
         </div>
 
         <div class="play-header-right">
+            @if($quest->time_limit_minutes)
+            <div class="timer-display" id="quest-timer">
+                <i class="fas fa-clock"></i> <span id="timer-count">{{ $quest->time_limit_minutes }}:00</span>
+            </div>
+            @endif
             <div class="reward-preview">
                 <span class="reward-item"><i class="fas fa-star"></i> {{ $question->points }} XP</span>
             </div>
@@ -28,16 +33,24 @@
         <div class="question-card">
             <div class="question-type-badge">{{ str_replace('_', ' ', ucfirst($question->type)) }}</div>
             
+            <!-- Active Power Hint Display -->
+            <div id="active-power-hint" class="power-active-hint">
+                <i class="fas fa-magic"></i> <span id="hint-text"></span>
+            </div>
+
             <div class="question-text">
                 <h3>{!! nl2br(e($question->question)) !!}</h3>
             </div>
 
             <form id="quest-answer-form" class="answer-options-area">
                 @csrf
-                @if($question->type === 'multiple_choice' && $question->options)
+                @php
+                    $options = is_array($question->options) ? $question->options : (is_string($question->options) ? json_decode($question->options, true) : []);
+                @endphp
+                @if($question->type === 'multiple_choice' && !empty($options))
                     <div class="options-grid">
-                        @foreach($question->options as $index => $option)
-                        <label class="option-item">
+                        @foreach($options as $index => $option)
+                        <label class="option-item" id="option-{{ $index }}">
                             <input type="radio" name="answer" value="{{ $option }}" required>
                             <span class="option-box">
                                 <span class="option-letter">{{ chr(65 + $index) }}</span>
@@ -77,6 +90,84 @@
 
         <!-- Sidebar / Visuals -->
         <div class="play-sidebar">
+            @php
+                $user = Auth::user();
+                $currentHP = $user?->hp ?? 0;
+                $currentAP = $user?->ap ?? 0;
+                $characterData = $user?->getCharacterData() ?? [];
+                $powers = is_array($characterData) && isset($characterData['abilities']) ? $characterData['abilities'] : [];
+                $currentLevel = $question->level;
+                $usedPowers = $attempt->usedPowers->where('level', $currentLevel)->pluck('power_name')->toArray();
+            @endphp
+
+            <!-- HP/AP Stats Card -->
+            <div class="stats-card">
+                <h4><i class="fas fa-user-cog"></i> Hero Status</h4>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="stat-label"><i class="fas fa-heart"></i> HP</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill hp-fill" style="width: {{ min(($currentHP / 100) * 100, 100) }}%;"></div>
+                        </div>
+                        <span class="stat-value">{{ $currentHP }}</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="stat-label"><i class="fas fa-bolt"></i> AP</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill ap-fill" style="width: {{ min(($currentAP / 100) * 100, 100) }}%;"></div>
+                        </div>
+                        <span class="stat-value">{{ $currentAP }}</span>
+                    </div>
+                </div>
+                <div class="character-badge">
+                    <i class="fas fa-dragon"></i> {{ $characterData['name'] ?? 'Hero' }}
+                </div>
+            </div>
+
+            <!-- Powers Card -->
+            <div class="powers-card">
+                <h4><i class="fas fa-magic"></i> Powers</h4>
+                <div class="powers-list">
+                    @forelse($powers as $powerName => $powerDesc)
+                        @php
+                            $isUsed = in_array($powerName, $usedPowers);
+                        @endphp
+                        <button type="button" class="power-btn {{ $isUsed ? 'used' : '' }}" 
+                                @if(!$isUsed) onclick="usePower('{{ $powerName }}', '{{ addslashes($powerDesc) }}')" @endif
+                                title="{{ $powerDesc }}" 
+                                {{ $isUsed ? 'disabled' : '' }}>
+                            <span class="power-icon-small">
+                                @switch(strtolower($powerName))
+                                    @case('spell of insight') @case('power strike') @case('healing light')
+                                        <i class="fas fa-hand-sparkles"></i>
+                                        @break
+                                    @case('mana boost') @case('streak master') @case('team blessing')
+                                        <i class="fas fa-arrow-up"></i>
+                                        @break
+                                    @case('time warp') @case('shield guard') @case('revive')
+                                        <i class="fas fa-shield-alt"></i>
+                                        @break
+                                    @case('knowledge burst') @case('battle rush') @case('focus aura')
+                                        <i class="fas fa-bolt"></i>
+                                        @break
+                                    @case('arcane analysis') @case('challenge duel') @case('wisdom share')
+                                        <i class="fas fa-brain"></i>
+                                        @break
+                                    @default
+                                        <i class="fas fa-star"></i>
+                                @endswitch
+                            </span>
+                            <span class="power-name">{{ $powerName }}</span>
+                            @if($isUsed)
+                                <span class="power-used-badge"><i class="fas fa-check"></i> Used</span>
+                            @endif
+                        </button>
+                    @empty
+                        <p class="no-powers">No powers available</p>
+                    @endforelse
+                </div>
+            </div>
+
             <!-- Mini Map showing progress -->
             <div class="mini-map-card">
                 @php
@@ -491,7 +582,227 @@
 
     .btn-submit-answer:hover { background: #1e293b; transform: translateY(-2px); box-shadow: 0 12px 25px rgba(0,0,0,0.15); }
 
-    /* SIDEBAR */
+    .stats-card, .powers-card {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    .stats-card h4, .powers-card h4 {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hero-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .hero-stat {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--secondary);
+        width: 50px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .stat-label i { font-size: 0.7rem; }
+    .stat-label .fa-heart { color: #ef4444; }
+    .stat-label .fa-bolt { color: #3b82f6; }
+
+    .stat-bar {
+        flex: 1;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .stat-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .hp-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .ap-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+    .stat-value {
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: var(--primary);
+        width: 30px;
+        text-align: right;
+    }
+
+    .character-badge {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .powers-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .power-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        width: 100%;
+    }
+
+    .power-btn:hover {
+        background: #eff6ff;
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+    }
+
+    .power-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .power-btn.used {
+        opacity: 0.6;
+        background: #e2e8f0;
+    }
+
+    .power-used-badge {
+        margin-left: auto;
+        font-size: 0.7rem;
+        color: #10b981;
+        font-weight: 700;
+    }
+
+    .timer-display {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 15px;
+        animation: timer-pulse 1s infinite;
+    }
+
+    @keyframes timer-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+
+    .timer-display.warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        animation: timer-warning 0.5s infinite;
+    }
+
+    @keyframes timer-warning {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .power-icon-small {
+        width: 35px;
+        height: 35px;
+        background: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--primary);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .power-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .no-powers {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* Power Active Effects */
+    .power-active-hint {
+        background: #fef3c7;
+        border: 2px solid #fbbf24;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .power-active-hint.show {
+        display: block;
+        animation: hint-pulse 2s infinite;
+    }
+
+    @keyframes hint-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+        50% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+    }
+
+    .power-active-hint i {
+        color: #f59e0b;
+        margin-right: 8px;
+    }
+
+    .power-active-hint strong {
+        color: #92400e;
+    }
+
+    /* Eliminated option styling for Arcane Analysis */
+    .option-item.eliminated {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    .option-item.eliminated .option-box {
+        background: #fee2e2;
+        text-decoration: line-through;
+    }
     .mini-map-card {
         background: white;
         border-radius: 25px;
@@ -715,6 +1026,219 @@
 </style>
 
 <script>
+// Power usage tracking
+let activePower = null;
+let eliminatedOptions = [];
+let timeRemaining = {{ $quest->time_limit_minutes ? $quest->time_limit_minutes * 60 : 0 }};
+let timerInterval = null;
+let extraTimeAdded = 0;
+
+// Initialize timer if time limit exists
+@if($quest->time_limit_minutes)
+document.addEventListener('DOMContentLoaded', function() {
+    startTimer();
+});
+@endif
+
+function startTimer() {
+    if (timeRemaining <= 0) return;
+    
+    const timerDisplay = document.getElementById('timer-count');
+    const timerContainer = document.getElementById('quest-timer');
+    
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Warning when less than 30 seconds
+        if (timeRemaining <= 30 && !timerContainer.classList.contains('warning')) {
+            timerContainer.classList.add('warning');
+        }
+        
+        // Time's up
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            handleTimeUp();
+        }
+    }, 1000);
+}
+
+function handleTimeUp() {
+    // Disable submit button
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-clock"></i> Time\'s Up!';
+    }
+    
+    // Call timeout endpoint to move to next question
+    fetch('{{ route("student.quest.timeout", [$quest->id, $question->id]) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Update HP display
+            if (result.new_hp !== undefined) {
+                updateHPDisplay(result.new_hp);
+            }
+            showBattle('defeat', result.message, () => window.location.href = result.next_url);
+        } else {
+            showBattle('defeat', 'Time\'s up!', () => window.location.href = result.next_url || '{{ route("student.quest.show", $quest->id) }}');
+        }
+    })
+    .catch(error => {
+        console.error('Timeout error:', error);
+        showBattle('defeat', 'Time\'s up!', () => {
+            window.location.href = '{{ route("student.quest.show", $quest->id) }}';
+        });
+    });
+}
+
+function addExtraTime() {
+    extraTimeAdded += 30; // Add 30 seconds
+    timeRemaining += 30;
+    
+    // Remove warning if time is now sufficient
+    const timerContainer = document.getElementById('quest-timer');
+    if (timeRemaining > 30) {
+        timerContainer.classList.remove('warning');
+    }
+}
+
+function usePower(powerName, powerDesc) {
+    const hintBox = document.getElementById('active-power-hint');
+    const hintText = document.getElementById('hint-text');
+    
+    // Record power usage on server
+    recordPowerUsage(powerName);
+    
+    switch(powerName.toLowerCase()) {
+        case 'spell of insight':
+            // Mage: Show hint
+            hintText.innerHTML = '<strong>Spell of Insight:</strong> ' + getHintForQuestion();
+            hintBox.classList.add('show');
+            activePower = 'insight';
+            break;
+            
+        case 'arcane analysis':
+            // Mage: Eliminate one wrong answer
+            if (eliminateWrongAnswer()) {
+                hintText.innerHTML = '<strong>Arcane Analysis:</strong> One incorrect option has been eliminated!';
+                hintBox.classList.add('show');
+                activePower = 'analysis';
+            }
+            break;
+            
+        case 'time warp':
+            // Mage: Add extra time (if timer exists)
+            hintText.innerHTML = '<strong>Time Warp:</strong> Extra 30 seconds granted!';
+            hintBox.classList.add('show');
+            activePower = 'timewarp';
+            addExtraTime();
+            break;
+            
+        case 'power strike':
+            // Warrior: Double points for next correct answer
+            hintText.innerHTML = '<strong>Power Strike:</strong> Next correct answer worth double points!';
+            hintBox.classList.add('show');
+            activePower = 'powerstrike';
+            break;
+            
+        case 'shield guard':
+            // Warrior: Prevent point loss
+            hintText.innerHTML = '<strong>Shield Guard:</strong> Protected from HP loss on next wrong answer!';
+            hintBox.classList.add('show');
+            activePower = 'shield';
+            break;
+            
+            case 'revive':
+            // Healer: Allow retry
+            hintText.innerHTML = '<strong>Revive:</strong> You may retry this question if answered incorrectly!';
+            hintBox.classList.add('show');
+            activePower = 'revive';
+            break;
+            
+        case 'focus aura':
+            // Healer: Second attempt allowed
+            hintText.innerHTML = '<strong>Focus Aura:</strong> You have a second chance on this question!';
+            hintBox.classList.add('show');
+            activePower = 'focus';
+            break;
+            
+        default:
+            // Other powers - show description
+            hintText.innerHTML = '<strong>' + powerName + ':</strong> ' + powerDesc;
+            hintBox.classList.add('show');
+    }
+    
+    // Disable the power button after use
+    const btn = event.target.closest('.power-btn');
+    btn.disabled = true;
+    btn.classList.add('used');
+    
+    // Add "Used" badge
+    const badge = document.createElement('span');
+    badge.className = 'power-used-badge';
+    badge.innerHTML = '<i class="fas fa-check"></i> Used';
+    btn.appendChild(badge);
+}
+
+function recordPowerUsage(powerName) {
+    // Send AJAX request to record power usage
+    fetch('{{ route("student.quest.use-power", [$quest->id, $attempt->id]) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            power_name: powerName,
+            level: {{ $question->level }}
+        })
+    }).catch(error => console.error('Error recording power usage:', error));
+}
+
+function getHintForQuestion() {
+    // This would ideally come from the backend
+    // For now, provide generic helpful hints
+    const hints = [
+        'Read the question carefully and look for key words.',
+        'Eliminate obviously wrong answers first.',
+        'Think about what you learned in the lessons.',
+        'Consider the context of the question.',
+        'Trust your first instinct - it\'s often correct!'
+    ];
+    return hints[Math.floor(Math.random() * hints.length)];
+}
+
+function eliminateWrongAnswer() {
+    const options = document.querySelectorAll('.option-item input[type="radio"]');
+    if (options.length === 0) return false;
+    
+    // Get available wrong options (randomly select one to eliminate)
+    const availableOptions = Array.from(options).filter(opt => !opt.checked && !opt.closest('.option-item').classList.contains('eliminated'));
+    if (availableOptions.length > 1) {
+        const toEliminate = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+        toEliminate.closest('.option-item').classList.add('eliminated');
+        eliminatedOptions.push(toEliminate.value);
+        return true;
+    }
+    return false;
+}
+
+function addExtraTime() {
+    // Placeholder for time extension logic
+    // This would integrate with a timer system if implemented
+    console.log('Extra time added!');
+}
 
 function showBattle(outcome, message, onContinue) {
     const modal    = document.getElementById('quest-feedback-modal');
@@ -765,6 +1289,12 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking Lore...';
 
     const formData = new FormData(this);
+    
+    // Add active power info
+    if (activePower) {
+        formData.append('active_power', activePower);
+    }
+    
     const modal = document.getElementById('quest-feedback-modal');
     const modalNextBtn = document.getElementById('modal-next-btn');
 
@@ -780,22 +1310,50 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
         const result = await response.json();
 
         if (result.success) {
+            // Update HP display if provided
+            if (result.new_hp !== undefined) {
+                updateHPDisplay(result.new_hp);
+            }
             showBattle('victory', result.message, () => window.location.href = result.next_url);
         } else {
-            showBattle('defeat', result.message, () => {
-                modal.style.display = 'none';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                // reset fires
-                document.getElementById('dragon-fire').classList.remove('active');
-                document.getElementById('hero-fire').classList.remove('active');
-                document.getElementById('hero-sprite').classList.remove('hit');
-                document.getElementById('dragon-sprite').classList.remove('hit');
-            });
+            // Update HP display if HP was deducted
+            if (result.new_hp !== undefined) {
+                updateHPDisplay(result.new_hp);
+            }
+            
+            // Check if Shield Guard or Revive/Focus Aura is active
+            if (activePower === 'shield' || activePower === 'revive' || activePower === 'focus') {
+                showBattle('defeat', result.message + ' (Power protected you from HP loss!)', () => {
+                    modal.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    document.getElementById('dragon-fire').classList.remove('active');
+                    document.getElementById('hero-fire').classList.remove('active');
+                    document.getElementById('hero-sprite').classList.remove('hit');
+                });
+            } else {
+                showBattle('defeat', result.message, () => {
+                    modal.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    document.getElementById('dragon-fire').classList.remove('active');
+                    document.getElementById('hero-fire').classList.remove('active');
+                    document.getElementById('hero-sprite').classList.remove('hit');
+                });
+            }
         }
     } catch (error) {
         console.error('Submission error:', error);
     }
 });
+
+function updateHPDisplay(newHP) {
+    const hpFill = document.querySelector('.hp-fill');
+    const hpValue = document.querySelector('.stat-value');
+    if (hpFill && hpValue) {
+        hpFill.style.width = Math.min((newHP / 100) * 100, 100) + '%';
+        hpValue.textContent = newHP;
+    }
+}
 </script>
 @endsection

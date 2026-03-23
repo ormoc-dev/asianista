@@ -157,9 +157,13 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/registration', [TeacherRegistrationController::class, 'index'])->name('registration');
     Route::get('/registration/generate-code', [TeacherRegistrationController::class, 'generateCode'])->name('registration.generate-code');
+    Route::post('/registration/upload', [TeacherRegistrationController::class, 'uploadExcel'])->name('registration.upload');
+    Route::get('/registration/template', [TeacherRegistrationController::class, 'downloadTemplate'])->name('registration.template');
+    Route::post('/registration/{id}/regenerate', [TeacherRegistrationController::class, 'regenerateCredentials'])->name('registration.regenerate');
+    Route::delete('/registration/pending/{id}', [TeacherRegistrationController::class, 'destroyPending'])->name('registration.destroy-pending');
     // Students management
-Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');
-Route::delete('/students/{student}', [TeacherRegistrationController::class, 'destroy'])->name('student.delete');
+    Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');
+    Route::delete('/students/{student}', [TeacherRegistrationController::class, 'destroy'])->name('student.delete');
 });
 
 
@@ -243,6 +247,8 @@ Route::post('/register/student', [AuthController::class, 'registerStudent'])->na
 Route::post('/register/teacher', [AuthController::class, 'registerTeacher'])->name('register.teacher');
 Route::post('/register/student/validate', [AuthController::class, 'validateStudentStepOne'])
     ->name('register.student.validate');
+Route::post('/register/validate-code', [AuthController::class, 'validateStudentCode'])
+    ->name('register.validate-code');
 
 // Route::get('/profile', [UserController::class, 'showProfile'])->name('profile'); // TODO: Create UserController
 
@@ -259,6 +265,8 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::post('/quest/{quest}/start', [StudentQuestController::class, 'start'])->name('quest.start');
     Route::get('/quest/{quest}/play/{question?}', [StudentQuestController::class, 'play'])->name('quest.play');
     Route::post('/quest/{quest}/submit/{question}', [StudentQuestController::class, 'submitStep'])->name('quest.submit');
+    Route::post('/quest/{quest}/use-power/{attempt}', [StudentQuestController::class, 'usePower'])->name('quest.use-power');
+    Route::post('/quest/{quest}/timeout/{question}', [StudentQuestController::class, 'timeOut'])->name('quest.timeout');
 });
 
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])

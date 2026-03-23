@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Quest;
 use App\Models\QuestQuestion;
 use App\Models\QuestAttempt;
+use App\Models\QuestAttemptPower;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class StudentQuestController extends Controller
@@ -61,6 +63,7 @@ class StudentQuestController extends Controller
     {
         $attempt = QuestAttempt::where('user_id', Auth::id())
                                 ->where('quest_id', $quest->id)
+                                ->with('usedPowers')
                                 ->first();
 
         if (!$attempt) {
@@ -80,6 +83,27 @@ class StudentQuestController extends Controller
         // Ensure user can only play their current or previous questions (no skipping)
         // Simplified for now: just load the question
         return view('student.quest.play', compact('quest', 'question', 'attempt'));
+    }
+
+    public function usePower(Request $request, Quest $quest, QuestAttempt $attempt)
+    {
+        // Verify the attempt belongs to the current user
+        if ($attempt->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $powerName = $request->input('power_name');
+        $level = $request->input('level', 1);
+
+        // Check if power already used for this level
+        if ($attempt->hasUsedPower($powerName, $level)) {
+            return response()->json(['error' => 'Power already used for this level'], 400);
+        }
+
+        // Record power usage
+        $attempt->usePower($powerName, $level);
+
+        return response()->json(['success' => true, 'message' => 'Power activated!']);
     }
 
     public function submitStep(Request $request, Quest $quest, QuestQuestion $question)
@@ -106,10 +130,21 @@ class StudentQuestController extends Controller
             $isCorrect = (strtolower(trim($request->answer)) === strtolower(trim($question->answer)));
         }
 
+        $user = Auth::user();
+        $attempt = QuestAttempt::where('user_id', Auth::id())
+                                ->where('quest_id', $quest->id)
+                                ->first();
+        
+        $activePower = $request->input('active_power');
+        $hpPenalty = $quest->hp_penalty ?? 10;
+
         if ($isCorrect) {
-            $attempt = QuestAttempt::where('user_id', Auth::id())
-                                    ->where('quest_id', $quest->id)
-                                    ->first();
+            // Restore HP on correct answer (regenerate based on character class)
+            $characterData = $user->getCharacterData();
+            $maxHP = 100; // Default max HP
+            $restoreAmount = ceil($maxHP * 0.2); // Restore 20% of max HP
+            $newHP = min($maxHP, $user->hp + $restoreAmount);
+            $user->update(['hp' => $newHP]);
             
             // Find next question based on the standardized order (level, then id)
             $nextQuestion = $quest->questions()
@@ -128,22 +163,90 @@ class StudentQuestController extends Controller
                 $attempt->update(['current_question_id' => $nextQuestion->id]);
                 return response()->json([
                     'success' => true,
-                    'message' => 'Victory! Moving to the next challenge.',
-                    'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id])
+                    'message' => 'Victory! You restored ' . $restoreAmount . ' HP! Moving to the next challenge.',
+                    'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
+                    'new_hp' => $newHP
                 ]);
             } else {
                 $attempt->update(['status' => 'completed']);
                 return response()->json([
                     'success' => true,
                     'message' => 'Quest Complete! You have conquered the Neural Realm.',
-                    'next_url' => route('student.quest.show', $quest->id)
+                    'next_url' => route('student.quest.show', $quest->id),
+                    'new_hp' => $newHP
                 ]);
             }
         }
 
+        // Wrong answer - deduct HP unless protected by power
+        $newHP = $user->hp;
+        $hpDeducted = false;
+        
+        // Check if protected by Shield Guard, Revive, or Focus Aura
+        $isProtected = in_array($activePower, ['shield', 'revive', 'focus']);
+        
+        if (!$isProtected) {
+            $newHP = max(0, $user->hp - $hpPenalty);
+            $user->update(['hp' => $newHP]);
+            $hpDeducted = true;
+        }
+
         return response()->json([
             'success' => false,
-            'message' => 'Not quite right. Try again, Hero!'
+            'message' => $hpDeducted ? "Not quite right. You lost {$hpPenalty} HP!" : 'Not quite right. Try again, Hero!',
+            'new_hp' => $newHP
         ]);
+    }
+
+    public function timeOut(Request $request, Quest $quest, QuestQuestion $question)
+    {
+        $user = Auth::user();
+        $attempt = QuestAttempt::where('user_id', Auth::id())
+                                ->where('quest_id', $quest->id)
+                                ->first();
+
+        if (!$attempt) {
+            return response()->json(['error' => 'No active attempt'], 404);
+        }
+
+        // Deduct HP penalty for time-out (unless protected)
+        $hpPenalty = $quest->hp_penalty ?? 10;
+        $newHP = max(0, $user->hp - $hpPenalty);
+        $user->update(['hp' => $newHP]);
+
+        // Find next question in same level first
+        $nextQuestion = $quest->questions()
+                             ->where('level', $question->level)
+                             ->where('id', '>', $question->id)
+                             ->orderBy('id')
+                             ->first();
+
+        // If no more questions in same level, go to next level
+        if (!$nextQuestion) {
+            $nextQuestion = $quest->questions()
+                                 ->where('level', '>', $question->level)
+                                 ->orderBy('level')
+                                 ->orderBy('id')
+                                 ->first();
+        }
+
+        if ($nextQuestion) {
+            $attempt->update(['current_question_id' => $nextQuestion->id]);
+            return response()->json([
+                'success' => true,
+                'message' => "Time's up! You lost {$hpPenalty} HP. Moving to next challenge.",
+                'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
+                'new_hp' => $newHP
+            ]);
+        } else {
+            // No more questions - quest complete
+            $attempt->update(['status' => 'completed']);
+            return response()->json([
+                'success' => true,
+                'message' => "Time's up! Quest complete.",
+                'next_url' => route('student.quest.show', $quest->id),
+                'new_hp' => $newHP
+            ]);
+        }
     }
 }

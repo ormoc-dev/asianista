@@ -174,26 +174,25 @@ class AuthController extends Controller
     public function registerStudent(Request $request)
     {
         $validator = \Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-            'registration_code' => [
+            'student_code' => [
                 'required',
                 'string',
                 function ($attribute, $value, $fail) {
-                    $code = RegistrationCode::where('code', $value)->first();
+                    $code = RegistrationCode::where('student_code', $value)->first();
 
                     if (!$code) {
-                        return $fail('The registration code is invalid.');
+                        return $fail('The student code is invalid.');
                     }
 
                     if ($code->used) {
-                        return $fail('This registration code has already been used.');
+                        return $fail('This student code has already been used.');
                     }
                 },
             ],
-            'character' => 'required|string',
-            'gender'    => 'required|string',
+            'character' => 'required|string|in:mage,warrior,healer',
+            'gender'    => 'required|string|in:male,female',
+            'default_password' => 'required|string',
+            'new_password' => 'nullable|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -203,31 +202,93 @@ class AuthController extends Controller
                 ->with('show_form', 'register');
         }
 
-        $profilePic = $this->getProfilePicForGender($request->gender);
+        // Get the registration code record
+        $registrationCode = RegistrationCode::where('student_code', $request->student_code)->first();
 
+        // Verify default password
+        if ($request->default_password !== $registrationCode->default_password) {
+            return back()
+                ->withErrors(['default_password' => 'The default password is incorrect.'])
+                ->withInput()
+                ->with('show_form', 'register');
+        }
+
+        $profilePic = $this->getProfilePicForGender($request->gender . '_' . $request->character);
+
+        // Determine final password
+        $finalPassword = $request->new_password ?? $request->default_password;
+
+        // Create the user with character stats
         $user = User::create([
-            'name'        => $request->name,
-            'email'       => $request->email,
-            'password'    => bcrypt($request->password),
+            'name'        => $registrationCode->full_name,
+            'first_name'  => $registrationCode->first_name,
+            'last_name'   => $registrationCode->last_name,
+            'middle_name' => $registrationCode->middle_name,
+            'email'       => $registrationCode->username . '@asianista.com', // Auto-generated email
+            'username'    => $registrationCode->username,
+            'password'    => bcrypt($finalPassword),
             'role'        => 'student',
             'character'   => $request->character,
             'gender'      => $request->gender,
             'profile_pic' => $profilePic,
-            // Student also starts as pending
             'status'      => 'pending',
+            'hp'          => 0, // Will be set by initializeCharacterStats
+            'ap'          => 0,
         ]);
 
-        // Mark the code as used (we already know it's valid here)
-        RegistrationCode::where('code', $request->registration_code)
-            ->update(['used' => true]);
+        // Initialize character stats (HP/AP)
+        $user->initializeCharacterStats($request->character);
+        $user->save();
 
-        // Do NOT log the student in here
-        // Auth::login($user);
+        // Mark the code as used and link to user
+        $registrationCode->update([
+            'used' => true,
+            'user_id' => $user->id,
+            'character' => $request->character,
+            'gender' => $request->gender,
+        ]);
 
-        // Show message on welcome page, Student Sign Up card
+        // Show message on welcome page
         return redirect('/')
             ->with('success', 'Registration submitted. Awaiting teacher approval.')
             ->with('show_form', 'register');
+    }
+
+    /**
+     * Validate student code via AJAX
+     */
+    public function validateStudentCode(Request $request)
+    {
+        $request->validate([
+            'student_code' => 'required|string',
+        ]);
+
+        $code = RegistrationCode::where('student_code', $request->student_code)->first();
+
+        if (!$code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid student code.',
+            ], 404);
+        }
+
+        if ($code->used) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This code has already been used.',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'student' => [
+                'first_name' => $code->first_name,
+                'last_name' => $code->last_name,
+                'middle_name' => $code->middle_name,
+                'full_name' => $code->full_name,
+                'username' => $code->username,
+            ],
+        ]);
     }
 
     public function validateStudentStepOne(Request $request)

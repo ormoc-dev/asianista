@@ -1427,11 +1427,17 @@
     <aside id="sidebar">
         <div>
             <div class="sidebar-header">
-                @php
-                    $user = Auth::user();
-                    $profilePic = $user?->profile_pic ?? 'default-pp.png';
-                    $userName = $user?->name ?? 'Student';
-                @endphp
+                    @php
+                        $user = Auth::user();
+                        $profilePic = $user?->profile_pic ?? 'default-pp.png';
+                        $userName = $user?->name ?? 'Student';
+                        $currentHP = $user?->hp ?? 10;
+                        $currentAP = $user?->ap ?? 10;
+                        $maxHP = 100;
+                        $maxAP = 100;
+                        $characterData = $user?->getCharacterData();
+                        $powers = $characterData['abilities'] ?? [];
+                    @endphp
                 <div class="logo-circle">
                     <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="sidebar-logo">
                 </div>
@@ -1501,75 +1507,78 @@
                         <div class="stats-container">
                             <div class="stat-icon-group">
                                 <div class="stat-meta">
-                                    <span><i class="fas fa-heart"></i> Health</span>
-                                    <span>8 / 10 HP</span>
+                                    <span><i class="fas fa-heart"></i> Health (HP)</span>
+                                    <span>{{ $currentHP }} / {{ $maxHP }} HP</span>
                                 </div>
                                 <div class="icon-row">
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="fas fa-heart hp-heart"></i>
-                                    <i class="far fa-heart hp-heart empty"></i>
-                                    <i class="far fa-heart hp-heart empty"></i>
+                                    @for($i = 0; $i < 10; $i++)
+                                        @if($i < ceil($currentHP / 10))
+                                            <i class="fas fa-heart hp-heart"></i>
+                                        @else
+                                            <i class="far fa-heart hp-heart empty"></i>
+                                        @endif
+                                    @endfor
                                 </div>
                             </div>
 
                             <div class="stat-icon-group">
                                 <div class="stat-meta">
-                                    <span><i class="fas fa-star"></i> Experience</span>
-                                    <span>Level 5 (3,420 XP)</span>
+                                    <span><i class="fas fa-bolt"></i> Action Points (AP)</span>
+                                    <span>{{ $currentAP }} / {{ $maxAP }} AP</span>
                                 </div>
                                 <div class="icon-row">
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="fas fa-star xp-star"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
-                                    <i class="far fa-star xp-star empty"></i>
+                                    @for($i = 0; $i < 10; $i++)
+                                        @if($i < ceil($currentAP / 10))
+                                            <i class="fas fa-bolt xp-star" style="color: #3b82f6;"></i>
+                                        @else
+                                            <i class="far fa-bolt xp-star empty" style="color: #e2e8f0;"></i>
+                                        @endif
+                                    @endfor
                                 </div>
                             </div>
                         </div>
 
                         <div class="powers-title">
-                            <i class="fas fa-magic"></i> Available Powers
+                            <i class="fas fa-magic"></i> {{ $characterData['name'] ?? 'Character' }} Powers
                         </div>
                         <div class="powers-grid">
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-shield-alt"></i></div>
-                                <div class="power-info">
-                                    <h4>Wisdom Shield</h4>
-                                    <p>Passive defense</p>
+                            @forelse($powers as $powerName => $powerDesc)
+                                <div class="power-item" title="{{ $powerDesc }}">
+                                    <div class="power-icon">
+                                        @switch(strtolower($powerName))
+                                            @case('spell of insight') @case('power strike') @case('healing light')
+                                                <i class="fas fa-hand-sparkles"></i>
+                                                @break
+                                            @case('mana boost') @case('streak master') @case('team blessing')
+                                                <i class="fas fa-arrow-up"></i>
+                                                @break
+                                            @case('time warp') @case('shield guard') @case('revive')
+                                                <i class="fas fa-shield-alt"></i>
+                                                @break
+                                            @case('knowledge burst') @case('battle rush') @case('focus aura')
+                                                <i class="fas fa-bolt"></i>
+                                                @break
+                                            @case('arcane analysis') @case('challenge duel') @case('wisdom share')
+                                                <i class="fas fa-brain"></i>
+                                                @break
+                                            @default
+                                                <i class="fas fa-star"></i>
+                                        @endswitch
+                                    </div>
+                                    <div class="power-info">
+                                        <h4>{{ $powerName }}</h4>
+                                        <p>{{ Str::limit($powerDesc, 40) }}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-fire"></i></div>
-                                <div class="power-info">
-                                    <h4>Logic Blast</h4>
-                                    <p>Active power</p>
+                            @empty
+                                <div class="power-item">
+                                    <div class="power-icon"><i class="fas fa-question"></i></div>
+                                    <div class="power-info">
+                                        <h4>No Powers</h4>
+                                        <p>Complete registration to unlock powers</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-brain"></i></div>
-                                <div class="power-info">
-                                    <h4>Neural surge</h4>
-                                    <p>Critical boost</p>
-                                </div>
-                            </div>
-                            <div class="power-item">
-                                <div class="power-icon"><i class="fas fa-feather-alt"></i></div>
-                                <div class="power-info">
-                                    <h4>Swift Mind</h4>
-                                    <p>Agility buff</p>
-                                </div>
-                            </div>
+                            @endforelse
                         </div>
 
 

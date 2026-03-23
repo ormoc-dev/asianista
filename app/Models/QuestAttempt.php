@@ -27,4 +27,28 @@ class QuestAttempt extends Model
     {
         return $this->belongsTo(QuestQuestion::class, 'current_question_id');
     }
+
+    public function usedPowers()
+    {
+        return $this->hasMany(QuestAttemptPower::class, 'quest_attempt_id');
+    }
+
+    public function hasUsedPower($powerName, $level)
+    {
+        return $this->usedPowers()
+            ->where('power_name', $powerName)
+            ->where('level', $level)
+            ->exists();
+    }
+
+    public function usePower($powerName, $level)
+    {
+        if (!$this->hasUsedPower($powerName, $level)) {
+            return $this->usedPowers()->create([
+                'power_name' => $powerName,
+                'level' => $level,
+            ]);
+        }
+        return null;
+    }
 }

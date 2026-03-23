@@ -271,6 +271,20 @@
                         <input type="datetime-local" name="due_date" class="form-control" value="{{ now()->addDays(7)->format('Y-m-d\TH:i') }}" required>
                     </div>
                 </div>
+
+                <label class="form-label" style="margin-top: 20px;">Game Settings</label>
+                <div class="reward-grid">
+                    <div class="reward-card">
+                        <i class="fas fa-clock" style="color: #3b82f6;"></i>
+                        <label class="form-label" style="font-size: 0.8rem;">Time Limit (minutes)</label>
+                        <input type="number" name="time_limit_minutes" class="form-control" value="10" min="1" placeholder="Minutes per level">
+                    </div>
+                    <div class="reward-card">
+                        <i class="fas fa-heart-broken" style="color: #ef4444;"></i>
+                        <label class="form-label" style="font-size: 0.8rem;">HP Penalty</label>
+                        <input type="number" name="hp_penalty" class="form-control" value="10" min="0" placeholder="HP lost per wrong answer">
+                    </div>
+                </div>
             </div>
         </div>
         
