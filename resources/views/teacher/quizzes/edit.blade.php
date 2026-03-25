@@ -40,6 +40,31 @@
                 <input type="text" name="title" class="form-control" value="{{ old('title', $quiz->title) }}" required>
             </div>
 
+            <div class="form-group">
+                <label class="form-label">Quiz Type <span style="color: var(--danger);">*</span></label>
+                <select name="type" class="form-control" required>
+                    <option value="quiz" {{ old('type', $quiz->type) == 'quiz' ? 'selected' : '' }}>Regular Quiz</option>
+                    <option value="pre-test" {{ old('type', $quiz->type) == 'pre-test' ? 'selected' : '' }}>Pre-Test</option>
+                    <option value="post-test" {{ old('type', $quiz->type) == 'post-test' ? 'selected' : '' }}>Post-Test</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Assign Date <span style="color: var(--danger);">*</span></label>
+                    <input type="datetime-local" name="assign_date" class="form-control" value="{{ old('assign_date', $quiz->assign_date ? \Carbon\Carbon::parse($quiz->assign_date)->format('Y-m-d\TH:i') : '') }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Due Date <span style="color: var(--danger);">*</span></label>
+                    <input type="datetime-local" name="due_date" class="form-control" value="{{ old('due_date', $quiz->due_date ? \Carbon\Carbon::parse($quiz->due_date)->format('Y-m-d\TH:i') : '') }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Quiz Description</label>
+                <textarea name="description" class="form-control" rows="3">{{ old('description', $quiz->description) }}</textarea>
+            </div>
+
             <h3 style="font-size: 1.1rem; margin: 24px 0 16px;"><i class="fas fa-question-circle" style="color: var(--primary);"></i> Questions</h3>
             <div id="questions-wrapper">
                 @foreach($quiz->questions as $qIndex => $question)
@@ -97,83 +122,82 @@
         </form>
     </div>
 </div>
+@endpush
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    let questionIndex = {{ $quiz->questions->count() }};
+let questionIndex = {{ $quiz->questions->count() }};
 
-    document.getElementById('add-question-btn').addEventListener('click', () => {
-        const wrapper = document.getElementById('questions-wrapper');
-        const qCard = document.createElement('div');
-        qCard.classList.add('question-card');
-        qCard.dataset.index = questionIndex;
-        qCard.innerHTML = `
-            <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: 10px; right: 10px;" onclick="this.closest('.question-card').remove()">
-                <i class="fas fa-trash"></i>
+document.getElementById('add-question-btn').addEventListener('click', () => {
+    const wrapper = document.getElementById('questions-wrapper');
+    const qCard = document.createElement('div');
+    qCard.classList.add('question-card');
+    qCard.dataset.index = questionIndex;
+    qCard.innerHTML = `
+        <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: 10px; right: 10px;" onclick="this.closest('.question-card').remove()">
+            <i class="fas fa-trash"></i>
+        </button>
+        <div class="form-group">
+            <label class="form-label">Question <span style="color: var(--danger);">*</span></label>
+            <input type="text" name="questions[${questionIndex}][question]" class="form-control" placeholder="Enter question..." required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Type</label>
+            <select name="questions[${questionIndex}][type]" class="form-control question-type" data-index="${questionIndex}">
+                <option value="multiple_choice">Multiple Choice</option>
+                <option value="identification">Identification</option>
+            </select>
+        </div>
+        <div class="options-container">
+            <label class="form-label">Options</label>
+            <div class="option-item">
+                <input type="text" name="questions[${questionIndex}][options][]" class="form-control" placeholder="Option text" required>
+                <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary add-option-btn" style="margin-top: 8px;">
+                <i class="fas fa-plus"></i> Add Option
             </button>
-            <div class="form-group">
-                <label class="form-label">Question <span style="color: var(--danger);">*</span></label>
-                <input type="text" name="questions[${questionIndex}][question]" class="form-control" placeholder="Enter question..." required>
+            <div class="form-group" style="margin-top: 12px;">
+                <label class="form-label">Correct Answer</label>
+                <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter correct answer">
             </div>
-            <div class="form-group">
-                <label class="form-label">Type</label>
-                <select name="questions[${questionIndex}][type]" class="form-control question-type" data-index="${questionIndex}">
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="identification">Identification</option>
-                </select>
-            </div>
-            <div class="options-container">
-                <label class="form-label">Options</label>
-                <div class="option-item">
-                    <input type="text" name="questions[${questionIndex}][options][]" class="form-control" placeholder="Option text" required>
-                    <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
-                </div>
-                <button type="button" class="btn btn-sm btn-secondary add-option-btn" style="margin-top: 8px;">
-                    <i class="fas fa-plus"></i> Add Option
-                </button>
-                <div class="form-group" style="margin-top: 12px;">
-                    <label class="form-label">Correct Answer</label>
-                    <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter correct answer">
-                </div>
-            </div>
-            <div class="form-group identification-answer" style="display:none;">
-                <label class="form-label">Answer</label>
-                <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter answer">
-            </div>
-        `;
-        wrapper.appendChild(qCard);
-        questionIndex++;
-    });
+        </div>
+        <div class="form-group identification-answer" style="display:none;">
+            <label class="form-label">Answer</label>
+            <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter answer">
+        </div>
+    `;
+    wrapper.appendChild(qCard);
+    questionIndex++;
+});
 
-    document.getElementById('questions-wrapper').addEventListener('click', e => {
-        if(e.target.closest('.remove-option-btn')) {
-            e.target.closest('.option-item').remove();
-        }
-        if(e.target.closest('.add-option-btn')) {
-            const card = e.target.closest('.question-card');
-            const idx = card.dataset.index;
-            const container = card.querySelector('.options-container');
-            const newOpt = document.createElement('div');
-            newOpt.classList.add('option-item');
-            newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" class="form-control" placeholder="Option text" required>
-                                <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>`;
-            container.insertBefore(newOpt, e.target.closest('.add-option-btn'));
-        }
-    });
+document.getElementById('questions-wrapper').addEventListener('click', e => {
+    if(e.target.closest('.remove-option-btn')) {
+        e.target.closest('.option-item').remove();
+    }
+    if(e.target.closest('.add-option-btn')) {
+        const card = e.target.closest('.question-card');
+        const idx = card.dataset.index;
+        const container = card.querySelector('.options-container');
+        const newOpt = document.createElement('div');
+        newOpt.classList.add('option-item');
+        newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" class="form-control" placeholder="Option text" required>
+                            <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>`;
+        container.insertBefore(newOpt, e.target.closest('.add-option-btn'));
+    }
+});
 
-    document.getElementById('questions-wrapper').addEventListener('change', e => {
-        if(e.target.classList.contains('question-type')) {
-            const card = e.target.closest('.question-card');
-            if(e.target.value === 'multiple_choice') {
-                card.querySelector('.options-container').style.display = '';
-                card.querySelector('.identification-answer').style.display = 'none';
-            } else {
-                card.querySelector('.options-container').style.display = 'none';
-                card.querySelector('.identification-answer').style.display = '';
-            }
+document.getElementById('questions-wrapper').addEventListener('change', e => {
+    if(e.target.classList.contains('question-type')) {
+        const card = e.target.closest('.question-card');
+        if(e.target.value === 'multiple_choice') {
+            card.querySelector('.options-container').style.display = '';
+            card.querySelector('.identification-answer').style.display = 'none';
+        } else {
+            card.querySelector('.options-container').style.display = 'none';
+            card.querySelector('.identification-answer').style.display = '';
         }
-    });
+    }
 });
 </script>
 @endpush

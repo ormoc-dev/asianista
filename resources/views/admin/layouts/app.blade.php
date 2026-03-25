@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Teacher Portal') | ASIANISTA</title>
+    <title>@yield('title', 'Admin Portal') | ASIANISTA</title>
     
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -64,19 +64,12 @@
             align-items: center;
         }
 
-        
-
         .sidebar-logo {
             width: 100px;
             height: 60px;
             border-radius: 10px;
             object-fit: cover;
-          
         }
-
-       
-
-     
 
         .sidebar-avatar {
             width: 44px;
@@ -85,8 +78,6 @@
             object-fit: cover;
             border: 2px solid var(--accent);
         }
-
-        
 
         .sidebar-nav {
             flex: 1;
@@ -329,17 +320,6 @@
             padding: 24px;
         }
 
-        /* Font Awesome fallback */
-        .fa, .fas, .far, .fal, .fad, .fab {
-            -moz-osx-font-smoothing: grayscale;
-            -webkit-font-smoothing: antialiased;
-            display: inline-block;
-            font-style: normal;
-            font-variant: normal;
-            text-rendering: auto;
-            line-height: 1;
-        }
-
         /* Buttons */
         .btn {
             display: inline-flex;
@@ -578,215 +558,6 @@
                 font-size: 1rem;
             }
         }
-
-        /* Floating AI Widget */
-        .ai-widget-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 1.4rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .ai-widget-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 25px rgba(79, 70, 229, 0.5);
-        }
-
-        .ai-widget-btn.active {
-            background: linear-gradient(135deg, var(--danger), #dc2626);
-        }
-
-        .ai-widget-btn .pulse-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: var(--primary);
-            animation: pulse-ring 2s infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 0.5; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-
-        .ai-chat-widget {
-            position: fixed;
-            bottom: 96px;
-            right: 24px;
-            width: 380px;
-            height: 520px;
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--border);
-            z-index: 999;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            animation: slideUp 0.3s ease;
-        }
-
-        .ai-chat-widget.show {
-            display: flex;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .ai-widget-header {
-            padding: 16px 20px;
-            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .ai-widget-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1rem;
-        }
-
-        .ai-widget-header h4 {
-            color: #fff;
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .ai-widget-header p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.75rem;
-            margin: 0;
-        }
-
-        .ai-widget-messages {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .ai-widget-messages::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .ai-widget-messages::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
-        }
-
-        .ai-widget-msg {
-            max-width: 85%;
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 0.875rem;
-            line-height: 1.4;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .ai-widget-msg.ai {
-            align-self: flex-start;
-            background: var(--bg-main);
-            color: var(--text-primary);
-            border-bottom-left-radius: 4px;
-        }
-
-        .ai-widget-msg.user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-
-        .ai-widget-typing {
-            display: none;
-            align-self: flex-start;
-            background: var(--bg-main);
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .ai-widget-input {
-            padding: 12px 16px;
-            background: var(--bg-main);
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-        }
-
-        .ai-widget-input input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            font-size: 0.875rem;
-            outline: none;
-            background: var(--bg-card);
-            color: var(--text-primary);
-        }
-
-        .ai-widget-input input:focus {
-            border-color: var(--primary);
-        }
-
-        .ai-widget-input button {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .ai-widget-input button:hover {
-            transform: scale(1.05);
-        }
-
-        .ai-widget-input button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 480px) {
-            .ai-chat-widget {
-                width: calc(100vw - 48px);
-                right: 24px;
-                left: 24px;
-            }
-        }
     </style>
     @stack('styles')
 </head>
@@ -796,56 +567,50 @@
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" class="sidebar-logo">
-              
             </div>
         </div>
-
-        
 
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Main</div>
-                <a href="{{ route('teacher.dashboard') }}" class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
-                <a href="{{ route('teacher.quest') }}" class="nav-link {{ request()->routeIs('teacher.quest*') ? 'active' : '' }}">
-                    <i class="fas fa-map-signs"></i> Quests
+                <a href="{{ route('admin.user-management') }}" class="nav-link {{ request()->routeIs('admin.user-management*') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i> User Management
                 </a>
             </div>
 
             <div class="nav-section">
                 <div class="nav-section-title">Content</div>
-                <a href="{{ route('teacher.lessons.index') }}" class="nav-link {{ request()->routeIs('teacher.lessons*') ? 'active' : '' }}">
-                    <i class="fas fa-book-open"></i> Lessons
+                <a href="{{ route('admin.lessons.index') }}" class="nav-link {{ request()->routeIs('admin.lessons*') ? 'active' : '' }}">
+                    <i class="fas fa-book"></i> Lessons
                 </a>
-                <a href="{{ route('teacher.quizzes') }}" class="nav-link {{ request()->routeIs('teacher.quizzes*') ? 'active' : '' }}">
+                <a href="{{ route('admin.quizzes') }}" class="nav-link {{ request()->routeIs('admin.quizzes*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i> Quizzes
                 </a>
             </div>
 
             <div class="nav-section">
                 <div class="nav-section-title">Management</div>
-                <a href="{{ route('teacher.registration') }}" class="nav-link {{ request()->routeIs('teacher.registration*') ? 'active' : '' }}">
-                    <i class="fas fa-user-plus"></i> Registration
-                </a>
-                <a href="{{ route('teacher.gamification.index') }}" class="nav-link {{ request()->routeIs('teacher.gamification*') ? 'active' : '' }}">
+                <a href="{{ route('admin.gamification') }}" class="nav-link {{ request()->routeIs('admin.gamification*') ? 'active' : '' }}">
                     <i class="fas fa-trophy"></i> Gamification
                 </a>
-                <a href="{{ route('teacher.random-events.index') }}" class="nav-link {{ request()->routeIs('teacher.random-events*') ? 'active' : '' }}">
-                    <i class="fas fa-dice"></i> Random Events
+                <a href="{{ route('admin.ai-management') }}" class="nav-link {{ request()->routeIs('admin.ai-management*') ? 'active' : '' }}">
+                    <i class="fas fa-robot"></i> AI Management
                 </a>
-                <a href="{{ route('teacher.reports.scores') }}" class="nav-link {{ request()->routeIs('teacher.reports*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-bar"></i> Reports
+                <a href="{{ route('admin.target-audience') }}" class="nav-link {{ request()->routeIs('admin.target-audience*') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i> Target Audience
                 </a>
             </div>
 
             <div class="nav-section">
-                <div class="nav-section-title">Analytics</div>
-                <a href="{{ route('teacher.performance') }}" class="nav-link {{ request()->routeIs('teacher.performance*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line"></i> Performance
+                <div class="nav-section-title">System</div>
+                <a href="{{ route('admin.data') }}" class="nav-link {{ request()->routeIs('admin.data*') ? 'active' : '' }}">
+                    <i class="fas fa-database"></i> Data Handling
                 </a>
-                <a href="{{ route('teacher.feedback') }}" class="nav-link {{ request()->routeIs('teacher.feedback*') ? 'active' : '' }}">
-                    <i class="fas fa-comments"></i> Feedback
+                <a href="{{ route('admin.security') }}" class="nav-link {{ request()->routeIs('admin.security*') ? 'active' : '' }}">
+                    <i class="fas fa-shield-alt"></i> Security
                 </a>
             </div>
         </nav>
@@ -874,7 +639,7 @@
                 <div class="user-dropdown">
                     <button class="user-btn" onclick="toggleDropdown()">
                         <img src="{{ asset('images/' . (Auth::user()?->profile_pic ?? 'default-pp.png')) }}" alt="Avatar">
-                        <span>{{ Auth::user()?->name ?? 'Guest' }}</span>
+                        <span>{{ Auth::user()?->name ?? 'Admin' }}</span>
                         <i class="fas fa-chevron-down" style="font-size: 0.7rem; color: var(--text-muted);"></i>
                     </button>
                     <div class="dropdown-menu" id="userDropdown">
@@ -914,39 +679,6 @@
         </div>
     </main>
 
-    <!-- Floating AI Widget -->
-    <div class="ai-chat-widget" id="aiChatWidget">
-        <div class="ai-widget-header">
-            <div class="ai-widget-avatar">
-                <i class="fas fa-hat-wizard"></i>
-            </div>
-            <div>
-                <h4>Arcane Advisor</h4>
-                <p><i class="fas fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> Online</p>
-            </div>
-        </div>
-        <div class="ai-widget-messages" id="aiWidgetMessages">
-            <div class="ai-widget-msg ai">
-                Greetings! I'm the Arcane Advisor. How can I assist you today?
-            </div>
-        </div>
-        <div class="ai-widget-typing" id="aiWidgetTyping">
-            <i class="fas fa-magic fa-spin"></i> Consulting the arcane...
-        </div>
-        <div class="ai-widget-input">
-            <input type="text" id="aiWidgetInput" placeholder="Ask something..." autocomplete="off">
-            <button id="aiWidgetSend" onclick="sendAiMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Floating AI Button -->
-    <button class="ai-widget-btn" id="aiWidgetBtn" onclick="toggleAiWidget()">
-        <span class="pulse-ring"></span>
-        <i class="fas fa-hat-wizard" id="aiWidgetIcon"></i>
-    </button>
-
     <script>
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
@@ -972,88 +704,6 @@
                 if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
                     sidebar.classList.remove('active');
                 }
-            }
-        });
-
-        // Floating AI Widget Functions
-        let aiChatHistory = [];
-
-        function toggleAiWidget() {
-            const widget = document.getElementById('aiChatWidget');
-            const btn = document.getElementById('aiWidgetBtn');
-            const icon = document.getElementById('aiWidgetIcon');
-            
-            widget.classList.toggle('show');
-            btn.classList.toggle('active');
-            
-            if (widget.classList.contains('show')) {
-                icon.className = 'fas fa-times';
-                document.getElementById('aiWidgetInput').focus();
-            } else {
-                icon.className = 'fas fa-hat-wizard';
-            }
-        }
-
-        function appendAiMessage(role, text) {
-            const container = document.getElementById('aiWidgetMessages');
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('ai-widget-msg', role);
-            msgDiv.innerText = text;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-            
-            if (role !== 'system') {
-                aiChatHistory.push({ role: role === 'ai' ? 'assistant' : 'user', content: text });
-            }
-        }
-
-        async function sendAiMessage() {
-            const input = document.getElementById('aiWidgetInput');
-            const btn = document.getElementById('aiWidgetSend');
-            const typing = document.getElementById('aiWidgetTyping');
-            const text = input.value.trim();
-            
-            if (!text) return;
-
-            input.value = '';
-            appendAiMessage('user', text);
-
-            btn.disabled = true;
-            typing.style.display = 'block';
-
-            try {
-                const response = await fetch("{{ route('teacher.ai.chat') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        message: text,
-                        history: aiChatHistory
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    appendAiMessage('ai', result.reply);
-                } else {
-                    appendAiMessage('ai', 'Connection interrupted. Please try again.');
-                }
-            } catch (error) {
-                console.error('AI Widget Error:', error);
-                appendAiMessage('ai', 'An error occurred. Please try again.');
-            } finally {
-                btn.disabled = false;
-                typing.style.display = 'none';
-            }
-        }
-
-        // Handle Enter key in AI widget input
-        document.getElementById('aiWidgetInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendAiMessage();
             }
         });
     </script>

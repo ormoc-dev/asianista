@@ -74,7 +74,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
         Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
         Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
-        Route::get('/reports', [TeacherController::class, 'reports'])->name('reports');
+        // Route::get('/reports', [TeacherController::class, 'reports'])->name('reports'); // Replaced by TeacherReportsController
         Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
         Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
     });
@@ -181,6 +181,8 @@ Route::prefix('student')->name('student.')->group(function () {
 Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
     Route::post('/generate-quest', [AIAssistantController::class, 'generateQuest'])->name('generate-quest');
     Route::post('/generate-question', [AIAssistantController::class, 'generateQuestion'])->name('generate-question');
+    Route::post('/generate-lesson', [AIAssistantController::class, 'generateLessonContent'])->name('generate-lesson');
+    Route::post('/generate-quiz', [AIAssistantController::class, 'generateQuizQuestions'])->name('generate-quiz');
 });
 
 Route::prefix('student/ai')->name('student.ai.')->group(function () {
@@ -257,6 +259,22 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quest/create', [TeacherQuestController::class, 'create'])->name('quest.create');
     Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');
     Route::get('/quest/{quest}', [TeacherQuestController::class, 'show'])->name('quest.show');
+    
+    // Random Events Routes
+    Route::get('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'index'])->name('random-events.index');
+    Route::get('/random-events/create', [App\Http\Controllers\TeacherRandomEventController::class, 'create'])->name('random-events.create');
+    Route::post('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'store'])->name('random-events.store');
+    Route::get('/random-events/draw', [App\Http\Controllers\TeacherRandomEventController::class, 'drawRandom'])->name('random-events.draw');
+    Route::get('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'show'])->name('random-events.show');
+    Route::get('/random-events/{randomEvent}/edit', [App\Http\Controllers\TeacherRandomEventController::class, 'edit'])->name('random-events.edit');
+    Route::put('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'update'])->name('random-events.update');
+    Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'destroy'])->name('random-events.destroy');
+    Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\TeacherRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
+    
+    // Reports Routes
+    Route::get('/reports/scores', [App\Http\Controllers\TeacherReportsController::class, 'scores'])->name('reports.scores');
+    Route::get('/reports/student/{student}', [App\Http\Controllers\TeacherReportsController::class, 'studentDetail'])->name('reports.student');
+    Route::put('/reports/student/{student}/xp', [App\Http\Controllers\TeacherReportsController::class, 'updateXp'])->name('reports.student.xp');
 });
 
 Route::prefix('student')->name('student.')->group(function () {
@@ -267,6 +285,10 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::post('/quest/{quest}/submit/{question}', [StudentQuestController::class, 'submitStep'])->name('quest.submit');
     Route::post('/quest/{quest}/use-power/{attempt}', [StudentQuestController::class, 'usePower'])->name('quest.use-power');
     Route::post('/quest/{quest}/timeout/{question}', [StudentQuestController::class, 'timeOut'])->name('quest.timeout');
+    
+    // Random Events - Student endpoints
+    Route::get('/events/check', [App\Http\Controllers\StudentEventController::class, 'checkNewEvent'])->name('events.check');
+    Route::post('/events/acknowledge', [App\Http\Controllers\StudentEventController::class, 'acknowledgeEvent'])->name('events.acknowledge');
 });
 
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])

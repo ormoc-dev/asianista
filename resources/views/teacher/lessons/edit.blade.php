@@ -7,8 +7,18 @@
 <div class="card">
     <div class="card-header">
         <h2 class="card-title">Edit Lesson</h2>
+        <a href="{{ route('teacher.lessons.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
     </div>
     <div class="card-body">
+        @if($lesson->status === 'approved')
+            <div class="alert alert-warning" style="margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                Approved lessons cannot be edited.
+            </div>
+        @endif
+
         <form action="{{ route('teacher.lessons.update', $lesson->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('POST')
@@ -20,7 +30,20 @@
 
             <div class="form-group">
                 <label class="form-label">Section</label>
-                <input type="text" name="section" class="form-control" value="{{ $lesson->section }}">
+                <select name="section" class="form-control" required>
+                    <option value="">Select Section</option>
+                    @php
+                        $sections = ['Grade 7 - A', 'Grade 7 - B', 'Grade 8 - A', 'Grade 8 - B', 'Grade 9 - A', 'Grade 9 - B', 'Grade 10 - A', 'Grade 10 - B', 'Grade 11 - A', 'Grade 11 - B', 'Grade 12 - A', 'Grade 12 - B'];
+                    @endphp
+                    @foreach($sections as $section)
+                        <option value="{{ $section }}" {{ $lesson->section === $section ? 'selected' : '' }}>{{ $section }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Lesson Content</label>
+                <textarea name="content" class="form-control" rows="8">{{ $lesson->content }}</textarea>
             </div>
 
             <div class="form-group">
@@ -35,9 +58,11 @@
 
             <div style="display: flex; gap: 12px; margin-top: 24px;">
                 <a href="{{ route('teacher.lessons.index') }}" class="btn btn-secondary">Cancel</a>
+                @if($lesson->status !== 'approved')
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Update Lesson
                 </button>
+                @endif
             </div>
         </form>
     </div>

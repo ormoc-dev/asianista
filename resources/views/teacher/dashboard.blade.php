@@ -14,7 +14,6 @@
             <p>Active Students</p>
         </div>
     </a>
-
     <a href="{{ route('teacher.quest') }}" class="stat-card">
         <div class="stat-icon green">
             <i class="fas fa-map-signs"></i>
@@ -24,7 +23,6 @@
             <p>Active Quests</p>
         </div>
     </a>
-
     <a href="{{ route('teacher.quest') }}" class="stat-card">
         <div class="stat-icon purple">
             <i class="fas fa-scroll"></i>
@@ -34,7 +32,6 @@
             <p>Quests Created</p>
         </div>
     </a>
-
     <a href="{{ route('teacher.lessons.index') }}" class="stat-card">
         <div class="stat-icon yellow">
             <i class="fas fa-book-open"></i>
@@ -44,7 +41,6 @@
             <p>Lessons Created</p>
         </div>
     </a>
-
     <a href="{{ route('teacher.gamification.index') }}" class="stat-card">
         <div class="stat-icon indigo">
             <i class="fas fa-trophy"></i>
@@ -54,7 +50,6 @@
             <p>Leaderboard</p>
         </div>
     </a>
-
     <a href="{{ route('teacher.feedback') }}" class="stat-card">
         <div class="stat-icon red">
             <i class="fas fa-comment-dots"></i>

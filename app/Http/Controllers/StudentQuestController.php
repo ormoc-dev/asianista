@@ -168,12 +168,37 @@ class StudentQuestController extends Controller
                     'new_hp' => $newHP
                 ]);
             } else {
-                $attempt->update(['status' => 'completed']);
+                // Quest completed successfully - award XP
+                $xpReward = $quest->xp_reward ?? 50; // Default 50 XP
+                
+                // Power Strike: Double XP if active
+                if ($activePower === 'powerstrike') {
+                    $xpReward *= 2;
+                }
+                
+                $newXP = $user->xp + $xpReward;
+                $newLevel = floor($newXP / 100) + 1;
+                
+                $user->update([
+                    'xp' => $newXP,
+                    'level' => $newLevel
+                ]);
+                
+                $attempt->update([
+                    'status' => 'completed',
+                    'score' => $xpReward,
+                    'completed_at' => now()
+                ]);
+                
+                $powerBonusMsg = $activePower === 'powerstrike' ? ' (Power Strike doubled your XP!)' : '';
                 return response()->json([
                     'success' => true,
-                    'message' => 'Quest Complete! You have conquered the Neural Realm.',
+                    'message' => "Quest Complete! You earned {$xpReward} XP!{$powerBonusMsg}",
                     'next_url' => route('student.quest.show', $quest->id),
-                    'new_hp' => $newHP
+                    'new_hp' => $newHP,
+                    'xp_gained' => $xpReward,
+                    'new_xp' => $newXP,
+                    'new_level' => $newLevel
                 ]);
             }
         }
@@ -191,11 +216,56 @@ class StudentQuestController extends Controller
             $hpDeducted = true;
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => $hpDeducted ? "Not quite right. You lost {$hpPenalty} HP!" : 'Not quite right. Try again, Hero!',
-            'new_hp' => $newHP
-        ]);
+        // Find next question even on wrong answer (allow proceeding)
+        $nextQuestion = $quest->questions()
+                             ->where(function($q) use ($question) {
+                                 $q->where('level', '>', $question->level)
+                                   ->orWhere(function($sq) use ($question) {
+                                       $sq->where('level', $question->level)
+                                          ->where('id', '>', $question->id);
+                                   });
+                             })
+                             ->orderBy('level')
+                             ->orderBy('id')
+                             ->first();
+
+        if ($nextQuestion) {
+            $attempt->update(['current_question_id' => $nextQuestion->id]);
+            return response()->json([
+                'success' => true, // Changed to true to allow proceeding
+                'correct' => false, // But mark as incorrect
+                'message' => $hpDeducted ? "Not quite right. You lost {$hpPenalty} HP! Moving to next challenge." : 'Not quite right. Moving to next challenge.',
+                'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
+                'new_hp' => $newHP
+            ]);
+        } else {
+            // No more questions - quest complete (partial XP for wrong answers)
+            $xpReward = floor(($quest->xp_reward ?? 50) * 0.5); // 50% XP for completing with wrong answers
+            $newXP = $user->xp + $xpReward;
+            $newLevel = floor($newXP / 100) + 1;
+            
+            $user->update([
+                'xp' => $newXP,
+                'level' => $newLevel
+            ]);
+            
+            $attempt->update([
+                'status' => 'completed',
+                'score' => $xpReward,
+                'completed_at' => now()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'correct' => false,
+                'message' => "Quest Complete! You earned {$xpReward} XP (partial for wrong answers).",
+                'next_url' => route('student.quest.show', $quest->id),
+                'new_hp' => $newHP,
+                'xp_gained' => $xpReward,
+                'new_xp' => $newXP,
+                'new_level' => $newLevel
+            ]);
+        }
     }
 
     public function timeOut(Request $request, Quest $quest, QuestQuestion $question)
@@ -239,13 +309,30 @@ class StudentQuestController extends Controller
                 'new_hp' => $newHP
             ]);
         } else {
-            // No more questions - quest complete
-            $attempt->update(['status' => 'completed']);
+            // No more questions - quest complete (partial XP for timeout)
+            $xpReward = floor(($quest->xp_reward ?? 50) * 0.3); // 30% XP for timeout completion
+            $newXP = $user->xp + $xpReward;
+            $newLevel = floor($newXP / 100) + 1;
+            
+            $user->update([
+                'xp' => $newXP,
+                'level' => $newLevel
+            ]);
+            
+            $attempt->update([
+                'status' => 'completed',
+                'score' => $xpReward,
+                'completed_at' => now()
+            ]);
+            
             return response()->json([
                 'success' => true,
-                'message' => "Time's up! Quest complete.",
+                'message' => "Time's up! Quest complete. You earned {$xpReward} XP.",
                 'next_url' => route('student.quest.show', $quest->id),
-                'new_hp' => $newHP
+                'new_hp' => $newHP,
+                'xp_gained' => $xpReward,
+                'new_xp' => $newXP,
+                'new_level' => $newLevel
             ]);
         }
     }

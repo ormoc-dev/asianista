@@ -3,193 +3,252 @@
 @section('content')
 
 <style>
-    .content-shell {
-        margin-top: 10px;
+    .page-container {
+        padding: 20px;
     }
 
-    .content-card {
-        background: radial-gradient(circle at top, rgba(191,197,219,0.7), rgba(241,241,224,0.9));
-        border-radius: 18px;
-        padding: 22px 24px 26px;
-        box-shadow: 0 14px 35px rgba(15,23,42,0.35);
-        border: 1px solid rgba(255,255,255,0.7);
-        backdrop-filter: blur(10px);
+    .page-card {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
     }
 
-    .content-card-header {
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 25px;
-        border-bottom: 2px solid rgba(0,35,102,0.1);
-        padding-bottom: 15px;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .content-title {
+    .page-title {
         display: flex;
         align-items: center;
         gap: 12px;
-        color: #002366;
     }
 
-    .content-title i {
-        font-size: 1.8rem;
-        color: #f5c400;
-        text-shadow: 0 0 10px rgba(245,196,0,0.3);
+    .page-title i {
+        font-size: 1.5rem;
+        color: #8b5cf6;
     }
 
-    .content-title h2 {
-        font-size: 1.3rem;
-        font-weight: 700;
-    }
-
-    /* Table Styling */
-    .realm-table-wrapper {
-        background: rgba(255,255,255,0.8);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 24px rgba(15,23,42,0.22);
-    }
-
-    .realm-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-    }
-
-    .realm-table thead {
-        background: linear-gradient(90deg, #0f172a, #1e293b);
-        color: #e2e8f0;
-    }
-
-    .realm-table th,
-    .realm-table td {
-        padding: 12px 15px;
-        text-align: left;
-        vertical-align: middle;
-    }
-
-    .realm-table th {
+    .page-title h2 {
+        font-size: 1.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        color: #1f2937;
+        margin: 0;
     }
 
-    .realm-table tbody tr {
-        border-bottom: 1px solid rgba(0,35,102,0.05);
-        transition: background 0.2s;
+    .page-title p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 4px 0 0;
     }
 
-    .realm-table tbody tr:hover {
-        background: rgba(254,249,195,0.5);
-    }
-
-    /* Status Badges */
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 12px;
-        border-radius: 999px;
+    .page-date {
         font-size: 0.75rem;
-        font-weight: 700;
+        color: #9ca3af;
         text-transform: uppercase;
-    }
-
-    .status-pending { background: #fef3c7; color: #854d0e; }
-    .status-active { background: #d1fae5; color: #065f46; }
-    .status-inactive { background: #fee2e2; color: #991b1b; }
-
-    /* Action Buttons */
-    .hero-command {
-        border: none;
-        border-radius: 8px;
-        padding: 6px 14px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s ease;
-        text-decoration: none;
-    }
-
-    .cmd-approve {
-        background: linear-gradient(135deg, #34d399, #059669);
-        color: #fff;
-        box-shadow: 0 4px 10px rgba(5,150,105,0.3);
-    }
-
-    .cmd-reject {
-        background: linear-gradient(135deg, #fb7185, #e11d48);
-        color: #fff;
-        box-shadow: 0 4px 10px rgba(225,29,72,0.3);
-    }
-
-    .cmd-view {
-        background: linear-gradient(135deg, #60a5fa, #2563eb);
-        color: #fff;
-        box-shadow: 0 4px 10px rgba(37,99,235,0.3);
-    }
-
-    .hero-command:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.2);
-        filter: brightness(1.1);
+        letter-spacing: 0.5px;
     }
 
     .alert {
-        padding: 12px 18px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
+        margin: 16px 24px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 0.875rem;
         display: flex;
         align-items: center;
-        gap: 10px;
-        animation: slideIn 0.3s ease-out;
+        gap: 8px;
     }
 
     .alert-success {
-        background: rgba(16,185,129,0.1);
-        border: 1px solid rgba(16,185,129,0.2);
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
         color: #065f46;
     }
 
     .alert-error {
-        background: rgba(239,68,68,0.1);
-        border: 1px solid rgba(239,68,68,0.2);
+        background: #fef2f2;
+        border: 1px solid #fecaca;
         color: #991b1b;
     }
 
-    @keyframes slideIn {
-        from { transform: translateY(-10px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    .table-wrapper {
+        overflow-x: auto;
     }
 
-    @media (max-width: 768px) {
-        .realm-table th:nth-child(2),
-        .realm-table td:nth-child(2),
-        .realm-table th:nth-child(3),
-        .realm-table td:nth-child(3) { display: none; }
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .data-table thead {
+        background: #f9fafb;
+    }
+
+    .data-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .data-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .item-title {
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    .item-meta {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid #e5e7eb;
+    }
+
+    .type-tag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: #f3f4f6;
+        color: #6b7280;
+        text-transform: capitalize;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .action-btns {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .btn-approve {
+        background: #10b981;
+        color: #fff;
+    }
+
+    .btn-approve:hover {
+        background: #059669;
+    }
+
+    .btn-reject {
+        background: #ef4444;
+        color: #fff;
+    }
+
+    .btn-reject:hover {
+        background: #dc2626;
+    }
+
+    .btn-view {
+        background: #3b82f6;
+        color: #fff;
+    }
+
+    .btn-view:hover {
+        background: #2563eb;
+    }
+
+    .page-footer {
+        padding: 16px 24px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        color: #d1d5db;
+        margin-bottom: 12px;
     }
 </style>
 
-<div class="content-shell">
-    <div class="content-card">
-        <div class="content-card-header">
-            <div class="content-title">
-                <i class="fas fa-file-signature"></i>
+<div class="page-container">
+    <div class="page-card">
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fas fa-clipboard-list"></i>
                 <div>
-                    <h2>Quiz & Exam Control</h2>
-                    <p style="font-size:0.85rem; color:#64748b; font-weight:400;">Moderate quizzes and assessments before they reach the students.</p>
+                    <h2>Quizzes</h2>
+                    <p>Review and manage quizzes and assessments</p>
                 </div>
             </div>
-            <div style="text-align:right;">
-                <span style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:1px;">{{ now()->format('M d, Y') }}</span>
-            </div>
+            <span class="page-date">{{ now()->format('M d, Y') }}</span>
         </div>
 
         @if (session('success'))
@@ -204,35 +263,31 @@
             </div>
         @endif
 
-        <div class="realm-table-wrapper">
-            <table class="realm-table">
+        <div class="table-wrapper">
+            <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width:30%;">Portal Title</th>
+                        <th>Title</th>
                         <th>Type</th>
                         <th>Mentor</th>
                         <th>Status</th>
-                        <th style="text-align:right;">Hero Commands</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($quizzes as $quiz)
                         <tr>
                             <td>
-                                <div style="font-weight:600; color:#0f172a;">{{ $quiz->title }}</div>
-                                <div style="font-size:0.75rem; color:#64748b;">Forged {{ $quiz->created_at->diffForHumans() }}</div>
+                                <div class="item-title">{{ $quiz->title }}</div>
+                                <div class="item-meta">{{ $quiz->created_at->diffForHumans() }}</div>
                             </td>
                             <td>
-                                <span style="font-size:0.8rem; background:rgba(0,35,102,0.05); padding:2px 8px; border-radius:4px; color:#475569; text-transform:capitalize;">
-                                    {{ $quiz->type }}
-                                </span>
+                                <span class="type-tag">{{ $quiz->type }}</span>
                             </td>
                             <td>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div style="width:24px; height:24px; border-radius:50%; overflow:hidden; border:1px solid #f5c400;">
-                                        <img src="{{ asset('images/' . ($quiz->teacher->profile_pic ?? 'default-pp.png')) }}" style="width:100%; height:100%; object-fit:cover;">
-                                    </div>
-                                    <span style="font-weight:500;">{{ $quiz->teacher->name ?? 'Unknown Mentor' }}</span>
+                                <div class="user-cell">
+                                    <img src="{{ asset('images/' . ($quiz->teacher->profile_pic ?? 'default-pp.png')) }}" class="user-avatar" alt="">
+                                    <span>{{ $quiz->teacher->name ?? 'Unknown' }}</span>
                                 </div>
                             </td>
                             <td>
@@ -241,32 +296,32 @@
                                     $icon = $status === 'active' ? 'fa-check' : ($status === 'inactive' ? 'fa-times' : 'fa-clock');
                                     $displayStatus = $status === 'active' ? 'Approved' : ($status === 'inactive' ? 'Rejected' : 'Pending');
                                 @endphp
-                                <span class="status-pill status-{{ $status }}">
+                                <span class="status-badge status-{{ $status }}">
                                     <i class="fas {{ $icon }}"></i>
                                     {{ $displayStatus }}
                                 </span>
                             </td>
-                            <td style="text-align:right;">
-                                <div style="display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
+                            <td>
+                                <div class="action-btns">
                                     @if($quiz->status === 'pending')
                                         <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" style="display:inline;">
                                             @csrf
-                                            <button type="submit" class="hero-command cmd-approve">
+                                            <button type="submit" class="btn btn-approve">
                                                 <i class="fas fa-check"></i> Approve
                                             </button>
                                         </form>
 
                                         <form action="{{ route('admin.quizzes.reject', $quiz->id) }}" method="POST" style="display:inline;">
                                             @csrf
-                                            <button type="submit" class="hero-command cmd-reject">
+                                            <button type="submit" class="btn btn-reject">
                                                 <i class="fas fa-times"></i> Reject
                                             </button>
                                         </form>
                                     @endif
 
                                     @if($quiz->file_path)
-                                        <a href="{{ asset('storage/' . $quiz->file_path) }}" target="_blank" class="hero-command cmd-view">
-                                            <i class="fas fa-eye"></i> View Content
+                                        <a href="{{ asset('storage/' . $quiz->file_path) }}" target="_blank" class="btn btn-view">
+                                            <i class="fas fa-eye"></i> View
                                         </a>
                                     @endif
                                 </div>
@@ -274,8 +329,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8; font-style:italic;">
-                                No assessment portals have been forged in this realm yet.
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <p>No quizzes found</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -283,8 +341,8 @@
             </table>
         </div>
 
-        <div style="margin-top:15px; text-align:center; font-size:0.8rem; color:#94a3b8;">
-            Monitoring <strong>{{ $quizzes->count() }}</strong> assessment portals
+        <div class="page-footer">
+            Total: <strong>{{ $quizzes->count() }}</strong> quizzes
         </div>
     </div>
 </div>

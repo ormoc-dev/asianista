@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Student Dashboard</title>
 
     <!-- Google Fonts -->
@@ -2057,6 +2058,271 @@
                 closeLevelModal();
             }
         });
+    </script>
+
+    <!-- Random Event Popup Modal -->
+    <div id="randomEventModal" class="random-event-modal" style="display: none;">
+        <div class="random-event-content">
+            <div class="scroll-container">
+                <div class="scroll-top"></div>
+                <div class="scroll-paper">
+                    <div class="event-badge">RANDOM EVENT!</div>
+                    <h2 class="event-title" id="eventTitle">Event Title</h2>
+                    <p class="event-description" id="eventDescription">Description</p>
+                    <div class="scroll-divider"></div>
+                    <div class="event-effect" id="eventEffect">Effect</div>
+                    <div class="event-xp" id="eventXp"></div>
+                </div>
+                <div class="scroll-bottom"></div>
+            </div>
+            <button onclick="acknowledgeEvent()" class="acknowledge-btn">GOT IT!</button>
+        </div>
+    </div>
+
+    <style>
+        .random-event-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .random-event-modal.show {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .random-event-content {
+            max-width: 500px;
+            width: 90%;
+            animation: popIn 0.4s ease;
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .scroll-container {
+            position: relative;
+        }
+        
+        .scroll-top, .scroll-bottom {
+            height: 35px;
+            background: linear-gradient(180deg, #d4a574 0%, #c49a6c 50%, #b08d5f 100%);
+            border-radius: 17px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .scroll-top::before, .scroll-top::after,
+        .scroll-bottom::before, .scroll-bottom::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 45px;
+            background: linear-gradient(90deg, #8b6914 0%, #a67c2e 50%, #8b6914 100%);
+            border-radius: 0 0 12px 12px;
+            top: 0;
+            box-shadow: inset 0 -3px 6px rgba(0,0,0,0.3);
+        }
+        
+        .scroll-top::before, .scroll-bottom::before { left: -8px; }
+        .scroll-top::after, .scroll-bottom::after { right: -8px; }
+        
+        .scroll-bottom::before, .scroll-bottom::after {
+            border-radius: 12px 12px 0 0;
+            top: auto;
+            bottom: 0;
+        }
+        
+        .scroll-paper {
+            background: linear-gradient(180deg, #f5e6d3 0%, #f0dcc0 50%, #ebd5b3 100%);
+            padding: 30px 35px;
+            margin: -5px 8px;
+            position: relative;
+            box-shadow: inset 0 0 60px rgba(139, 105, 20, 0.1), 0 4px 20px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        
+        .event-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .event-title {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 1.5rem;
+            color: #4a3728;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+        
+        .event-description {
+            font-style: italic;
+            color: #6b5344;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .scroll-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c4a77d, transparent);
+            margin: 15px 0;
+        }
+        
+        .event-effect {
+            color: #4a3728;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        
+        .event-xp {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .event-xp.reward { color: #22c55e; }
+        .event-xp.penalty { color: #ef4444; }
+        
+        .acknowledge-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .acknowledge-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+    </style>
+
+    <script>
+        (function() {
+            // Use window to avoid conflicts with Turbolinks
+            if (window.randomEventChecker) return; // Prevent duplicate initialization
+            window.randomEventChecker = true;
+            
+            let currentActiveEventId = null;
+            let checkInterval = null;
+            
+            // Check for new events every 3 seconds
+            function checkForEvents() {
+                console.log('Checking for events...');
+                fetch('{{ route("student.events.check") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Response:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Event data:', data);
+                    if (data.has_event) {
+                        console.log('Showing event modal!');
+                        showEventModal(data.event);
+                        currentActiveEventId = data.active_event_id;
+                    }
+                })
+                .catch(error => console.error('Error checking events:', error));
+            }
+            
+            function showEventModal(event) {
+                const modal = document.getElementById('randomEventModal');
+                if (!modal) {
+                    console.error('Modal not found!');
+                    return;
+                }
+                
+                document.getElementById('eventTitle').textContent = event.title;
+                document.getElementById('eventDescription').textContent = event.description;
+                document.getElementById('eventEffect').textContent = event.effect;
+                
+                const xpDiv = document.getElementById('eventXp');
+                if (event.xp_reward > 0) {
+                    xpDiv.innerHTML = `<span class="reward">+${event.xp_reward} XP</span>`;
+                    xpDiv.className = 'event-xp reward';
+                } else if (event.xp_penalty > 0) {
+                    xpDiv.innerHTML = `<span class="penalty">-${event.xp_penalty} XP</span>`;
+                    xpDiv.className = 'event-xp penalty';
+                } else {
+                    xpDiv.innerHTML = '';
+                }
+                
+                // Force display with inline style and class
+                modal.setAttribute('style', 'display: flex !important; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 99999; align-items: center; justify-content: center;');
+                modal.classList.add('show');
+                console.log('Modal should be visible now, display:', modal.style.display);
+            }
+            
+            window.acknowledgeEvent = function() {
+                const modal = document.getElementById('randomEventModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.classList.remove('show');
+                }
+                
+                if (currentActiveEventId) {
+                    fetch('{{ route("student.events.acknowledge") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                        },
+                        body: JSON.stringify({ active_event_id: currentActiveEventId })
+                    })
+                    .catch(error => console.error('Error acknowledging event:', error));
+                }
+            };
+            
+            // Start polling when page loads
+            function init() {
+                if (checkInterval) clearInterval(checkInterval);
+                checkForEvents(); // Check immediately
+                checkInterval = setInterval(checkForEvents, 3000); // Then every 3 seconds
+            }
+            
+            // Handle both initial load and Turbolinks navigation
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+            
+            document.addEventListener('turbolinks:load', init);
+        })();
     </script>
 </body>
 </html>
