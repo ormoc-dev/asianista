@@ -18,15 +18,26 @@
     </div>
 
     @php
-        $totalQuestions = $quest->questions->count();
+        // Order questions by level, then by id (same order as gameplay)
+        $orderedQuestions = $quest->questions->sortBy('level')->sortBy('id')->values();
+        $totalQuestions = $orderedQuestions->count();
         $completedCount = 0;
         $currentQuestionIndex = 0;
         $status = $attempt->status ?? 'not_started';
 
         if ($attempt) {
-            $currentQuestion = $quest->questions->where('id', $attempt->current_question_id)->first();
-            $currentQuestionIndex = $quest->questions->pluck('id')->search($attempt->current_question_id);
-            $completedCount = $currentQuestionIndex;
+            // Find current question position in ordered list
+            $questionIds = $orderedQuestions->pluck('id')->toArray();
+            $currentQuestionIndex = array_search($attempt->current_question_id, $questionIds);
+            
+            // If found, completed = all questions before current one
+            if ($currentQuestionIndex !== false) {
+                $completedCount = $currentQuestionIndex;
+            } else {
+                // If current_question_id not found, student might be at start
+                $completedCount = 0;
+            }
+            
             if ($status === 'completed') {
                 $completedCount = $totalQuestions;
             }
@@ -72,10 +83,13 @@
 
                 @for($lvl = 1; $lvl <= $quest->level; $lvl++)
                 @php
-                    $levelQuestions = $quest->questions->where('level', $lvl);
+                    $levelQuestions = $orderedQuestions->where('level', $lvl);
                     $totalLvlQuestions = $levelQuestions->count();
                     
-                    // NEW MORE ROBUST STATUS CALCULATION
+                    // Get current question object if exists
+                    $currentQuestion = $attempt ? $orderedQuestions->where('id', $attempt->current_question_id)->first() : null;
+                    
+                    // Status calculation for landmarks
                     $isLvlCompleted = false;
                     $isLvlCurrent = false;
                     $isLvlLocked = true;
@@ -85,7 +99,7 @@
                         $isLvlCompleted = true;
                         $isLvlLocked = false;
                         $completedInLevel = $totalLvlQuestions;
-                    } else if ($attempt && isset($currentQuestion)) {
+                    } else if ($attempt && $currentQuestion) {
                         $currLvl = $currentQuestion->level;
                         
                         if ($lvl < $currLvl) {
@@ -213,9 +227,10 @@
             <p>Complete all tasks to claim your rewards.</p>
         </div>
         <div class="steps-scroll">
-            @foreach($quest->questions as $index => $step)
+            @foreach($orderedQuestions as $index => $step)
             @php
-                $isStepCompleted = ($attempt && $status === 'completed') || ($attempt && $quest->questions->pluck('id')->search($attempt->current_question_id) > $index);
+                // Step is completed if: quest is completed OR current question index > this step's index
+                $isStepCompleted = ($status === 'completed') || ($currentQuestionIndex !== false && $currentQuestionIndex > $index);
                 $isStepCurrent = $attempt && $status === 'started' && $attempt->current_question_id == $step->id;
                 $isStepLocked = !$isStepCompleted && !$isStepCurrent;
             @endphp

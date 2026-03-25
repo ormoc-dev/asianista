@@ -3,465 +3,481 @@
 @section('content')
 
 <style>
-    .user-shell {
-        margin-top: 10px;
+    .page-container {
+        padding: 20px;
     }
 
-    .user-card {
-        background: radial-gradient(circle at top, rgba(191,197,219,0.7), rgba(241,241,224,0.9));
-        border-radius: 18px;
-        padding: 22px 24px 26px;
-        box-shadow: 0 14px 35px rgba(15,23,42,0.35);
-        border: 1px solid rgba(255,255,255,0.7);
-        backdrop-filter: blur(10px);
+    .page-card {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
     }
 
-    .user-card-header {
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 18px;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        flex-wrap: wrap;
+        gap: 16px;
     }
 
-    .user-card-title {
+    .page-title {
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #002366;
+        gap: 12px;
     }
 
-    .user-card-title h2 {
-        font-size: 1.1rem;
+    .page-title i {
+        font-size: 1.5rem;
+        color: #3b82f6;
+    }
+
+    .page-title h2 {
+        font-size: 1.25rem;
         font-weight: 600;
+        color: #1f2937;
+        margin: 0;
     }
 
-    .user-card-title span {
-        font-size: 0.85rem;
-        color: #64748b;
+    .page-title p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 4px 0 0;
     }
 
-    .user-filters {
+    .filter-group {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
     }
 
-    .filter-chip {
-        border: none;
-        border-radius: 999px;
+    .filter-btn {
         padding: 6px 14px;
-        font-size: 0.85rem;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        font-size: 0.875rem;
         font-weight: 500;
+        color: #6b7280;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: rgba(15,23,42,0.06);
-        color: #0f172a;
         transition: all 0.15s ease;
     }
 
-    .filter-chip i {
-        font-size: 0.9rem;
+    .filter-btn:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
     }
 
-    .filter-chip.active,
-    .filter-chip:hover {
-        background: linear-gradient(135deg, #ffd43b, #f5c400);
-        color: #0b1020;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    .filter-btn.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
     }
 
-    .user-stats-row {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-bottom: 12px;
-    }
-
-    .user-stat-pill {
-        flex: 1 1 140px;
-        background: rgba(255,255,255,0.75);
-        border-radius: 999px;
-        padding: 6px 14px;
-        font-size: 0.8rem;
+    .alert {
+        margin: 16px 24px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 0.875rem;
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #0b1020;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
     }
 
-    .user-stat-pill i {
-        color: #f5c400;
+    .stats-row {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        flex-wrap: wrap;
     }
 
-    /* table */
-.user-table-wrapper {
-    margin-top: 10px;
-    background: rgba(255,255,255,0.8);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.22);
-}
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #f9fafb;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
 
-.user-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
+    .stat-item strong {
+        color: #1f2937;
+    }
 
-.user-table thead {
-    background: linear-gradient(90deg, #0f172a, #1e293b);
-    color: #e2e8f0;
-}
+    .stat-item i {
+        color: #9ca3af;
+    }
 
-.user-table th,
-.user-table td {
-    padding: 10px 12px;
-    text-align: left;      /* center all columns */
-    vertical-align: middle;
-}
+    .table-wrapper {
+        overflow-x: auto;
+    }
 
-.user-table th {
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
 
-/* keep the "User" column left-aligned */
-.user-table th:first-child,
-.user-table td:first-child {
-    text-align: left;
-}
+    .data-table thead {
+        background: #f9fafb;
+    }
 
-.user-table tbody tr:nth-child(even) {
-    background: rgba(15,23,42,0.02);
-}
+    .data-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
 
-.user-table tbody tr:hover {
-    background: rgba(254,249,195,0.6);
-}
+    .data-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
     .user-avatar {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        overflow: hidden;
-        box-shadow: 0 0 8px rgba(15,23,42,0.35);
-        margin-right: 8px;
-        flex-shrink: 0;
-    }
-
-    .user-avatar img {
-        width: 100%;
-        height: 100%;
         object-fit: cover;
+        border: 1px solid #e5e7eb;
     }
 
-    .user-main {
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    .user-info .name {
+        font-weight: 500;
+        color: #1f2937;
     }
 
-    .user-main-info {
-        display: flex;
-        flex-direction: column;
+    .user-info .email {
+        font-size: 0.75rem;
+        color: #9ca3af;
     }
 
-    .user-main-info .name {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #0f172a;
-    }
-
-    .user-main-info .email {
-        font-size: 0.78rem;
-        color: #64748b;
-    }
-
-    .role-pill {
+    .role-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        border-radius: 999px;
+        gap: 4px;
         padding: 4px 10px;
-        font-size: 0.78rem;
-        font-weight: 600;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
         text-transform: uppercase;
     }
 
     .role-admin {
-        background: rgba(239,68,68,0.12);
-        color: #b91c1c;
+        background: #fee2e2;
+        color: #991b1b;
     }
 
     .role-teacher {
-        background: rgba(59,130,246,0.12);
+        background: #dbeafe;
         color: #1d4ed8;
     }
 
     .role-student {
-        background: rgba(34,197,94,0.12);
-        color: #15803d;
+        background: #d1fae5;
+        color: #065f46;
     }
 
     .status-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        border-radius: 999px;
-        padding: 2px 10px;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 500;
         text-transform: capitalize;
     }
 
-    .status-pending { background: rgba(245,158,11,0.15); color: #b45309; }
-    .status-approved { background: rgba(16,185,129,0.15); color: #065f46; }
-    .status-rejected { background: rgba(239,68,68,0.15); color: #991b1b; }
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
 
-    .character-pill {
-        font-size: 0.8rem;
-        padding: 4px 9px;
-        border-radius: 999px;
-        background: rgba(15,23,42,0.06);
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .character-tag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: #f3f4f6;
+        color: #6b7280;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
     }
 
-    .character-pill i {
-        color: #f59e0b;
-        font-size: 0.85rem;
-    }
-
-    .xp-label {
+    .xp-info {
         font-size: 0.8rem;
-        color: #475569;
+        color: #6b7280;
     }
 
-    .user-actions {
+    .action-btns {
         display: flex;
         gap: 6px;
     }
 
     .btn-icon {
-        border: none;
-        border-radius: 999px;
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 0.9rem;
-        background: rgba(15,23,42,0.06);
-        color: #0f172a;
+        text-decoration: none;
         transition: all 0.15s ease;
     }
 
+    .btn-icon:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
+
     .btn-icon.view:hover {
-        background: rgba(59,130,246,0.16);
-        color: #1d4ed8;
+        background: #eff6ff;
+        border-color: #3b82f6;
+        color: #3b82f6;
     }
 
     .btn-icon.edit:hover {
-        background: rgba(234,179,8,0.2);
-        color: #b45309;
+        background: #fffbeb;
+        border-color: #f59e0b;
+        color: #f59e0b;
     }
 
     .btn-icon.delete:hover {
-        background: rgba(248,113,113,0.2);
-        color: #b91c1c;
+        background: #fef2f2;
+        border-color: #ef4444;
+        color: #ef4444;
     }
 
-    @media (max-width: 992px) {
-        .user-card {
-            padding: 18px 16px 22px;
-        }
-
-        .user-card-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .user-stats-row {
-            flex-direction: column;
-        }
-
-        .user-table th:nth-child(5),
-        .user-table td:nth-child(5) {
-            display: none; /* hide XP on smaller screens */
-        }
+    .page-footer {
+        padding: 16px 24px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        border-top: 1px solid #e5e7eb;
     }
 
-    @media (max-width: 768px) {
-        main {
-            margin-left: 0;
-        }
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
     }
-        /* === Delete confirmation modal === */
-    .hero-modal-backdrop {
+
+    .empty-state i {
+        font-size: 2.5rem;
+        color: #d1d5db;
+        margin-bottom: 12px;
+    }
+
+    /* Modal */
+    .modal-overlay {
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle at top, rgba(251,191,36,0.08), rgba(15,23,42,0.78));
-        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 9999;
     }
 
-    .hero-modal {
-        background: radial-gradient(circle at top, rgba(254,243,199,0.96), rgba(248,250,252,0.98));
-        border-radius: 18px;
-        padding: 20px 22px 18px;
+    .modal-box {
+        background: #fff;
+        padding: 24px;
+        border-radius: 8px;
         width: 100%;
         max-width: 360px;
-        box-shadow: 0 18px 40px rgba(15,23,42,0.55);
-        border: 1px solid rgba(250,204,21,0.5);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
 
-    .hero-modal-header {
+    .modal-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 12px;
+        margin-bottom: 16px;
     }
 
-    .hero-modal-icon {
+    .modal-icon {
         width: 40px;
         height: 40px;
-        border-radius: 999px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #ef4444;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(circle at top, #f97373, #b91c1c);
-        color: #fefce8;
-        box-shadow: 0 0 14px rgba(248,113,113,0.9);
+        font-size: 1.25rem;
     }
 
-    .hero-modal-title {
-        font-weight: 700;
+    .modal-title {
         font-size: 1rem;
+        font-weight: 600;
         color: #1f2937;
     }
 
-    .hero-modal-body {
-        font-size: 0.85rem;
-        color: #4b5563;
-        margin-bottom: 14px;
+    .modal-body {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 20px;
+        line-height: 1.5;
     }
 
-    .hero-modal-body strong {
-        color: #b91c1c;
+    .modal-body strong {
+        color: #ef4444;
     }
 
-    .hero-modal-actions {
+    .modal-actions {
         display: flex;
         justify-content: flex-end;
         gap: 8px;
-        margin-top: 4px;
     }
 
-    .hero-modal-btn {
-        border-radius: 999px;
-        padding: 6px 14px;
-        font-size: 0.8rem;
-        font-weight: 600;
+    .btn-cancel {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+        background: #f9fafb;
+    }
+
+    .btn-confirm {
+        padding: 8px 16px;
+        border-radius: 6px;
         border: none;
+        background: #ef4444;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        transition: all 0.15s ease;
     }
 
-    .hero-modal-cancel {
-        background: rgba(15,23,42,0.06);
-        color: #0f172a;
-    }
-
-    .hero-modal-cancel:hover {
-        background: rgba(15,23,42,0.12);
-    }
-
-    .hero-modal-confirm {
-        background: linear-gradient(135deg, #f97373, #b91c1c);
-        color: #fefce8;
-        box-shadow: 0 6px 14px rgba(220,38,38,0.6);
-    }
-
-    .hero-modal-confirm:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 18px rgba(220,38,38,0.75);
+    .btn-confirm:hover {
+        background: #dc2626;
     }
 
     .hidden {
         display: none !important;
     }
 
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-group {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .data-table th:nth-child(5),
+        .data-table td:nth-child(5) {
+            display: none;
+        }
+    }
 </style>
 
-<div class="user-shell">
-    <div class="user-card">
-        <div class="user-card-header">
-            <div class="user-card-title">
-                <i class="fas fa-users-cog" style="font-size:1.5rem; color:#f5c400;"></i>
+<div class="page-container">
+    <div class="page-card">
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fas fa-users"></i>
                 <div>
                     <h2>User Management</h2>
-                    <span>Manage all heroes in your realm — teachers and students.</span>
+                    <p>Manage all users in the system</p>
                 </div>
             </div>
 
-            <div class="user-filters">
-                <button class="filter-chip active" data-filter="all">
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">
                     <i class="fas fa-layer-group"></i> All
                 </button>
-                <button class="filter-chip" data-filter="teacher">
+                <button class="filter-btn" data-filter="teacher">
                     <i class="fas fa-chalkboard-teacher"></i> Teachers
                 </button>
-                <button class="filter-chip" data-filter="student">
+                <button class="filter-btn" data-filter="student">
                     <i class="fas fa-user-graduate"></i> Students
                 </button>
             </div>
         </div>
 
-        {{-- Success/Status Alert --}}
         @if (session('status'))
-            <div style="padding: 12px 18px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #065f46; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;">
+            <div class="alert">
                 <i class="fas fa-check-circle"></i>
                 {{ session('status') }}
             </div>
         @endif
 
-        {{-- quick stats --}}
-        <div class="user-stats-row">
-            <div class="user-stat-pill">
+        <div class="stats-row">
+            <div class="stat-item">
                 <i class="fas fa-users"></i>
                 <span><strong>{{ $users->count() }}</strong> total users</span>
             </div>
-            <div class="user-stat-pill">
+            <div class="stat-item">
                 <i class="fas fa-chalkboard-teacher"></i>
                 <span><strong>{{ $users->where('role','teacher')->count() }}</strong> teachers</span>
             </div>
-            <div class="user-stat-pill">
+            <div class="stat-item">
                 <i class="fas fa-user-graduate"></i>
                 <span><strong>{{ $users->where('role','student')->count() }}</strong> students</span>
             </div>
         </div>
 
-        <div class="user-table-wrapper">
-            <table class="user-table">
+        <div class="table-wrapper">
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>User</th>
                         <th>Role</th>
                         <th>Character</th>
-                        <th>Email</th>
                         <th>XP / Level</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -471,16 +487,11 @@
                     @forelse ($users as $user)
                         <tr class="user-row" data-role="{{ $user->role }}">
                             <td>
-                                <div class="user-main">
-                                    <div class="user-avatar">
-                                        @php
-                                            $profilePic = $user->profile_pic ?? 'default-pp.png';
-                                        @endphp
-                                        <img src="{{ asset('images/' . $profilePic) }}" alt="{{ $user->name }}">
-                                    </div>
-                                    <div class="user-main-info">
-                                        <span class="name">{{ $user->name }}</span>
-                                        <span class="email">{{ $user->email }}</span>
+                                <div class="user-cell">
+                                    <img src="{{ asset('images/' . ($user->profile_pic ?? 'default-pp.png')) }}" class="user-avatar" alt="{{ $user->name }}">
+                                    <div class="user-info">
+                                        <div class="name">{{ $user->name }}</div>
+                                        <div class="email">{{ $user->email }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -488,7 +499,7 @@
                                 @php
                                     $roleClass = $user->role === 'admin' ? 'role-admin' : ($user->role === 'teacher' ? 'role-teacher' : 'role-student');
                                 @endphp
-                                <span class="role-pill {{ $roleClass }}">
+                                <span class="role-badge {{ $roleClass }}">
                                     @if($user->role === 'admin')
                                         <i class="fas fa-crown"></i>
                                     @elseif($user->role === 'teacher')
@@ -496,36 +507,29 @@
                                     @else
                                         <i class="fas fa-user-graduate"></i>
                                     @endif
-                                    {{ strtoupper($user->role) }}
+                                    {{ $user->role }}
                                 </span>
                             </td>
                             <td>
                                 @if ($user->character)
-                                    <span class="character-pill">
+                                    <span class="character-tag">
                                         <i class="fas fa-magic"></i>
                                         {{ ucfirst($user->character) }}
                                     </span>
                                 @else
-                                    <span style="font-size:0.8rem; color:#94a3b8;">—</span>
+                                    <span style="color: #d1d5db;">—</span>
                                 @endif
                             </td>
-                            <td>{{ $user->email }}</td>
                             <td>
-                                <span class="xp-label">
-                                    @php
-                                        $xp = $user->xp ?? null;
-                                        $level = $user->level ?? null;
-                                    @endphp
-
-                                    @if($xp || $level)
-                                        Level <strong>{{ $level ?? '01' }}</strong>
-                                        @if($xp)
-                                            • XP {{ number_format($xp) }}
-                                        @endif
-                                    @else
-                                        <span style="font-size:0.8rem; color:#94a3b8;">No data</span>
-                                    @endif
-                                </span>
+                                @php
+                                    $xp = $user->xp ?? null;
+                                    $level = $user->level ?? null;
+                                @endphp
+                                @if($xp || $level)
+                                    <span class="xp-info">Lv. <strong>{{ $level ?? '01' }}</strong> @if($xp) • {{ number_format($xp) }} XP @endif</span>
+                                @else
+                                    <span style="color: #d1d5db; font-size: 0.8rem;">No data</span>
+                                @endif
                             </td>
                             <td>
                                 @php
@@ -537,23 +541,18 @@
                                     {{ $status }}
                                 </span>
                             </td>
-                            <td style="text-align:right;">
-                                <div class="user-actions">
-                                    <a href="{{ route('admin.user-management.show', $user->id) }}" class="btn-icon view" title="View details">
+                            <td>
+                                <div class="action-btns">
+                                    <a href="{{ route('admin.user-management.show', $user->id) }}" class="btn-icon view" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-
-                                    <a href="{{ route('admin.user-management.edit', $user->id) }}" class="btn-icon edit" title="Edit hero">
+                                    <a href="{{ route('admin.user-management.edit', $user->id) }}" class="btn-icon edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-
                                     <form action="{{ route('admin.user-management.destroy', $user->id) }}" method="POST" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
-                                                class="btn-icon delete btn-delete-hero"
-                                                data-username="{{ $user->name }}"
-                                                title="Delete hero">
+                                        <button type="button" class="btn-icon delete btn-delete" data-username="{{ $user->name }}" title="Delete">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
@@ -562,46 +561,49 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align:center; padding:18px; font-size:0.9rem; color:#64748b;">
-                                No users found yet.
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <i class="fas fa-users"></i>
+                                    <p>No users found</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
-            {{-- Delete hero modal --}}
-<div id="deleteHeroModal" class="hero-modal-backdrop hidden">
-    <div class="hero-modal">
-        <div class="hero-modal-header">
-            <div class="hero-modal-icon">
-                <i class="fas fa-skull-crossbones"></i>
-            </div>
-            <div class="hero-modal-title">Banish hero?</div>
         </div>
-        <div class="hero-modal-body">
-            You are about to remove <strong id="deleteHeroName">this hero</strong> from the realm.
-            This cannot be undone. Their progress, XP and records will be lost.
-        </div>
-        <div class="hero-modal-actions">
-            <button type="button" class="hero-modal-btn hero-modal-cancel modal-close-btn">
-                <i class="fas fa-undo-alt"></i> Keep hero
-            </button>
-            <button type="button" class="hero-modal-btn hero-modal-confirm" id="deleteHeroConfirm">
-                <i class="fas fa-fire-alt"></i> Banish
-            </button>
+
+        <div class="page-footer">
+            Total: <strong>{{ $users->count() }}</strong> users
         </div>
     </div>
 </div>
 
-
+<!-- Delete Modal -->
+<div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="modal-title">Delete User?</div>
+        </div>
+        <div class="modal-body">
+            You are about to remove <strong id="deleteUserName">this user</strong>. This action cannot be undone.
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel modal-close">Cancel</button>
+            <button type="button" class="btn-confirm" id="confirmDelete">
+                <i class="fas fa-trash-alt"></i> Delete
+            </button>
         </div>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --------- filter buttons ----------
-        const filterButtons = document.querySelectorAll('.filter-chip');
+        // Filter buttons
+        const filterButtons = document.querySelectorAll('.filter-btn');
         const rows = document.querySelectorAll('.user-row');
 
         filterButtons.forEach(btn => {
@@ -613,59 +615,48 @@
 
                 rows.forEach(row => {
                     const role = row.getAttribute('data-role');
-                    if (filter === 'all' || role === filter) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                    row.style.display = (filter === 'all' || role === filter) ? '' : 'none';
                 });
             });
         });
 
-        // --------- modal general behavior ----------
-        const modals = document.querySelectorAll('.hero-modal-backdrop');
-        const closeBtns = document.querySelectorAll('.modal-close-btn');
-
-        closeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                modals.forEach(m => m.classList.add('hidden'));
-                pendingForm = null;
-            });
-        });
-
-        modals.forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    pendingForm = null;
-                }
-            });
-        });
-
-        // --------- delete hero modal ----------
-        const deleteButtons = document.querySelectorAll('.btn-delete-hero');
-        const deleteModal = document.getElementById('deleteHeroModal');
-        const heroNameSpan = document.getElementById('deleteHeroName');
-        const btnConfirmDelete = document.getElementById('deleteHeroConfirm');
+        // Delete modal
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+        const deleteUserName = document.getElementById('deleteUserName');
+        const confirmDelete = document.getElementById('confirmDelete');
+        const closeButtons = document.querySelectorAll('.modal-close');
 
         let pendingForm = null;
 
         deleteButtons.forEach(btn => {
             btn.addEventListener('click', function () {
-                const username = this.getAttribute('data-username') || 'this hero';
-                heroNameSpan.textContent = username;
+                deleteUserName.textContent = this.getAttribute('data-username') || 'this user';
                 pendingForm = this.closest('form');
                 deleteModal.classList.remove('hidden');
             });
         });
 
-        btnConfirmDelete.addEventListener('click', function () {
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                deleteModal.classList.add('hidden');
+                pendingForm = null;
+            });
+        });
+
+        deleteModal.addEventListener('click', (e) => {
+            if (e.target === deleteModal) {
+                deleteModal.classList.add('hidden');
+                pendingForm = null;
+            }
+        });
+
+        confirmDelete.addEventListener('click', function () {
             if (pendingForm) {
                 pendingForm.submit();
             }
         });
     });
 </script>
-
 
 @endsection

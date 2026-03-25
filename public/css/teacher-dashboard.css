@@ -295,11 +295,16 @@ section {
 }
 
 /* CLICKABLE STATS GRID */
-.teacher-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.stats-grid {
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 10px;
+}
+
+.stats-grid .stat-card {
+    flex: 1 1 calc(16.666% - 16px);
+    min-width: 180px;
 }
 
 .stat-card-link {
@@ -371,9 +376,15 @@ section {
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
 }
 
+@media (max-width: 1200px) {
+    .stats-grid .stat-card {
+        flex: 1 1 calc(25% - 16px);
+    }
+}
+
 @media (max-width: 992px) {
-    .teacher-stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .stats-grid .stat-card {
+        flex: 1 1 calc(33.333% - 16px);
     }
 }
 
@@ -403,7 +414,15 @@ section {
         align-items: flex-start;
     }
 
-    .teacher-stats-grid {
-        grid-template-columns: 1fr;
+    .stats-grid .stat-card {
+        flex: 1 1 calc(50% - 16px);
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid .stat-card {
+        flex: 1 1 100%;
+        min-width: unset;
     }
 }

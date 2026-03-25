@@ -8,7 +8,6 @@ class AIAssistantController extends Controller
 {
     /**
      * Generate quest content based on a topic.
-     * For demonstration, this uses a template-based mock AI.
      */
     public function generateQuest(Request $request)
     {
@@ -55,7 +54,7 @@ class AIAssistantController extends Controller
            - For each level, provide either a Multiple Choice or Identification question.
            - Ensure levels are sequential (1, 2, 3...).
         4. Rewards: Numeric values for XP (100-300), AB (20-60), GP (10-40) based on complexity.
-
+        
         JSON structure:
         {
             \"title\": \"...\",
@@ -107,6 +106,7 @@ class AIAssistantController extends Controller
 
         return $decoded;
     }
+
     /**
      * Generate a single quest question based on a topic and type.
      */
@@ -154,14 +154,14 @@ class AIAssistantController extends Controller
         2. Points: Suggested points (10-50 based on difficulty).
         3. For 'multiple_choice': Return an array of 4 options and the correct answer string.
         4. For 'identification': Return the correct answer string.
-
+        
         JSON structure:
         {
             \"text\": \"...\",
             \"type\": \"{$type}\",
             \"level\": 1,
             \"points\": 10,
-            \"options\": [\"...\", \"...\", \"...\", \"...\"], // Only for multiple_choice
+            \"options\": [\"...\", \"...\", \"...\", \"...\"],
             \"answer\": \"...\"
         }
         
@@ -305,7 +305,6 @@ class AIAssistantController extends Controller
 
         $messages = [['role' => 'system', 'content' => $systemPrompt]];
         
-        // Add history for context (limit to last 5 exchanges to save tokens)
         $recentHistory = array_slice($history, -10);
         foreach ($recentHistory as $chat) {
             $messages[] = ['role' => $chat['role'], 'content' => $chat['content']];
@@ -330,5 +329,196 @@ class AIAssistantController extends Controller
 
         $result = $response->json();
         return $result['choices'][0]['message']['content'] ?? 'The Sage is deep in meditation... (No response received)';
+    }
+
+    /**
+     * Generate lesson content using AI.
+     */
+    public function generateLessonContent(Request $request)
+    {
+        $request->validate([
+            'topic' => 'required|string|max:255',
+            'grade_level' => 'nullable|string',
+            'lesson_type' => 'nullable|string'
+        ]);
+
+        $topic = $request->input('topic');
+        $gradeLevel = $request->input('grade_level', 'general');
+        $lessonType = $request->input('lesson_type', 'lecture');
+
+        try {
+            $content = $this->callGroqForLesson($topic, $gradeLevel, $lessonType);
+            return response()->json([
+                'status' => 'success',
+                'data' => $content
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('AI Lesson Generation Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to generate lesson content.'
+            ], 500);
+        }
+    }
+
+    private function callGroqForLesson($topic, $gradeLevel, $lessonType)
+    {
+        $apiKey = env('GROQ_API_KEY');
+        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+
+        $prompt = "You are an educational content generator for the ASIANISTA learning platform.
+        Create a comprehensive lesson on the following topic:
+
+        Topic: {$topic}
+        Grade Level: {$gradeLevel}
+        Lesson Type: {$lessonType}
+
+        Generate a JSON object with the following structure:
+        {
+            \"title\": \"A clear, engaging lesson title\",
+            \"objectives\": [\"Learning objective 1\", \"Learning objective 2\", \"Learning objective 3\"],
+            \"introduction\": \"A brief introduction to the topic (2-3 paragraphs)\",
+            \"main_content\": \"The main lesson content with key concepts, explanations, and examples\",
+            \"key_points\": [\"Key point 1\", \"Key point 2\", \"Key point 3\", \"Key point 4\"],
+            \"activities\": [\"Suggested activity 1\", \"Suggested activity 2\"],
+            \"summary\": \"A concise summary of the lesson\",
+            \"assessment_questions\": [
+                {\"question\": \"Question text\", \"answer\": \"Expected answer\"}
+            ]
+        }
+
+        Return ONLY valid JSON. No conversational text.";
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => "Bearer {$apiKey}",
+            'Content-Type' => 'application/json',
+        ])->post($endpoint, [
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => [
+                ['role' => 'system', 'content' => "You are a helpful assistant that outputs only JSON."],
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'response_format' => ['type' => 'json_object'],
+            'temperature' => 0.7,
+            'max_tokens' => 2048,
+            'stream' => false
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Groq Request Failed: ' . $response->body());
+        }
+
+        $result = $response->json();
+        $textResponse = $result['choices'][0]['message']['content'] ?? '';
+
+        $decoded = json_decode($textResponse, true);
+
+        if (!$decoded) {
+            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Generate quiz questions using AI.
+     */
+    public function generateQuizQuestions(Request $request)
+    {
+        $request->validate([
+            'topic' => 'required|string|max:255',
+            'num_questions' => 'nullable|integer|min:1|max:20',
+            'question_types' => 'nullable|array',
+            'difficulty' => 'nullable|string|in:easy,medium,hard,mixed'
+        ]);
+
+        $topic = $request->input('topic');
+        $numQuestions = $request->input('num_questions', 5);
+        $questionTypes = $request->input('question_types', ['multiple_choice']);
+        $difficulty = $request->input('difficulty', 'medium');
+
+        try {
+            $questions = $this->callGroqForQuiz($topic, $numQuestions, $questionTypes, $difficulty);
+            return response()->json([
+                'status' => 'success',
+                'data' => $questions
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('AI Quiz Generation Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to generate quiz questions.'
+            ], 500);
+        }
+    }
+
+    private function callGroqForQuiz($topic, $numQuestions, $questionTypes, $difficulty)
+    {
+        $apiKey = env('GROQ_API_KEY');
+        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+
+        $typesStr = implode(', ', $questionTypes);
+
+        $prompt = "You are an educational quiz generator for the ASIANISTA learning platform.
+        Create {$numQuestions} quiz questions on the following topic:
+
+        Topic: {$topic}
+        Question Types: {$typesStr}
+        Difficulty: {$difficulty}
+
+        Generate a JSON object with the following structure:
+        {
+            \"title\": \"A suitable quiz title\",
+            \"description\": \"A brief description of the quiz\",
+            \"questions\": [
+                {
+                    \"question\": \"The question text\",
+                    \"type\": \"multiple_choice\",
+                    \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],
+                    \"answer\": \"The correct answer\",
+                    \"points\": 10
+                },
+                {
+                    \"question\": \"The question text\",
+                    \"type\": \"identification\",
+                    \"answer\": \"The correct answer\",
+                    \"points\": 10
+                }
+            ]
+        }
+
+        Make sure questions are educational, clear, and appropriate for the topic.
+        For identification questions, do not include options.
+        Return ONLY valid JSON. No conversational text.";
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => "Bearer {$apiKey}",
+            'Content-Type' => 'application/json',
+        ])->post($endpoint, [
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => [
+                ['role' => 'system', 'content' => "You are a helpful assistant that outputs only JSON."],
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'response_format' => ['type' => 'json_object'],
+            'temperature' => 0.7,
+            'max_tokens' => 2048,
+            'stream' => false
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Groq Request Failed: ' . $response->body());
+        }
+
+        $result = $response->json();
+        $textResponse = $result['choices'][0]['message']['content'] ?? '';
+
+        $decoded = json_decode($textResponse, true);
+
+        if (!$decoded) {
+            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        }
+
+        return $decoded;
     }
 }

@@ -1106,8 +1106,14 @@ function addExtraTime() {
     extraTimeAdded += 30; // Add 30 seconds
     timeRemaining += 30;
     
-    // Remove warning if time is now sufficient
+    // Update timer display immediately
+    const timerDisplay = document.getElementById('timer-count');
     const timerContainer = document.getElementById('quest-timer');
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Remove warning if time is now sufficient
     if (timeRemaining > 30) {
         timerContainer.classList.remove('warning');
     }
@@ -1234,12 +1240,6 @@ function eliminateWrongAnswer() {
     return false;
 }
 
-function addExtraTime() {
-    // Placeholder for time extension logic
-    // This would integrate with a timer system if implemented
-    console.log('Extra time added!');
-}
-
 function showBattle(outcome, message, onContinue) {
     const modal    = document.getElementById('quest-feedback-modal');
     const result   = document.getElementById('battle-result');
@@ -1314,33 +1314,30 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
             if (result.new_hp !== undefined) {
                 updateHPDisplay(result.new_hp);
             }
-            showBattle('victory', result.message, () => window.location.href = result.next_url);
+            
+            // Check if answer was correct or wrong (both proceed now)
+            const isCorrect = result.correct !== false;
+            const outcome = isCorrect ? 'victory' : 'defeat';
+            
+            // Check if Shield Guard or Revive/Focus Aura protected from HP loss
+            const wasProtected = activePower && (activePower === 'shield' || activePower === 'revive' || activePower === 'focus');
+            const protectedMessage = wasProtected && !isCorrect ? ' (Power protected you from HP loss!)' : '';
+            
+            showBattle(outcome, result.message + protectedMessage, () => window.location.href = result.next_url);
         } else {
             // Update HP display if HP was deducted
             if (result.new_hp !== undefined) {
                 updateHPDisplay(result.new_hp);
             }
             
-            // Check if Shield Guard or Revive/Focus Aura is active
-            if (activePower === 'shield' || activePower === 'revive' || activePower === 'focus') {
-                showBattle('defeat', result.message + ' (Power protected you from HP loss!)', () => {
-                    modal.style.display = 'none';
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                    document.getElementById('dragon-fire').classList.remove('active');
-                    document.getElementById('hero-fire').classList.remove('active');
-                    document.getElementById('hero-sprite').classList.remove('hit');
-                });
-            } else {
-                showBattle('defeat', result.message, () => {
-                    modal.style.display = 'none';
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                    document.getElementById('dragon-fire').classList.remove('active');
-                    document.getElementById('hero-fire').classList.remove('active');
-                    document.getElementById('hero-sprite').classList.remove('hit');
-                });
-            }
+            showBattle('defeat', result.message, () => {
+                modal.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                document.getElementById('dragon-fire').classList.remove('active');
+                document.getElementById('hero-fire').classList.remove('active');
+                document.getElementById('hero-sprite').classList.remove('hit');
+            });
         }
     } catch (error) {
         console.error('Submission error:', error);
