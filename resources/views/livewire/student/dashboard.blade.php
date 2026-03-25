@@ -1,4 +1,4 @@
-<div class="dashboard-shell-1">
+<div class="rpg-dashboard">
     @php
         $user = Auth::user();
         $currentHP = $user?->hp ?? 0;
@@ -8,131 +8,145 @@
         $characterData = $user?->getCharacterData();
         $powers = $characterData['abilities'] ?? [];
     @endphp
-    <div class="dashboard-left-col">
-        <div class="shell-top">
-            <div class="stats-container">
-                <div class="stat-icon-group">
-                    <div class="stat-meta">
-                        <span><i class="fas fa-heart"></i> Health (HP)</span>
-                        <span>{{ $currentHP }} / {{ $maxHP }} HP</span>
+
+   
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div class="dashboard-grid">
+        <!-- LEFT COLUMN: COMBINED CHARACTER PANEL -->
+        <div class="dashboard-column left-column">
+            <div class="rpg-panel character-panel">
+                <!-- CHARACTER HEADER -->
+                <div class="character-header">
+                    <div class="character-avatar-ring">
+                        <img src="{{ asset('images/' . ($user?->profile_pic ?? 'default-pp.png')) }}" alt="Avatar" class="character-avatar">
+                        <div class="character-level-badge">{{ $user?->level ?? 5 }}</div>
                     </div>
-                    <div class="icon-row">
-                        @for($i = 0; $i < 10; $i++)
-                            @if($i < ceil($currentHP / 10))
-                                <i class="fas fa-heart hp-heart"></i>
-                            @else
-                                <i class="far fa-heart hp-heart empty"></i>
-                            @endif
-                        @endfor
+                    <div class="character-info">
+                        <h2 class="character-name">{{ $user?->name ?? 'Adventurer' }}</h2>
+                        <span class="character-class">{{ $characterData['name'] ?? 'Novice' }}</span>
                     </div>
                 </div>
 
-                <div class="stat-icon-group">
-                    <div class="stat-meta">
-                        <span><i class="fas fa-bolt"></i> Action Points (AP)</span>
-                        <span>{{ $currentAP }} / {{ $maxAP }} AP</span>
+                <!-- SCROLLABLE CONTENT -->
+                <div class="character-scrollable">
+                    <!-- STATUS BARS SECTION -->
+                    <div class="section-title"><i class="fas fa-chart-bar"></i> Status</div>
+                    <div class="compact-stats">
+                        <!-- HP Stat -->
+                        <div class="compact-stat hp-stat">
+                            <div class="compact-stat-header">
+                                <span class="compact-stat-label"><i class="fas fa-heart"></i> HP</span>
+                                <span class="compact-stat-value">{{ $currentHP }}/{{ $maxHP }}</span>
+                            </div>
+                            <div class="compact-progress-bg">
+                                <div class="compact-progress-fill hp-fill" style="width: {{ ($currentHP / $maxHP) * 100 }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- AP Stat -->
+                        <div class="compact-stat ap-stat">
+                            <div class="compact-stat-header">
+                                <span class="compact-stat-label"><i class="fas fa-bolt"></i> AP</span>
+                                <span class="compact-stat-value">{{ $currentAP }}/{{ $maxAP }}</span>
+                            </div>
+                            <div class="compact-progress-bg">
+                                <div class="compact-progress-fill ap-fill" style="width: {{ ($currentAP / $maxAP) * 100 }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- XP Stat -->
+                        <div class="compact-stat xp-stat">
+                            <div class="compact-stat-header">
+                                <span class="compact-stat-label"><i class="fas fa-star"></i> XP</span>
+                                <span class="compact-stat-value">68%</span>
+                            </div>
+                            <div class="compact-progress-bg">
+                                <div class="compact-progress-fill xp-fill" style="width: 68%"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="icon-row">
-                        @for($i = 0; $i < 10; $i++)
-                            @if($i < ceil($currentAP / 10))
-                                <i class="fas fa-bolt xp-star" style="color: #3b82f6;"></i>
-                            @else
-                                <i class="far fa-bolt xp-star empty" style="color: #e2e8f0;"></i>
-                            @endif
-                        @endfor
+
+                    <!-- POWERS SECTION -->
+                    <div class="section-title"><i class="fas fa-magic"></i> Powers</div>
+                    <div class="compact-powers">
+                        @forelse($powers as $powerName => $powerDesc)
+                            <div class="compact-power" title="{{ $powerDesc }}">
+                                <div class="compact-power-icon">
+                                    @switch(strtolower($powerName))
+                                        @case('spell of insight') @case('power strike') @case('healing light')
+                                            <i class="fas fa-hand-sparkles"></i>
+                                            @break
+                                        @case('mana boost') @case('streak master') @case('team blessing')
+                                            <i class="fas fa-arrow-up"></i>
+                                            @break
+                                        @case('time warp') @case('shield guard') @case('revive')
+                                            <i class="fas fa-shield-alt"></i>
+                                            @break
+                                        @case('knowledge burst') @case('battle rush') @case('focus aura')
+                                            <i class="fas fa-bolt"></i>
+                                            @break
+                                        @case('arcane analysis') @case('challenge duel') @case('wisdom share')
+                                            <i class="fas fa-brain"></i>
+                                            @break
+                                        @default
+                                            <i class="fas fa-star"></i>
+                                    @endswitch
+                                </div>
+                                <span class="compact-power-name">{{ $powerName }}</span>
+                            </div>
+                        @empty
+                            <div class="compact-power locked">
+                                <div class="compact-power-icon"><i class="fas fa-lock"></i></div>
+                                <span class="compact-power-name">No Powers</span>
+                            </div>
+                        @endforelse
                     </div>
+
+                    <!-- ACTIVE QUEST SECTION -->
+                    <div class="section-title"><i class="fas fa-scroll"></i> Active Quest</div>
+                    @if(isset($activeQuest) && $activeQuest)
+                        <div class="compact-quest" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id) }}')">
+                            <div class="compact-quest-header">
+                                <span class="compact-quest-title">{{ \Illuminate\Support\Str::limit($activeQuest->title, 30) }}</span>
+                                <span class="compact-quest-diff {{ strtolower($activeQuest->difficulty ?? 'medium') }}">{{ $activeQuest->difficulty ?? 'Medium' }}</span>
+                            </div>
+                            <p class="compact-quest-desc">{{ \Illuminate\Support\Str::limit($activeQuest->description, 80) }}</p>
+                            <div class="compact-quest-rewards">
+                                <span class="compact-reward xp"><i class="fas fa-bolt"></i> +{{ $activeQuest->xp_reward ?? 0 }}</span>
+                                <span class="compact-reward gp"><i class="fas fa-coins"></i> +{{ $activeQuest->gp_reward ?? 0 }}</span>
+                            </div>
+                            <div class="compact-quest-action">
+                                <span>Start Quest</span>
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    @else
+                        <div class="compact-quest-empty">
+                            <i class="fas fa-scroll"></i>
+                            <p>No active quests available</p>
+                        </div>
+                    @endif
                 </div>
             </div>
+        </div>
 
-            <div class="powers-title">
-                <i class="fas fa-magic"></i> {{ $characterData['name'] ?? 'Character' }} Powers
-            </div>
-            <div class="powers-grid">
-                @forelse($powers as $powerName => $powerDesc)
-                    <div class="power-item" title="{{ $powerDesc }}">
-                        <div class="power-icon">
-                            @switch(strtolower($powerName))
-                                @case('spell of insight') @case('power strike') @case('healing light')
-                                    <i class="fas fa-hand-sparkles"></i>
-                                    @break
-                                @case('mana boost') @case('streak master') @case('team blessing')
-                                    <i class="fas fa-arrow-up"></i>
-                                    @break
-                                @case('time warp') @case('shield guard') @case('revive')
-                                    <i class="fas fa-shield-alt"></i>
-                                    @break
-                                @case('knowledge burst') @case('battle rush') @case('focus aura')
-                                    <i class="fas fa-bolt"></i>
-                                    @break
-                                @case('arcane analysis') @case('challenge duel') @case('wisdom share')
-                                    <i class="fas fa-brain"></i>
-                                    @break
-                                @default
-                                    <i class="fas fa-star"></i>
-                            @endswitch
-                        </div>
-                        <div class="power-info">
-                            <h4>{{ $powerName }}</h4>
-                            <p>{{ \Illuminate\Support\Str::limit($powerDesc, 40) }}</p>
-                        </div>
-                    </div>
-                @empty
-                    <div class="power-item">
-                        <div class="power-icon"><i class="fas fa-question"></i></div>
-                        <div class="power-info">
-                            <h4>No Powers</h4>
-                            <p>Complete registration to unlock powers</p>
-                        </div>
-                    </div>
-                @endforelse
-            </div>
-
-            <div class="quest-card" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id ?? 0) }}')" style="cursor: pointer;">
-                @if(isset($activeQuest) && $activeQuest)
-                    <div class="quest-card-header">
-                        <div class="quest-card-title">
-                            <i class="fas fa-scroll"></i> Current Quest
-                        </div>
-                        <span class="quest-card-diff {{ strtolower($activeQuest->difficulty ?? 'medium') }}">
-                            {{ $activeQuest->difficulty ?? 'Medium' }}
-                        </span>
-                    </div>
-                    <div class="quest-card-body">
-                        <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: white;">{{ $activeQuest->title }}</h3>
-                        <p>{{ \Illuminate\Support\Str::limit($activeQuest->description, 100) }}</p>
-                        
-                        <div class="quest-card-rewards">
-                            <div class="reward-pill xp">
-                                <i class="fas fa-bolt"></i> +{{ $activeQuest->xp_reward ?? 0 }} XP
+        <!-- RIGHT COLUMN: MAP -->
+        <div class="dashboard-column right-column">
+            <div class="rpg-panel map-panel">
+                <div class="panel-header">
+                    <div class="panel-icon"><i class="fas fa-map-marked-alt"></i></div>
+                    <h3 class="panel-title">Quest Map</h3>
+                </div>
+                <div class="map-container">
+                    <div id="embedded-map-container" class="embedded-map-section">
+                        <div class="map-placeholder">
+                            <div class="placeholder-icon">
+                                <i class="fas fa-compass"></i>
                             </div>
-                            <div class="reward-pill gp">
-                                <i class="fas fa-coins"></i> +{{ $activeQuest->gp_reward ?? 0 }} GP
-                            </div>
+                            <h4>Adventure Awaits</h4>
+                            <p>Select a quest to reveal your path through ASIANISTA</p>
                         </div>
-                    </div>
-                    <div class="quest-card-footer">
-                        <div class="btn-quest-action-preview">
-                            View Map & Adventure <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
-                @else
-                    <div class="quest-empty-state">
-                        <i class="fas fa-scroll"></i>
-                        <p>No active quests at the moment.<br>Check back later for new adventures!</p>
-                    </div>
-                @endif
-            </div> 
-        </div> <!-- End shell-top -->
-    </div> <!-- End Left Column -->
-
-    <div class="dashboard-right-col">
-        <!-- SEPARATE QUEST MAP CARD -->
-        <div class="quest-map-card">
-            <div class="quest-map-card-body">
-                <div id="embedded-map-container" class="embedded-map-section">
-                    <div class="map-placeholder">
-                        <i class="fas fa-compass" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
-                        <p>Select your quest to reveal the path through ASIANISTA...</p>
                     </div>
                 </div>
             </div>
