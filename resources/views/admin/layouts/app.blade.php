@@ -602,6 +602,9 @@
                 <a href="{{ route('admin.target-audience') }}" class="nav-link {{ request()->routeIs('admin.target-audience*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i> Target Audience
                 </a>
+                <a href="{{ route('admin.random-events.index') }}" class="nav-link {{ request()->routeIs('admin.random-events*') ? 'active' : '' }}">
+                    <i class="fas fa-dice"></i> Random Events
+                </a>
             </div>
 
             <div class="nav-section">

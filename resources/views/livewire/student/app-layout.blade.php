@@ -243,6 +243,247 @@
             font-weight: 700 !important;
             white-space: nowrap !important;
         }
+
+        /* NEW SIDEBAR RPG STYLES */
+        .sidebar-header {
+            padding: 25px 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-ring {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            flex-shrink: 0;
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #1e293b;
+        }
+
+        .level-badge {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            background: #fbbf24;
+            color: #1e293b;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #1e293b;
+        }
+
+        .player-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .player-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-class {
+            font-size: 0.75rem;
+            color: #fbbf24;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .xp-section {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+            padding: 12px 15px;
+        }
+
+        .xp-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .xp-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .xp-value {
+            font-size: 0.75rem;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .xp-progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .xp-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .sidebar-nav {
+            padding: 15px 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .nav-label {
+            display: block;
+            font-size: 0.65rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 10px;
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .nav-icon i {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-item:hover .nav-icon,
+        .nav-item.active .nav-icon {
+            background: rgba(251, 191, 36, 0.15);
+        }
+
+        .nav-item:hover .nav-icon i,
+        .nav-item.active .nav-icon i {
+            color: #fbbf24;
+        }
+
+        .nav-item.logout {
+            color: #f87171;
+        }
+
+        .nav-item.logout .nav-icon i {
+            color: #f87171;
+        }
+
+        .nav-item.logout:hover {
+            background: rgba(248, 113, 113, 0.1);
+            color: #ef4444;
+        }
+
+        .nav-item.logout:hover .nav-icon {
+            background: rgba(248, 113, 113, 0.15);
+        }
+
+        /* Collapsed Sidebar */
+        aside.collapsed .avatar-section {
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        aside.collapsed .avatar-ring {
+            width: 45px;
+            height: 45px;
+        }
+
+        aside.collapsed .level-badge {
+            width: 18px;
+            height: 18px;
+            font-size: 0.6rem;
+        }
+
+        aside.collapsed .player-info,
+        aside.collapsed .xp-section,
+        aside.collapsed .nav-label,
+        aside.collapsed .nav-item span {
+            display: none;
+        }
+
+        aside.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        aside.collapsed .nav-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        aside.collapsed .nav-section {
+            margin-bottom: 10px;
+        }
+
+        aside.collapsed .sidebar-footer {
+            font-size: 0.5rem;
+            padding: 10px 5px;
+        }
     </style>
 </head>
 <body>
@@ -254,47 +495,85 @@
                     $user = Auth::user();
                     $profilePic = $user?->profile_pic ?? 'default-pp.png';
                     $userName = $user?->name ?? 'Student';
+                    $userXP = $user?->xp ?? 0;
+                    $userLevel = floor($userXP / 100) + 1;
+                    $xpForNextLevel = $userLevel * 100;
+                    $xpProgress = ($userXP % 100);
                 @endphp
-                <div class="logo-circle">
-                    <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="sidebar-logo">
-                </div>
-                <div class="player-tag">{{ $userName }}</div>
                 
-                @if ($user?->character)
-                    <div class="character-name">{{ ucfirst($user->character) }}</div>
-                @endif
+                <!-- Avatar Section -->
+                <div class="avatar-section">
+                    <div class="avatar-ring">
+                        <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="avatar-img">
+                        <div class="level-badge">{{ $userLevel }}</div>
+                    </div>
+                    <div class="player-info">
+                        <div class="player-name">{{ $userName }}</div>
+                        <div class="player-class">{{ ucfirst($user?->character ?? 'Adventurer') }}</div>
+                    </div>
+                </div>
 
-                <div class="sidebar-level">Level <span>05</span> • 3,420 XP</div>
-                <div class="xp-bar"><div class="xp-fill"></div></div>
+                <!-- XP Progress -->
+                <div class="xp-section">
+                    <div class="xp-info">
+                        <span class="xp-label">XP</span>
+                        <span class="xp-value">{{ $userXP }} / {{ $xpForNextLevel }}</span>
+                    </div>
+                    <div class="xp-progress-bar">
+                        <div class="xp-progress-fill" style="width: {{ $xpProgress }}%"></div>
+                    </div>
+                </div>
             </div>
 
-            <nav>
-                <a href="{{ route('student.dashboard') }}" class="{{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i><span>Dashboard</span>
-                </a>
-                <a href="{{ route('student.quest') }}" class="{{ request()->routeIs('student.quest') ? 'active' : '' }}">
-                    <i class="fas fa-map-signs"></i><span>Quest</span>
-                </a>
-                <a href="{{ route('student.registration') }}" class="{{ request()->routeIs('student.registration') ? 'active' : '' }}">
-                    <i class="fas fa-id-card"></i><span>Registration</span>
-                </a>
-                <a href="{{ route('student.messages') }}" class="{{ request()->routeIs('student.messages') ? 'active' : '' }}">
-                    <i class="fas fa-comments"></i><span>Messages</span>
-                </a>
-                <a href="{{ route('student.lessons') }}" class="{{ request()->routeIs('student.lessons') ? 'active' : '' }}">
-                    <i class="fas fa-book-open"></i><span>Lessons</span>
-                </a>
-                <a href="{{ route('student.performance') }}" class="{{ request()->routeIs('student.performance') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line"></i><span>Performance</span>
-                </a>
-                <a href="{{ route('student.feedback') }}" class="{{ request()->routeIs('student.feedback') ? 'active' : '' }}">
-                    <i class="fas fa-comment-dots"></i><span>Feedback</span>
-                </a>
-                
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
-                <a href="#" class="logout-link" onclick="event.preventDefault(); showLogoutModal();">
-                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-                </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-label">Main</span>
+                    <a href="{{ route('student.dashboard') }}" class="nav-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-home"></i></div>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ route('student.quest') }}" class="nav-item {{ request()->routeIs('student.quest') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-map-signs"></i></div>
+                        <span>Quests</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-label">Learning</span>
+                    <a href="{{ route('student.lessons') }}" class="nav-item {{ request()->routeIs('student.lessons') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-book-open"></i></div>
+                        <span>Lessons</span>
+                    </a>
+                    <a href="{{ route('student.quizzes') }}" class="nav-item {{ request()->routeIs('student.quizzes') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-clipboard-check"></i></div>
+                        <span>Quizzes</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-label">Social</span>
+                    <a href="{{ route('student.messages') }}" class="nav-item {{ request()->routeIs('student.messages') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-comments"></i></div>
+                        <span>Messages</span>
+                    </a>
+                    <a href="{{ route('student.feedback') }}" class="nav-item {{ request()->routeIs('student.feedback') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-comment-dots"></i></div>
+                        <span>Feedback</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-label">Account</span>
+                    <a href="{{ route('student.registration') }}" class="nav-item {{ request()->routeIs('student.registration') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-id-card"></i></div>
+                        <span>Registration</span>
+                    </a>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
+                    <a href="#" class="nav-item logout" onclick="event.preventDefault(); showLogoutModal();">
+                        <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </nav>
         </div>
 

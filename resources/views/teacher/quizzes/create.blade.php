@@ -150,7 +150,7 @@
                         <input type="checkbox" id="typeMultiple" checked> Multiple Choice
                     </label>
                     <label>
-                        <input type="checkbox" id=" typeId"> Identification
+                        <input type="checkbox" id="typeId"> Identification
                     </label>
                 </div>
             </div>
@@ -245,12 +245,15 @@ function addQuestionCard(data = null) {
     const questionType = data ? data.type : 'multiple_choice';
     const points = data ? (data.points || 10) : 10;
     
+    const isIdentification = questionType === 'identification';
+    const requiredAttr = isIdentification ? '' : 'required';
+    
     let optionsHtml = '';
     if (data && data.options && data.options.length > 0) {
         data.options.forEach((opt, i) => {
             optionsHtml += `
                 <div class="option-item">
-                    <input type="text" name="questions[${questionIndex}][options][]" class="form-control" value="${opt}" placeholder="Option text" required>
+                    <input type="text" name="questions[${questionIndex}][options][]" class="form-control" value="${opt}" placeholder="Option text" ${requiredAttr}>
                     <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
                 </div>
             `;
@@ -258,7 +261,7 @@ function addQuestionCard(data = null) {
     } else {
         optionsHtml = `
             <div class="option-item">
-                <input type="text" name="questions[${questionIndex}][options][]" class="form-control" placeholder="Option text" required>
+                <input type="text" name="questions[${questionIndex}][options][]" class="form-control" placeholder="Option text" ${requiredAttr}>
                 <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
             </div>
         `;
@@ -312,9 +315,13 @@ document.getElementById('questions-wrapper').addEventListener('click', e => {
         const card = e.target.closest('.question-card');
         const idx = card.dataset.index;
         const container = card.querySelector('.options-container');
+        const typeSelect = card.querySelector('.question-type');
+        const isIdentification = typeSelect && typeSelect.value === 'identification';
+        const requiredAttr = isIdentification ? '' : 'required';
+        
         const newOpt = document.createElement('div');
         newOpt.classList.add('option-item');
-        newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" class="form-control" placeholder="Option text" required>
+        newOpt.innerHTML = `<input type="text" name="questions[${idx}][options][]" class="form-control" placeholder="Option text" ${requiredAttr}>
                             <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>`;
         container.insertBefore(newOpt, e.target.closest('.add-option-btn'));
     }
@@ -324,12 +331,19 @@ document.getElementById('questions-wrapper').addEventListener('click', e => {
 document.getElementById('questions-wrapper').addEventListener('change', e => {
     if(e.target.classList.contains('question-type')) {
         const card = e.target.closest('.question-card');
+        const optionsContainer = card.querySelector('.options-container');
+        const optionInputs = optionsContainer.querySelectorAll('input[type="text"][name*="[options]"]');
+        
         if(e.target.value === 'multiple_choice') {
-            card.querySelector('.options-container').style.display = '';
+            optionsContainer.style.display = '';
             card.querySelector('.identification-answer').style.display = 'none';
+            // Add required back to option inputs
+            optionInputs.forEach(input => input.setAttribute('required', 'required'));
         } else {
-            card.querySelector('.options-container').style.display = 'none';
+            optionsContainer.style.display = 'none';
             card.querySelector('.identification-answer').style.display = '';
+            // Remove required from option inputs to prevent validation errors
+            optionInputs.forEach(input => input.removeAttribute('required'));
         }
     }
 });

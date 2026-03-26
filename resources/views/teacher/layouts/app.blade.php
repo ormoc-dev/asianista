@@ -395,17 +395,25 @@
         }
 
         /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 24px;
-        }
+       .stats-grid {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.stats-grid .stat-card {
+    flex: 1 0 calc(16.666% - 16px);
+    min-width: 160px;
+    max-width: calc(16.666% - 16px);
+}
+
 
         .stat-card {
             background: var(--bg-card);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 15px;
             border: 1px solid var(--border);
             display: flex;
             align-items: flex-start;
@@ -565,13 +573,53 @@
             }
         }
 
-        @media (max-width: 640px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
+        @media (max-width: 1400px) {
+            .stats-grid .stat-card {
+                flex: 1 0 calc(20% - 16px);
+                max-width: calc(20% - 16px);
             }
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid .stat-card {
+                flex: 1 0 calc(25% - 16px);
+                max-width: calc(25% - 16px);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stats-grid {
+                flex-wrap: wrap;
+            }
+            
+            .stats-grid .stat-card {
+                flex: 1 1 calc(33.333% - 16px);
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                flex-wrap: wrap;
+            }
+            
+            .stats-grid .stat-card {
+                flex: 1 1 calc(50% - 16px);
+                min-width: 140px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 640px) {
 
             .header {
                 padding: 12px 16px;
+            }
+
+            .stats-grid .stat-card {
+                flex: 1 1 100%;
+                min-width: unset;
+                max-width: none;
             }
 
             .page-title {
@@ -898,6 +946,13 @@
         <div class="content">
             @if(session('success'))
                 <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div class="alert alert-success" style="margin-bottom: 20px;">
                     <i class="fas fa-check-circle"></i>
                     {{ session('success') }}
                 </div>

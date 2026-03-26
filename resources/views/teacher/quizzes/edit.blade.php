@@ -85,7 +85,14 @@
                     </div>
                     <div class="options-container" style="{{ $question->type=='multiple_choice' ? '' : 'display:none;' }}">
                         <label class="form-label">Options</label>
-                        @foreach(json_decode($question->options) ?? [] as $optIndex => $option)
+                        @php
+                            $choices = $question->choices;
+                            if (is_string($choices)) {
+                                $choices = json_decode($choices, true) ?? [];
+                            }
+                            $choices = $choices ?? [];
+                        @endphp
+                        @foreach($choices as $optIndex => $option)
                         <div class="option-item">
                             <input type="text" name="questions[{{ $qIndex }}][options][]" class="form-control" value="{{ old("questions.$qIndex.options.$optIndex", $option) }}" placeholder="Option text" required>
                             <button type="button" class="btn btn-sm btn-danger remove-option-btn"><i class="fas fa-times"></i></button>
@@ -96,12 +103,16 @@
                         </button>
                         <div class="form-group" style="margin-top: 12px;">
                             <label class="form-label">Correct Answer</label>
-                            <input type="text" name="questions[{{ $qIndex }}][answer]" class="form-control" value="{{ old("questions.$qIndex.answer", $question->answer) }}">
+                            <input type="text" name="questions[{{ $qIndex }}][answer]" class="form-control" value="{{ old("questions.$qIndex.answer", $question->correct_answer) }}">
                         </div>
                     </div>
                     <div class="form-group identification-answer" style="{{ $question->type=='identification' ? '' : 'display:none;' }}">
                         <label class="form-label">Answer</label>
-                        <input type="text" name="questions[{{ $qIndex }}][answer]" class="form-control" value="{{ old("questions.$qIndex.answer", $question->answer) }}">
+                        <input type="text" name="questions[{{ $qIndex }}][answer]" class="form-control" value="{{ old("questions.$qIndex.answer", $question->correct_answer) }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Points</label>
+                        <input type="number" name="questions[{{ $qIndex }}][points]" class="form-control" value="{{ old("questions.$qIndex.points", $question->points ?? 10) }}" min="1" max="100" style="width: 100px;">
                     </div>
                 </div>
                 @endforeach
@@ -122,7 +133,7 @@
         </form>
     </div>
 </div>
-@endpush
+@endsection
 
 @push('scripts')
 <script>
@@ -165,6 +176,10 @@ document.getElementById('add-question-btn').addEventListener('click', () => {
         <div class="form-group identification-answer" style="display:none;">
             <label class="form-label">Answer</label>
             <input type="text" name="questions[${questionIndex}][answer]" class="form-control" placeholder="Enter answer">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Points</label>
+            <input type="number" name="questions[${questionIndex}][points]" class="form-control" value="10" min="1" max="100" style="width: 100px;">
         </div>
     `;
     wrapper.appendChild(qCard);

@@ -74,6 +74,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
         Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
         Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
+        Route::post('/feedback/send', [TeacherController::class, 'sendFeedback'])->name('feedback.send');
+        Route::get('/reports/student/{id}', [TeacherReportsController::class, 'studentDetail'])->name('reports.student');
         // Route::get('/reports', [TeacherController::class, 'reports'])->name('reports'); // Replaced by TeacherReportsController
         Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
         Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
@@ -88,6 +90,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
         Route::get('/data', [AdminController::class, 'data'])->name('data');
         Route::get('/security', [AdminController::class, 'security'])->name('security');
+        
+        // Random Events Management (Admin Only)
+        Route::get('/random-events', [App\Http\Controllers\AdminRandomEventController::class, 'index'])->name('random-events.index');
+        Route::get('/random-events/create', [App\Http\Controllers\AdminRandomEventController::class, 'create'])->name('random-events.create');
+        Route::post('/random-events', [App\Http\Controllers\AdminRandomEventController::class, 'store'])->name('random-events.store');
+        Route::get('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'show'])->name('random-events.show');
+        Route::get('/random-events/{randomEvent}/edit', [App\Http\Controllers\AdminRandomEventController::class, 'edit'])->name('random-events.edit');
+        Route::put('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'update'])->name('random-events.update');
+        Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'destroy'])->name('random-events.destroy');
+        Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\AdminRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
+        
         // show
         Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
             ->name('user-management.show');
@@ -127,6 +140,7 @@ Route::get('/download/{id}', [TeacherLessonController::class, 'download'])->name
 // STUDENT LESSON ROUTES
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/lessons', [StudentLessonController::class, 'index'])->name('lessons');
+    Route::get('/lessons/{id}', [StudentLessonController::class, 'show'])->name('lessons.show');
     Route::get('/lessons/download/{id}', [StudentLessonController::class, 'download'])->name('lessons.download');
 });
 
@@ -149,6 +163,7 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quizzes/create', [TeacherQuizController::class, 'create'])->name('quizzes.create');
     Route::post('/quizzes/store', [TeacherQuizController::class, 'store'])->name('quizzes.store');
     Route::get('/quizzes/{quiz}/edit', [TeacherQuizController::class, 'edit'])->name('quizzes.edit');
+    Route::get('/quizzes/{quiz}/scores', [TeacherQuizController::class, 'scores'])->name('quizzes.scores');
     Route::put('/quizzes/{quiz}', [TeacherQuizController::class, 'update'])->name('quizzes.update');
     Route::delete('/quizzes/{quiz}', [TeacherQuizController::class, 'destroy'])->name('quizzes.destroy');
 });
@@ -173,8 +188,10 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
 // STUDENT
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/quizzes', [StudentQuizController::class, 'index'])->name('quizzes');
+    Route::get('/quizzes/history', [StudentQuizController::class, 'history'])->name('quizzes.history');
     Route::get('/quizzes/take/{id}', [StudentQuizController::class, 'take'])->name('quizzes.take');
     Route::post('/quizzes/submit/{id}', [StudentQuizController::class, 'submit'])->name('quizzes.submit');
+    Route::get('/quizzes/result/{id}', [StudentQuizController::class, 'result'])->name('quizzes.result');
 });
 
 // AI ASSISTANT ROUTES
@@ -260,16 +277,9 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');
     Route::get('/quest/{quest}', [TeacherQuestController::class, 'show'])->name('quest.show');
     
-    // Random Events Routes
+    // Random Events Routes (Teacher - Draw Only)
     Route::get('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'index'])->name('random-events.index');
-    Route::get('/random-events/create', [App\Http\Controllers\TeacherRandomEventController::class, 'create'])->name('random-events.create');
-    Route::post('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'store'])->name('random-events.store');
-    Route::get('/random-events/draw', [App\Http\Controllers\TeacherRandomEventController::class, 'drawRandom'])->name('random-events.draw');
-    Route::get('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'show'])->name('random-events.show');
-    Route::get('/random-events/{randomEvent}/edit', [App\Http\Controllers\TeacherRandomEventController::class, 'edit'])->name('random-events.edit');
-    Route::put('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'update'])->name('random-events.update');
-    Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\TeacherRandomEventController::class, 'destroy'])->name('random-events.destroy');
-    Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\TeacherRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
+    Route::post('/random-events/draw', [App\Http\Controllers\TeacherRandomEventController::class, 'drawRandom'])->name('random-events.draw');
     
     // Reports Routes
     Route::get('/reports/scores', [App\Http\Controllers\TeacherReportsController::class, 'scores'])->name('reports.scores');

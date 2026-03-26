@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Quiz;
+use App\Models\Question;
+use App\Models\QuizAttempt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,6 +43,10 @@ class TeacherQuizController extends Controller
             'assign_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assign_date',
             'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:20480',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.type' => 'required|in:multiple_choice,identification',
+            'questions.*.answer' => 'required|string',
         ]);
 
         $filePath = null;
@@ -49,7 +55,7 @@ class TeacherQuizController extends Controller
             $filePath = $request->file('file')->store('quizzes', 'public');
         }
 
-        Quiz::create([
+        $quiz = Quiz::create([
             'title' => $request->title,
             'description' => $request->description,
             'type' => $request->type,
@@ -59,6 +65,20 @@ class TeacherQuizController extends Controller
             'due_date' => $request->due_date,
             'teacher_id' => Auth::id(),
         ]);
+
+        // Save questions
+        if ($request->has('questions')) {
+            foreach ($request->questions as $qData) {
+                Question::create([
+                    'quiz_id' => $quiz->id,
+                    'question' => $qData['question'],
+                    'type' => $qData['type'],
+                    'choices' => isset($qData['options']) ? $qData['options'] : null,
+                    'correct_answer' => $qData['answer'],
+                    'points' => $qData['points'] ?? 10,
+                ]);
+            }
+        }
 
         return redirect()->route('teacher.quizzes')
             ->with('success', '✅ Quiz created successfully and sent for admin approval.');
@@ -87,6 +107,10 @@ class TeacherQuizController extends Controller
             'assign_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assign_date',
             'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:20480',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.type' => 'required|in:multiple_choice,identification',
+            'questions.*.answer' => 'required|string',
         ]);
 
         if ($request->hasFile('file')) {
@@ -105,6 +129,23 @@ class TeacherQuizController extends Controller
             'file_path' => $quiz->file_path,
             // Status stays unchanged (still pending or active)
         ]);
+
+        // Delete existing questions and recreate
+        $quiz->questions()->delete();
+
+        // Save updated questions
+        if ($request->has('questions')) {
+            foreach ($request->questions as $qData) {
+                Question::create([
+                    'quiz_id' => $quiz->id,
+                    'question' => $qData['question'],
+                    'type' => $qData['type'],
+                    'choices' => isset($qData['options']) ? $qData['options'] : null,
+                    'correct_answer' => $qData['answer'],
+                    'points' => $qData['points'] ?? 10,
+                ]);
+            }
+        }
 
         return redirect()->route('teacher.quizzes')
             ->with('success', '✅ Quiz updated successfully!');
@@ -125,5 +166,28 @@ class TeacherQuizController extends Controller
 
         return redirect()->route('teacher.quizzes')
             ->with('success', '🗑️ Quiz deleted successfully!');
+    }
+
+    /**
+     * Show student scores for a specific quiz.
+     */
+    public function scores($id)
+    {
+        $quiz = Quiz::with('questions')->where('teacher_id', Auth::id())->findOrFail($id);
+        
+        $attempts = QuizAttempt::with('student')
+            ->where('quiz_id', $id)
+            ->orderBy('score', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Calculate statistics
+        $totalStudents = $attempts->count();
+        $averageScore = $totalStudents > 0 ? round($attempts->avg('score')) : 0;
+        $highestScore = $totalStudents > 0 ? $attempts->max('score') : 0;
+        $lowestScore = $totalStudents > 0 ? $attempts->min('score') : 0;
+        $passRate = $totalStudents > 0 ? round(($attempts->where('score', '>=', 75)->count() / $totalStudents) * 100) : 0;
+
+        return view('teacher.quizzes.scores', compact('quiz', 'attempts', 'totalStudents', 'averageScore', 'highestScore', 'lowestScore', 'passRate'));
     }
 }

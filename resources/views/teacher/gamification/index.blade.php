@@ -25,10 +25,10 @@
                 <span style="font-weight: 700; width: 24px; {{ $index == 0 ? 'color: var(--accent);' : '' }}">{{ $index + 1 }}</span>
                 <img src="{{ asset('images/' . ($student->profile_pic ?? 'default-pp.png')) }}" style="width: 36px; height: 36px; border-radius: 50%;">
                 <div style="flex: 1;">
-                    <p style="font-weight: 500; font-size: 0.9rem;">{{ $student->name }}</p>
-                    <p style="font-size: 0.75rem; color: var(--text-muted);">Level {{ $student->level ?? 1 }}</p>
+                    <p style="font-weight: 500; font-size: 0.9rem;">{{ $student->first_name }} {{ $student->last_name }}</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Level {{ floor(($student->xp ?? 0) / 100) + 1 }}</p>
                 </div>
-                <span style="font-weight: 700; color: var(--primary);">{{ $student->points_sum_value ?? 0 }} XP</span>
+                <span style="font-weight: 700; color: var(--primary);">{{ $student->xp ?? 0 }} XP</span>
             </div>
             @empty
             <p style="text-align: center; color: var(--text-muted); padding: 20px;">No students yet</p>

@@ -1,4 +1,4 @@
-@extends('teacher.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'View Random Event')
 @section('page-title', 'View Random Event')
@@ -133,10 +133,17 @@
     <div class="card-header">
         <h2 class="card-title">Event Details</h2>
         <div style="display: flex; gap: 10px;">
-            <a href="{{ route('teacher.random-events.edit', $randomEvent) }}" class="btn btn-warning">
+            <a href="{{ route('admin.random-events.edit', $randomEvent) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Edit
             </a>
-            <a href="{{ route('teacher.random-events.index') }}" class="btn btn-secondary">
+            <form action="{{ route('admin.random-events.destroy', $randomEvent) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this event?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </form>
+            <a href="{{ route('admin.random-events.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -171,56 +178,65 @@
             <div class="scroll-bottom"></div>
         </div>
 
-            <!-- Event Details -->
-            <div style="margin-top: 30px; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <h3 style="margin-bottom: 20px; color: var(--primary);">Event Information</h3>
+        <!-- Event Details -->
+        <div style="margin-top: 30px; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 20px; color: var(--primary);">Event Information</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Event Type</label>
+                    @php
+                        $typeColors = [
+                            'positive' => '#10b981',
+                            'negative' => '#ef4444',
+                            'neutral' => '#3b82f6',
+                            'challenge' => '#f59e0b'
+                        ];
+                        $typeLabels = [
+                            'positive' => 'Positive (Reward)',
+                            'negative' => 'Negative (Penalty)',
+                            'neutral' => 'Neutral',
+                            'challenge' => 'Challenge'
+                        ];
+                    @endphp
+                    <span style="font-weight: 600; color: {{ $typeColors[$randomEvent->event_type] ?? '#666' }};">
+                        {{ $typeLabels[$randomEvent->event_type] ?? $randomEvent->event_type }}
+                    </span>
+                </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Event Type</label>
-                        @php
-                            $typeColors = [
-                                'positive' => '#10b981',
-                                'negative' => '#ef4444',
-                                'neutral' => '#3b82f6',
-                                'challenge' => '#f59e0b'
-                            ];
-                            $typeLabels = [
-                                'positive' => 'Positive (Reward)',
-                                'negative' => 'Negative (Penalty)',
-                                'neutral' => 'Neutral',
-                                'challenge' => 'Challenge'
-                            ];
-                        @endphp
-                        <span style="font-weight: 600; color: {{ $typeColors[$randomEvent->event_type] ?? '#666' }};">
-                            {{ $typeLabels[$randomEvent->event_type] ?? $randomEvent->event_type }}
-                        </span>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Target Type</label>
-                        @php
-                            $targetLabels = [
-                                'single' => 'Single Player',
-                                'all' => 'All Players',
-                                'pair' => 'Pair',
-                                'random' => 'Random Selection'
-                            ];
-                        @endphp
-                        <span style="font-weight: 600;">{{ $targetLabels[$randomEvent->target_type] ?? $randomEvent->target_type }}</span>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Status</label>
-                        <span style="font-weight: 600; color: {{ $randomEvent->is_active ? '#10b981' : '#94a3b8' }};">
-                            {{ $randomEvent->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Created</label>
-                        <span style="font-weight: 600;">{{ $randomEvent->created_at->format('M d, Y') }}</span>
-                    </div>
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Target Type</label>
+                    @php
+                        $targetLabels = [
+                            'single' => 'Single Player',
+                            'all' => 'All Players',
+                            'pair' => 'Pair',
+                            'random' => 'Random Selection'
+                        ];
+                    @endphp
+                    <span style="font-weight: 600;">{{ $targetLabels[$randomEvent->target_type] ?? $randomEvent->target_type }}</span>
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Status</label>
+                    <span style="font-weight: 600; color: {{ $randomEvent->is_active ? '#10b981' : '#94a3b8' }};">
+                        {{ $randomEvent->is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Sort Order</label>
+                    <span style="font-weight: 600;">{{ $randomEvent->sort_order }}</span>
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Created</label>
+                    <span style="font-weight: 600;">{{ $randomEvent->created_at->format('M d, Y - h:i A') }}</span>
+                </div>
+                
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Last Updated</label>
+                    <span style="font-weight: 600;">{{ $randomEvent->updated_at->format('M d, Y - h:i A') }}</span>
                 </div>
             </div>
         </div>

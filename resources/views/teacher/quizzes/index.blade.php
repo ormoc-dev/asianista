@@ -46,13 +46,16 @@
                         <td>{{ $quiz->due_date ? \Carbon\Carbon::parse($quiz->due_date)->format('M d, Y') : '—' }}</td>
                         <td>
                             <div style="display: flex; gap: 8px;">
-                                <a href="{{ route('teacher.quizzes.edit', $quiz->id) }}" class="btn btn-sm btn-secondary">
+                                <a href="{{ route('teacher.quizzes.scores', $quiz->id) }}" class="btn btn-sm btn-primary" title="View Scores">
+                                    <i class="fas fa-chart-bar"></i>
+                                </a>
+                                <a href="{{ route('teacher.quizzes.edit', $quiz->id) }}" class="btn btn-sm btn-secondary" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <form action="{{ route('teacher.quizzes.destroy', $quiz->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Delete this quiz?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
