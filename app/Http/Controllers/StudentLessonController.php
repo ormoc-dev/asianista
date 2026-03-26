@@ -15,6 +15,18 @@ class StudentLessonController extends Controller
         return view('student.lessons.index', compact('lessons'));
     }
 
+    // Show lesson details and content
+    public function show($id)
+    {
+        $lesson = Lesson::findOrFail($id);
+
+        if ($lesson->status !== 'approved') {
+            abort(403, 'This lesson is not yet approved by admin.');
+        }
+
+        return view('student.lessons.show', compact('lesson'));
+    }
+
     // Download lesson file
     public function download($id)
     {

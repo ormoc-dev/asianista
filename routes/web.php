@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController; // ✅ Added
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\TeacherLessonController;
 use App\Http\Controllers\StudentLessonController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\StudentMessagesController;
 use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\AdminUserManagementController;
 use App\Http\Controllers\AIAssistantController;
+use App\Http\Controllers\GradeController;
 
 
 /*
@@ -49,57 +51,74 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 |--------------------------------------------------------------------------
 */
 
-// Group routes for student dashboard
-Route::prefix('student')->name('student.')->group(function () {
-    Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
-    Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
-    Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
-    Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
-    Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
-    Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
-    Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
+Route::middleware(['auth'])->group(function () {
+    // Group routes for student dashboard
+    Route::prefix('student')->name('student.')->group(function () {
+        Route::get('/dashboard', \App\Http\Livewire\Student\Dashboard::class)->name('dashboard');
+        Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
+        Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
+        Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
+        Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
+        Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
+        Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
+    });
+
+    // Teacher routes
+    Route::prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
+        Route::get('/registration', [TeacherController::class, 'registration'])->name('registration');
+        Route::get('/lessons', [TeacherController::class, 'lessons'])->name('lessons');
+        Route::get('/quizzes', [TeacherController::class, 'quizzes'])->name('quizzes');
+        Route::get('/gamification', [TeacherController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
+        Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
+        Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
+        Route::post('/feedback/send', [TeacherController::class, 'sendFeedback'])->name('feedback.send');
+        Route::get('/reports/student/{id}', [TeacherReportsController::class, 'studentDetail'])->name('reports.student');
+        // Route::get('/reports', [TeacherController::class, 'reports'])->name('reports'); // Replaced by TeacherReportsController
+        Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
+        Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
+    });
+
+    // Admin Routes
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/user-management', [AdminUserManagementController::class, 'index'])->name('user-management');
+        Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
+        Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
+        Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
+        Route::get('/data', [AdminController::class, 'data'])->name('data');
+        Route::get('/security', [AdminController::class, 'security'])->name('security');
+        
+        // Random Events Management (Admin Only)
+        Route::get('/random-events', [App\Http\Controllers\AdminRandomEventController::class, 'index'])->name('random-events.index');
+        Route::get('/random-events/create', [App\Http\Controllers\AdminRandomEventController::class, 'create'])->name('random-events.create');
+        Route::post('/random-events', [App\Http\Controllers\AdminRandomEventController::class, 'store'])->name('random-events.store');
+        Route::get('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'show'])->name('random-events.show');
+        Route::get('/random-events/{randomEvent}/edit', [App\Http\Controllers\AdminRandomEventController::class, 'edit'])->name('random-events.edit');
+        Route::put('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'update'])->name('random-events.update');
+        Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'destroy'])->name('random-events.destroy');
+        Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\AdminRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
+        
+        // show
+        Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
+            ->name('user-management.show');
+
+        // edit
+        Route::get('/user-management/{user}/edit', [AdminUserManagementController::class, 'edit'])
+            ->name('user-management.edit');
+
+        // update
+        Route::put('/user-management/{user}', [AdminUserManagementController::class, 'update'])
+            ->name('user-management.update');
+
+        // delete
+        Route::delete('/user-management/{user}', [AdminUserManagementController::class, 'destroy'])
+            ->name('user-management.destroy');
+    });
 });
 
-// Teacher routes
-Route::prefix('teacher')->name('teacher.')->group(function () {
-    Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
-    Route::get('/registration', [TeacherController::class, 'registration'])->name('registration');
-    Route::get('/lessons', [TeacherController::class, 'lessons'])->name('lessons');
-    Route::get('/quizzes', [TeacherController::class, 'quizzes'])->name('quizzes');
-    Route::get('/gamification', [TeacherController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
-    Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
-    Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
-    Route::get('/reports', [TeacherController::class, 'reports'])->name('reports');
-    Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
-});
-
-// Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/user-management', [AdminUserManagementController::class, 'index'])->name('user-management');
-    Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
-    Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
-    Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
-    Route::get('/data', [AdminController::class, 'data'])->name('data');
-    Route::get('/security', [AdminController::class, 'security'])->name('security');
-    // show
-    Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
-        ->name('user-management.show');
-
-    // edit
-    Route::get('/user-management/{user}/edit', [AdminUserManagementController::class, 'edit'])
-        ->name('user-management.edit');
-
-    // update
-    Route::put('/user-management/{user}', [AdminUserManagementController::class, 'update'])
-        ->name('user-management.update');
-
-    // delete
-    Route::delete('/user-management/{user}', [AdminUserManagementController::class, 'destroy'])
-        ->name('user-management.destroy');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +140,7 @@ Route::get('/download/{id}', [TeacherLessonController::class, 'download'])->name
 // STUDENT LESSON ROUTES
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/lessons', [StudentLessonController::class, 'index'])->name('lessons');
+    Route::get('/lessons/{id}', [StudentLessonController::class, 'show'])->name('lessons.show');
     Route::get('/lessons/download/{id}', [StudentLessonController::class, 'download'])->name('lessons.download');
 });
 
@@ -143,6 +163,7 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quizzes/create', [TeacherQuizController::class, 'create'])->name('quizzes.create');
     Route::post('/quizzes/store', [TeacherQuizController::class, 'store'])->name('quizzes.store');
     Route::get('/quizzes/{quiz}/edit', [TeacherQuizController::class, 'edit'])->name('quizzes.edit');
+    Route::get('/quizzes/{quiz}/scores', [TeacherQuizController::class, 'scores'])->name('quizzes.scores');
     Route::put('/quizzes/{quiz}', [TeacherQuizController::class, 'update'])->name('quizzes.update');
     Route::delete('/quizzes/{quiz}', [TeacherQuizController::class, 'destroy'])->name('quizzes.destroy');
 });
@@ -151,9 +172,13 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/registration', [TeacherRegistrationController::class, 'index'])->name('registration');
     Route::get('/registration/generate-code', [TeacherRegistrationController::class, 'generateCode'])->name('registration.generate-code');
+    Route::post('/registration/upload', [TeacherRegistrationController::class, 'uploadExcel'])->name('registration.upload');
+    Route::get('/registration/template', [TeacherRegistrationController::class, 'downloadTemplate'])->name('registration.template');
+    Route::post('/registration/{id}/regenerate', [TeacherRegistrationController::class, 'regenerateCredentials'])->name('registration.regenerate');
+    Route::delete('/registration/pending/{id}', [TeacherRegistrationController::class, 'destroyPending'])->name('registration.destroy-pending');
     // Students management
-Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');
-Route::delete('/students/{student}', [TeacherRegistrationController::class, 'destroy'])->name('student.delete');
+    Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');
+    Route::delete('/students/{student}', [TeacherRegistrationController::class, 'destroy'])->name('student.delete');
 });
 
 
@@ -163,14 +188,26 @@ Route::delete('/students/{student}', [TeacherRegistrationController::class, 'des
 // STUDENT
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/quizzes', [StudentQuizController::class, 'index'])->name('quizzes');
+    Route::get('/quizzes/history', [StudentQuizController::class, 'history'])->name('quizzes.history');
     Route::get('/quizzes/take/{id}', [StudentQuizController::class, 'take'])->name('quizzes.take');
     Route::post('/quizzes/submit/{id}', [StudentQuizController::class, 'submit'])->name('quizzes.submit');
+    Route::get('/quizzes/result/{id}', [StudentQuizController::class, 'result'])->name('quizzes.result');
 });
 
 // AI ASSISTANT ROUTES
 Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
     Route::post('/generate-quest', [AIAssistantController::class, 'generateQuest'])->name('generate-quest');
     Route::post('/generate-question', [AIAssistantController::class, 'generateQuestion'])->name('generate-question');
+    Route::post('/generate-lesson', [AIAssistantController::class, 'generateLessonContent'])->name('generate-lesson');
+    Route::post('/generate-quiz', [AIAssistantController::class, 'generateQuizQuestions'])->name('generate-quiz');
+});
+
+Route::prefix('student/ai')->name('student.ai.')->group(function () {
+    Route::post('/chat', [AIAssistantController::class, 'studentChat'])->name('chat');
+});
+
+Route::prefix('teacher/ai')->name('teacher.ai.')->group(function () {
+    Route::post('/chat', [AIAssistantController::class, 'teacherChat'])->name('chat');
 });
 
 // ADMIN
@@ -229,22 +266,40 @@ Route::post('/register/student', [AuthController::class, 'registerStudent'])->na
 Route::post('/register/teacher', [AuthController::class, 'registerTeacher'])->name('register.teacher');
 Route::post('/register/student/validate', [AuthController::class, 'validateStudentStepOne'])
     ->name('register.student.validate');
+Route::post('/register/validate-code', [AuthController::class, 'validateStudentCode'])
+    ->name('register.validate-code');
 
-Route::get('/profile', [UserController::class, 'showProfile'])->name('profile');
+// Route::get('/profile', [UserController::class, 'showProfile'])->name('profile'); // TODO: Create UserController
 
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quest', [TeacherQuestController::class, 'index'])->name('quest');
+    Route::get('/quest/create', [TeacherQuestController::class, 'create'])->name('quest.create');
+    Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');
+    Route::get('/quest/{quest}', [TeacherQuestController::class, 'show'])->name('quest.show');
+    
+    // Random Events Routes (Teacher - Draw Only)
+    Route::get('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'index'])->name('random-events.index');
+    Route::post('/random-events/draw', [App\Http\Controllers\TeacherRandomEventController::class, 'drawRandom'])->name('random-events.draw');
+    
+    // Reports Routes
+    Route::get('/reports/scores', [App\Http\Controllers\TeacherReportsController::class, 'scores'])->name('reports.scores');
+    Route::get('/reports/student/{student}', [App\Http\Controllers\TeacherReportsController::class, 'studentDetail'])->name('reports.student');
+    Route::put('/reports/student/{student}/xp', [App\Http\Controllers\TeacherReportsController::class, 'updateXp'])->name('reports.student.xp');
 });
 
 Route::prefix('student')->name('student.')->group(function () {
     Route::get('/quest', [StudentQuestController::class, 'index'])->name('quest');
+    Route::get('/quest/{quest}', [StudentQuestController::class, 'show'])->name('quest.show');
+    Route::post('/quest/{quest}/start', [StudentQuestController::class, 'start'])->name('quest.start');
+    Route::get('/quest/{quest}/play/{question?}', [StudentQuestController::class, 'play'])->name('quest.play');
+    Route::post('/quest/{quest}/submit/{question}', [StudentQuestController::class, 'submitStep'])->name('quest.submit');
+    Route::post('/quest/{quest}/use-power/{attempt}', [StudentQuestController::class, 'usePower'])->name('quest.use-power');
+    Route::post('/quest/{quest}/timeout/{question}', [StudentQuestController::class, 'timeOut'])->name('quest.timeout');
+    
+    // Random Events - Student endpoints
+    Route::get('/events/check', [App\Http\Controllers\StudentEventController::class, 'checkNewEvent'])->name('events.check');
+    Route::post('/events/acknowledge', [App\Http\Controllers\StudentEventController::class, 'acknowledgeEvent'])->name('events.acknowledge');
 });
-
-Route::post('/teacher/quest', [TeacherQuestController::class, 'store'])->name('teacher.quest.store');  // Store a new quest
-Route::get('/teacher/quests', [TeacherQuestController::class, 'list'])->name('teacher.quest.list');  // List all quests
-
-Route::get('/teacher/quest/create', [TeacherQuestController::class, 'create'])->name('teacher.quest.create');
-Route::post('/teacher/quest/create', [QuestController::class, 'createQuest'])->name('teacher.quest.create');
 
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])
         ->name('password.reset');
@@ -299,4 +354,5 @@ Route::prefix('student')->name('student.')->group(function () {
         ->name('messages.destroy');
 
 });
+
 

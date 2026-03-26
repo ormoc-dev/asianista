@@ -15,7 +15,7 @@ class Question extends Model
         'type',
         'choices',
         'correct_answer',
-        'direction',
+        'points',
     ];
 
     protected $casts = [

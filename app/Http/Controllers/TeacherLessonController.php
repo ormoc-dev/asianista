@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Lesson;
+use App\Models\Grade;
+use App\Models\Section;
 use Illuminate\Support\Facades\Storage;
 
 class TeacherLessonController extends Controller
@@ -24,7 +26,8 @@ class TeacherLessonController extends Controller
      */
     public function create()
     {
-        return view('teacher.lessons.create');
+        $grades = Grade::with('sections')->get();
+        return view('teacher.lessons.create', compact('grades'));
     }
 
     /**

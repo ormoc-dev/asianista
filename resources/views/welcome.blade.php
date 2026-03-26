@@ -8,6 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- FAVICON IN BROWSER TAB -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Route URLs for JavaScript -->
+    <meta name="validate-code-url" content="{{ route('register.validate-code') }}">
+    
 </head>
 @php
   $initialForm = session('show_form') ?? 'login';
@@ -100,71 +105,147 @@
       </p>
     </div>
 
-    <div id="registerForm" class="card hidden">
-  <h2>Student Sign Up</h2>
+    <!-- STUDENT CODE ENTRY FORM -->
+    <div id="studentCodeForm" class="card reg-code-card hidden">
+      <div class="rcc-icon">🗝️</div>
+      <h2 class="rcc-title">Enter Your <span class="text-gold">Student Code</span></h2>
+      <p class="rcc-subtitle">Your teacher has given you a unique code to start your adventure</p>
 
-  {{-- Success from full registration redirect --}}
-  <div id="studentSuccessContainer">
-    @if (session('show_form') === 'register' && session('success'))
-      <p class="success">{{ session('success') }}</p>
-    @endif
-  </div>
+      <div id="studentCodeErrorContainer">
+        @if (session('show_form') === 'register' && $errors->any())
+          <div class="reg-alert reg-alert-error">{{ $errors->first() }}</div>
+        @endif
+      </div>
 
-  {{-- IMPORTANT: no Blade validation errors here; step 1 is handled via AJAX --}}
-  <div id="studentErrorContainer"></div>
-  <form id="registerFormElement" method="POST" action="{{ route('register.student') }}">
-    @csrf
-    <input type="text" id="registrationCode" name="registration_code" placeholder="Registration Code" required>
-    <input type="text" name="name" placeholder="Full Name" required>
-    <input type="email" name="email" placeholder="Email Address" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <input type="password" name="password_confirmation" placeholder="Re-type Password" required>
+      <form id="studentCodeFormElement" onsubmit="event.preventDefault(); validateStudentCode();">
+        @csrf
+        <div class="stu-code-field">
+          <input type="text" id="studentCodeInput" name="student_code"
+            placeholder="STU-XXXXXX" required autocomplete="off" maxlength="10">
+        </div>
+        <div id="codeValidationMessage" class="val-msg"></div>
+        <button type="submit" class="btn btn-quest">
+          <span>Validate Code</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
 
-    <input type="hidden" name="role" id="roleInput">
-    <input type="hidden" name="character" id="characterInput">
-    <input type="hidden" name="gender" id="genderInput">
-    <input type="hidden" name="avatar" id="avatarInput">
+      <p class="rcc-footer">Already have an account? <span id="showLogin" class="text-gold pointer">Log In</span></p>
+    </div>
 
-    <button type="submit" id="studentNextBtn" class="btn">NEXT</button>
-  </form>
-  <p class="toggle-text">
-    Already have an account? <span id="showLogin">Log In</span>
-  </p>
-</div>
+    <!-- STUDENT REGISTRATION FORM -->
+    <div id="studentRegisterForm" class="hero-wizard-card hidden">
 
-
-    <!-- CHARACTER SELECTION FORM -->
-    <div id="characterSelectionForm" class="card hidden">
-      <h2>Choose Your Character</h2>
-      <div class="character-options">
-        <a href="#" onclick="selectCharacter('healer')">
-          <div class="character-option">
-            <img src="{{ asset('images/healer.png') }}" alt="Healer">
-            <p>Healer</p>
+      <!-- LEFT: Live Character Preview Panel -->
+      <div class="hero-preview-panel">
+        <div class="hero-char-display">
+          <img id="charPreviewImg" src="{{ asset('images/default-pp.png') }}" alt="Hero" style="display:none;">
+          <div id="noCharPlaceholder" class="hero-char-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+            <p>Choose your class<br>&amp; gender to preview</p>
           </div>
-        </a>
-        <a href="#" onclick="selectCharacter('mage')">
-          <div class="character-option">
-            <img src="{{ asset('images/mage.png') }}" alt="Mage">
-            <p>Mage</p>
+        </div>
+        <p class="hero-class-label" id="previewClassName"></p>
+        <div class="hero-stat-row" id="previewStatHP" style="display:none;">
+          <div class="hstat-head"><span>❤️ HP</span><span id="previewHPVal">0</span></div>
+          <div class="hstat-track"><div class="hstat-fill hp-fill" id="previewHPBar" style="width:0%"></div></div>
+        </div>
+        <div class="hero-stat-row" id="previewStatAP" style="display:none;">
+          <div class="hstat-head"><span>⚡ AP</span><span id="previewAPVal">0</span></div>
+          <div class="hstat-track"><div class="hstat-fill ap-fill" id="previewAPBar" style="width:0%"></div></div>
+        </div>
+        <div class="hero-student-badge">
+          <p class="hsb-name" id="previewStudentName">-</p>
+          <p class="hsb-user" id="previewStudentUser"></p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Form Panel -->
+      <div class="hero-form-panel">
+
+        <!-- Progress -->
+        <div class="wizard-steps">
+          <div class="ws-step done"><div class="ws-dot">✓</div><span>Code</span></div>
+          <div class="ws-line active"></div>
+          <div class="ws-step active"><div class="ws-dot">2</div><span>Hero</span></div>
+          <div class="ws-line"></div>
+          <div class="ws-step"><div class="ws-dot">3</div><span>Done</span></div>
+        </div>
+
+        <h2 class="wizard-title">Build Your <span class="text-gold">Hero</span></h2>
+
+        <div id="studentSuccessContainer">
+          @if (session('show_form') === 'register' && session('success'))
+            <div class="reg-alert reg-alert-success">{{ session('success') }}</div>
+          @endif
+        </div>
+        <div id="studentErrorContainer"></div>
+
+        <form id="studentRegisterFormElement" method="POST" action="{{ route('register.student') }}">
+          @csrf
+          <input type="hidden" name="student_code" id="studentCodeHidden">
+          <input type="hidden" id="displayStudentName">
+          <input type="hidden" id="displayUsername">
+
+          <!-- Class -->
+          <div class="wiz-section">
+            <p class="wiz-label">⚔️ Choose Your Class</p>
+            <div class="class-chips">
+              <div class="class-chip" id="char-mage" onclick="selectCharacterClass('mage')">
+                <img src="{{ asset('images/mage.png') }}" alt="Mage">
+                <span>Mage</span>
+                <small>HP 30 | AP 50</small>
+              </div>
+              <div class="class-chip" id="char-warrior" onclick="selectCharacterClass('warrior')">
+                <img src="{{ asset('images/warrior.png') }}" alt="Warrior">
+                <span>Warrior</span>
+                <small>HP 80 | AP 30</small>
+              </div>
+              <div class="class-chip" id="char-healer" onclick="selectCharacterClass('healer')">
+                <img src="{{ asset('images/healer.png') }}" alt="Healer">
+                <span>Healer</span>
+                <small>HP 50 | AP 35</small>
+              </div>
+            </div>
+            <input type="hidden" name="character" id="characterInput">
+            <p id="characterError" class="wiz-field-err" style="display:none;">Please select a class</p>
           </div>
-        </a>
-        <a href="#" onclick="selectCharacter('warrior')">
-          <div class="character-option">
-            <img src="{{ asset('images/warrior.png') }}" alt="Warrior">
-            <p>Warrior</p>
+
+          <!-- Gender -->
+          <div class="wiz-section">
+            <p class="wiz-label">👤 Select Gender</p>
+            <div class="gender-toggle-btns">
+              <button type="button" class="gtoggle-btn" id="gbtn-male" onclick="selectGenderChoice('male')">
+                <span class="gtoggle-icon">👨</span> Male
+              </button>
+              <button type="button" class="gtoggle-btn" id="gbtn-female" onclick="selectGenderChoice('female')">
+                <span class="gtoggle-icon">👩</span> Female
+              </button>
+            </div>
+            <input type="hidden" name="gender" id="genderInput">
+            <p id="genderError" class="wiz-field-err" style="display:none;">Please select a gender</p>
           </div>
-        </a>
+
+          <!-- Password -->
+          <div class="wiz-section">
+            <p class="wiz-label">🔐 Password</p>
+            <input type="password" name="default_password" placeholder="Default Password (from teacher)" required>
+            <input type="password" name="new_password" placeholder="New Password (optional)">
+            <input type="password" name="new_password_confirmation" placeholder="Confirm New Password">
+            <p class="wiz-hint">Leave new password blank to keep your default</p>
+          </div>
+
+          <button type="submit" class="btn btn-quest" id="studentCompleteBtn">
+            <span>Start My Journey</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </button>
+        </form>
+
+        <p class="wiz-back"><span onclick="backToCodeEntry()" class="wiz-back-link">← Back to Code Entry</span></p>
       </div>
     </div>
 
-    <!-- GENDER SELECTION FORM -->
-    <div id="genderSelectionForm" class="card hidden">
-      <h2>Choose Your Gender</h2>
-      <div class="gender-options" id="genderOptionsContainer">
-        <!-- injected dynamically -->
-      </div>
-    </div>
+    {{-- Legacy Register Form REMOVED - Using new student code flow instead --}}
 
 <!-- FORGOT PASSWORD FORM -->
 <div id="forgotForm" class="card hidden">
@@ -198,48 +279,47 @@
     // --- DOM references
     const loginForm = document.getElementById('loginForm');
     const roleSelectionForm = document.getElementById('roleSelectionForm');
-    const registerForm = document.getElementById('registerForm');
+    const studentCodeForm = document.getElementById('studentCodeForm');
+    const studentRegisterForm = document.getElementById('studentRegisterForm');
     const teacherRegisterForm = document.getElementById('teacherRegisterForm');
     const forgotForm = document.getElementById('forgotForm');
-    const characterSelectionForm = document.getElementById('characterSelectionForm');
-    const genderSelectionForm = document.getElementById('genderSelectionForm');
-    const registrationCodeInput = document.getElementById('registrationCode');
-    const roleInput = document.getElementById('roleInput');
-    const registerFormElement = document.getElementById('registerFormElement');
+    const studentRegisterFormElement = document.getElementById('studentRegisterFormElement');
     const teacherRegisterFormElement = document.getElementById('teacherRegisterFormElement');
     const teacherErrorContainer = document.getElementById('teacherErrorContainer');
-const teacherSubmitBtn = document.getElementById('teacherSubmitBtn');
-    const avatarInput = document.getElementById('avatarInput');
-    const studentNextBtn = document.getElementById('studentNextBtn');
+    const teacherSubmitBtn = document.getElementById('teacherSubmitBtn');
+    const studentCompleteBtn = document.getElementById('studentCompleteBtn');
     const studentErrorContainer = document.getElementById('studentErrorContainer');
+    const studentCodeErrorContainer = document.getElementById('studentCodeErrorContainer');
     const loginFormElement = document.getElementById('loginFormElement');
-const loginErrorContainer = document.getElementById('loginErrorContainer');
-const loginSubmitBtn = document.getElementById('loginSubmitBtn');
-const forgotFormElement = document.getElementById('forgotFormElement');
-const forgotErrorContainer = document.getElementById('forgotErrorContainer');
-const forgotStatusContainer = document.getElementById('forgotStatusContainer');
-const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
-const studentSuccessContainer = document.getElementById('studentSuccessContainer');
-
-
-    let bypassAjaxValidation = false; // when true, final submit will skip step-1 AJAX
+    const loginErrorContainer = document.getElementById('loginErrorContainer');
+    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+    const forgotFormElement = document.getElementById('forgotFormElement');
+    const forgotErrorContainer = document.getElementById('forgotErrorContainer');
+    const forgotStatusContainer = document.getElementById('forgotStatusContainer');
+    const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
+    const studentSuccessContainer = document.getElementById('studentSuccessContainer');
 
     function showCard(which) {
       loginForm.classList.add('hidden');
       roleSelectionForm.classList.add('hidden');
-      registerForm.classList.add('hidden');
+      studentCodeForm.classList.add('hidden');
+      studentRegisterForm.classList.add('hidden');
       teacherRegisterForm.classList.add('hidden');
-      characterSelectionForm.classList.add('hidden');
-      genderSelectionForm.classList.add('hidden');
       forgotForm.classList.add('hidden');
 
-      if (which === 'register') registerForm.classList.remove('hidden');
+      if (which === 'student_code') studentCodeForm.classList.remove('hidden');
+      else if (which === 'student_register') studentRegisterForm.classList.remove('hidden');
       else if (which === 'teacher_register') teacherRegisterForm.classList.remove('hidden');
       else if (which === 'forgot') forgotForm.classList.remove('hidden');
       else if (which === 'role') roleSelectionForm.classList.remove('hidden');
-      else if (which === 'character') characterSelectionForm.classList.remove('hidden');
-      else if (which === 'gender') genderSelectionForm.classList.remove('hidden');
       else loginForm.classList.remove('hidden');
+
+      // Allow body scroll for tall hero wizard, reset for other cards
+      if (which === 'student_register') {
+        document.body.classList.add('wizard-active');
+      } else {
+        document.body.classList.remove('wizard-active');
+      }
     }
 
     // Splash
@@ -291,81 +371,141 @@ if (backToLoginFromForgot) {
 
     // Role selection
     function selectRole(role) {
-      showCard(role === 'teacher' ? 'teacher_register' : 'register');
-      roleInput.value = role;
-
-      if (role === 'student') {
-        registrationCodeInput.classList.remove('hidden');
-        registrationCodeInput.required = true;
+      if (role === 'teacher') {
+        showCard('teacher_register');
       } else {
-        registrationCodeInput.classList.add('hidden');
-        registrationCodeInput.required = false;
+        showCard('student_code');
       }
     }
 
-    // Gender options for each character
-    function showGenderOptions(character) {
-      const genderOptions = {
-        'healer': [
-          { id: 'male_healer', text: 'Male Healer', img: 'male_healer.png' },
-          { id: 'female_healer', text: 'Female Healer', img: 'female_healer.png' }
-        ],
-        'mage': [
-          { id: 'male_mage', text: 'Male Mage', img: 'male_mage.png' },
-          { id: 'female_mage', text: 'Female Mage', img: 'female_mage.png' }
-        ],
-        'warrior': [
-          { id: 'male_warrior', text: 'Male Warrior', img: 'male_warrior.png' },
-          { id: 'female_warrior', text: 'Female Warrior', img: 'female_warrior.png' }
-        ]
+    // Character class selection for hero wizard
+    function selectCharacterClass(character) {
+      document.querySelectorAll('.class-chip').forEach(el => el.classList.remove('active'));
+      const selectedEl = document.getElementById('char-' + character);
+      if (selectedEl) selectedEl.classList.add('active');
+      const characterInput = document.getElementById('characterInput');
+      if (characterInput) characterInput.value = character;
+      const errorEl = document.getElementById('characterError');
+      if (errorEl) errorEl.style.display = 'none';
+      updateHeroPreview();
+    }
+
+    // Gender toggle selection
+    function selectGenderChoice(gender) {
+      document.querySelectorAll('.gtoggle-btn').forEach(btn => btn.classList.remove('active'));
+      const btn = document.getElementById('gbtn-' + gender);
+      if (btn) btn.classList.add('active');
+      const genderInput = document.getElementById('genderInput');
+      if (genderInput) genderInput.value = gender;
+      const errorEl = document.getElementById('genderError');
+      if (errorEl) errorEl.style.display = 'none';
+      updateHeroPreview();
+    }
+
+    // Live hero preview updater
+    function updateHeroPreview() {
+      const character = (document.getElementById('characterInput') || {}).value || '';
+      const gender    = (document.getElementById('genderInput')    || {}).value || '';
+      const previewImg   = document.getElementById('charPreviewImg');
+      const placeholder  = document.getElementById('noCharPlaceholder');
+      const classLabel   = document.getElementById('previewClassName');
+      const hpStat = document.getElementById('previewStatHP');
+      const apStat = document.getElementById('previewStatAP');
+      const hpVal  = document.getElementById('previewHPVal');
+      const apVal  = document.getElementById('previewAPVal');
+      const hpBar  = document.getElementById('previewHPBar');
+      const apBar  = document.getElementById('previewAPBar');
+
+      const stats = {
+        mage:    { label: '🧙 Mage',    hp: 30, ap: 50 },
+        warrior: { label: '⚔️ Warrior', hp: 80, ap: 30 },
+        healer:  { label: '💚 Healer',  hp: 50, ap: 35 }
       };
+      const maxHP = 100, maxAP = 100;
 
-      const container = document.getElementById('genderOptionsContainer');
-      container.innerHTML = '';
+      if (character && stats[character]) {
+        if (classLabel) classLabel.textContent = stats[character].label;
+        if (hpStat && apStat) {
+          hpStat.style.display = 'block';
+          apStat.style.display = 'block';
+          if (hpVal) hpVal.textContent = stats[character].hp;
+          if (apVal) apVal.textContent = stats[character].ap;
+          if (hpBar) hpBar.style.width = (stats[character].hp / maxHP * 100) + '%';
+          if (apBar) apBar.style.width = (stats[character].ap / maxAP * 100) + '%';
+        }
+      }
 
-      if (genderOptions[character]) {
-        genderOptions[character].forEach(option => {
-          const optionElement = document.createElement('a');
-          optionElement.href = "#";
-          optionElement.onclick = (e) => { e.preventDefault(); selectGender(option.id); };
-          optionElement.innerHTML = `
-            <div class="gender-option">
-              <img src="{{ asset('images') }}/${option.img}" alt="${option.text}">
-              <p>${option.text}</p>
-            </div>
-          `;
-          container.appendChild(optionElement);
+      if (character && gender && previewImg && placeholder) {
+        previewImg.src = '{{ asset('images') }}/' + gender + '_' + character + '.png';
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else if (placeholder && previewImg) {
+        previewImg.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+    }
+
+    // Validate student code via AJAX
+    async function validateStudentCode() {
+      const codeInput = document.getElementById('studentCodeInput');
+      const messageEl = document.getElementById('codeValidationMessage');
+      const code = codeInput.value.trim().toUpperCase();
+
+      if (!code) {
+        messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Please enter your student code.</span>';
+        return;
+      }
+
+      messageEl.innerHTML = '<span class="validating"><svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Validating your code...</span>';
+
+      try {
+        const response = await fetch('{{ route('register.validate-code') }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({ student_code: code })
         });
+
+        const data = await response.json();
+
+        if (data.success) {
+          messageEl.innerHTML = '<span class="success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Code validated! Welcome, ' + data.student.full_name + '!</span>';
+
+          // Populate hidden inputs
+          document.getElementById('displayStudentName').value = data.student.full_name;
+          document.getElementById('displayUsername').value = data.student.username;
+          document.getElementById('studentCodeHidden').value = code;
+
+          // Populate hero preview panel
+          const previewName = document.getElementById('previewStudentName');
+          const previewUser = document.getElementById('previewStudentUser');
+          if (previewName) previewName.textContent = data.student.full_name;
+          if (previewUser) previewUser.textContent = '@' + data.student.username;
+
+          // Show registration form after a short delay
+          setTimeout(() => {
+            showCard('student_register');
+          }, 800);
+        } else {
+          messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ' + (data.message || 'Invalid code') + '</span>';
+        }
+      } catch (error) {
+        messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Connection error. Please try again.</span>';
+        console.error('Validation error:', error);
       }
     }
 
-    function getAvatarForGender(gender) {
-      switch (gender) {
-        case 'female_healer': return 'female_healer.png';
-        case 'male_healer': return 'male_healer.png';
-        case 'female_mage': return 'female_mage.png';
-        case 'male_mage': return 'male_mage.png';
-        case 'female_warrior': return 'female_warrior.png';
-        case 'male_warrior': return 'male_warrior.png';
-        default: return 'default-pp.png';
-      }
-    }
+    // Go back to code entry
+    function backToCodeEntry() {
+      showCard('student_code');
 
-    // Final step: gender selection → real form submit
-    function selectGender(gender) {
-      document.getElementById('genderInput').value = gender;
-      if (avatarInput) {
-        avatarInput.value = getAvatarForGender(gender);
-      }
-      // From now on, skip AJAX validation and do a normal POST
-      bypassAjaxValidation = true;
-      registerFormElement.submit();
-    }
-
-    function selectCharacter(character) {
-      document.getElementById('characterInput').value = character;
-      showGenderOptions(character);
-      showCard('gender');
+      // Clear inputs
+      const codeInput = document.getElementById('studentCodeInput');
+      const messageEl = document.getElementById('codeValidationMessage');
+      if (codeInput) codeInput.value = '';
+      if (messageEl) messageEl.innerHTML = '';
     }
 
 function handleTeacherSubmit(event) {
@@ -436,91 +576,35 @@ function handleTeacherSubmit(event) {
     });
 }
 
-    // STUDENT: Step-1 AJAX validation
-registerFormElement.addEventListener('submit', handleStudentSubmit);
+    // STUDENT: Form validation for hero wizard
+    if (studentRegisterFormElement) {
+      studentRegisterFormElement.addEventListener('submit', function(event) {
+        const characterInput = document.getElementById('characterInput');
+        const genderInput    = document.getElementById('genderInput');
+        const charErrorEl    = document.getElementById('characterError');
+        const genderErrorEl  = document.getElementById('genderError');
+        let valid = true;
 
-async function handleStudentSubmit(event) {
-  if (bypassAjaxValidation) {
-    // final submit, let the browser do a normal POST
-    return;
-  }
-
-  event.preventDefault();
-
-  // clear old success + errors whenever user tries again
-  if (studentSuccessContainer) {
-    studentSuccessContainer.innerHTML = '';
-  }
-  studentErrorContainer.innerHTML = '';
-  const seenMessages = new Set();
-
-  // disable button to avoid spamming
-  studentNextBtn.disabled = true;
-
-  const formData = new FormData(registerFormElement);
-
-  try {
-    const response = await fetch("{{ route('register.student.validate') }}", {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'application/json',
-      },
-      body: formData,
-    });
-
-    if (response.status === 422) {
-      const data = await response.json();
-      const errors = data.errors || {};
-
-      Object.values(errors).forEach(messages => {
-        messages.forEach(message => {
-          if (seenMessages.has(message)) return;
-          seenMessages.add(message);
-          const p = document.createElement('p');
-          p.classList.add('error');
-          p.textContent = message;
-          studentErrorContainer.appendChild(p);
-        });
-      });
-
-      studentNextBtn.disabled = false;
-      return;
-    }
-
-    if (!response.ok) {
-      const p = document.createElement('p');
-      p.classList.add('error');
-      p.textContent = 'An unexpected error occurred. Please try again.';
-      studentErrorContainer.appendChild(p);
-      studentNextBtn.disabled = false;
-      return;
-    }
-
-    const data = await response.json();
-    if (data.success) {
-      // Step 1 valid → move to character selection
-      showCard('character');
-    } else if (data.errors) {
-      Object.values(data.errors).forEach(messages => {
-        messages.forEach(message => {
-          if (seenMessages.has(message)) return;
-          seenMessages.add(message);
-          const p = document.createElement('p');
-          p.classList.add('error');
-          p.textContent = message;
-          studentErrorContainer.appendChild(p);
-        });
+        if (!characterInput || !characterInput.value) {
+          event.preventDefault();
+          if (charErrorEl) charErrorEl.style.display = 'block';
+          valid = false;
+        }
+        if (!genderInput || !genderInput.value) {
+          event.preventDefault();
+          if (genderErrorEl) genderErrorEl.style.display = 'block';
+          valid = false;
+        }
+        if (!valid) {
+          const firstErr = document.querySelector('.wiz-field-err[style*="block"]');
+          if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return valid;
       });
     }
-  } catch (e) {
-    const p = document.createElement('p');
-    p.classList.add('error');
-    p.textContent = 'Unable to validate your registration. Please check your connection and try again.';
-    studentErrorContainer.appendChild(p);
-  } finally {
-    studentNextBtn.disabled = false;
-  }
+
+if (loginFormElement) {
+  loginFormElement.addEventListener('submit', handleLoginSubmit);
 }
 
 async function handleLoginSubmit(event) {
@@ -529,8 +613,13 @@ async function handleLoginSubmit(event) {
   // clear old errors
   loginErrorContainer.innerHTML = '';
   const seenMessages = new Set();
+  let data = null;
 
+  // Show loading state
+  const originalBtnText = loginSubmitBtn.innerHTML;
   loginSubmitBtn.disabled = true;
+  loginSubmitBtn.classList.add('btn-loading');
+  loginSubmitBtn.innerHTML = '<span class="spinner-small"></span> LOGGING IN...';
 
   const formData = new FormData(loginFormElement);
 
@@ -545,7 +634,7 @@ async function handleLoginSubmit(event) {
     });
 
     if (response.status === 422) {
-      const data = await response.json();
+      data = await response.json();
       const errors = data.errors || {};
 
       Object.values(errors).forEach(messages => {
@@ -572,7 +661,7 @@ async function handleLoginSubmit(event) {
       return;
     }
 
-    const data = await response.json();
+    data = await response.json();
 
     if (data.success && data.redirect) {
       // successful login → go to dashboard
@@ -599,7 +688,12 @@ async function handleLoginSubmit(event) {
     p.textContent = 'Unable to log in. Please check your connection and try again.';
     loginErrorContainer.appendChild(p);
   } finally {
-    loginSubmitBtn.disabled = false;
+    // Restore button state if not redirected
+    if (!data || !data.redirect || window.location.href.indexOf(data.redirect) === -1) {
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.classList.remove('btn-loading');
+        loginSubmitBtn.innerHTML = 'LOG IN';
+    }
   }
 }
 

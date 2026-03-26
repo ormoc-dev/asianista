@@ -7,7 +7,16 @@ use Illuminate\Http\Request;
 class StudentController extends Controller
 {
     public function dashboard() {
-        return view('student.dashboard');
+        $activeQuest = \App\Models\Quest::latest()->first();
+        $activeAttempt = null;
+        
+        if ($activeQuest) {
+            $activeAttempt = \App\Models\QuestAttempt::where('user_id', \Illuminate\Support\Facades\Auth::id())
+                                                    ->where('quest_id', $activeQuest->id)
+                                                    ->first();
+        }
+
+        return view('student.dashboard', compact('activeQuest', 'activeAttempt'));
     }
 
     public function registration() {
@@ -23,7 +32,7 @@ class StudentController extends Controller
     }
 
     public function aiSupport() {
-        return view('student.sections.ai-support');
+        return view('student.ai-support.index');
     }
 
     public function performance() {
