@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\RegistrationCode;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -62,6 +64,11 @@ class AuthController extends Controller
 
                 if ($user->status === 'pending') {
                     Auth::logout();
+                    Log::notice('auth.login.blocked', array_merge([
+                        'reason' => 'teacher_pending_approval',
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ], $this->authRequestMeta($request)));
                     $message = 'Your account is pending approval. Please wait for the admin’s review.';
 
                     if ($request->expectsJson()) {
@@ -79,6 +86,11 @@ class AuthController extends Controller
 
                 if ($user->status === 'rejected') {
                     Auth::logout();
+                    Log::notice('auth.login.blocked', array_merge([
+                        'reason' => 'teacher_rejected',
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ], $this->authRequestMeta($request)));
                     $message = 'Your registration request was declined by the administrator.';
 
                     if ($request->expectsJson()) {
@@ -102,6 +114,11 @@ class AuthController extends Controller
 
                 if ($user->status === 'pending') {
                     Auth::logout();
+                    Log::notice('auth.login.blocked', array_merge([
+                        'reason' => 'student_pending_approval',
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ], $this->authRequestMeta($request)));
                     $message = 'Your account is pending teacher approval.';
 
                     if ($request->expectsJson()) {
@@ -119,6 +136,11 @@ class AuthController extends Controller
 
                 if ($user->status === 'rejected') {
                     Auth::logout();
+                    Log::notice('auth.login.blocked', array_merge([
+                        'reason' => 'student_rejected',
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ], $this->authRequestMeta($request)));
                     $message = 'Your registration request was declined by the teacher.';
 
                     if ($request->expectsJson()) {
@@ -141,9 +163,39 @@ class AuthController extends Controller
                 $redirectUrl = route('admin.dashboard');
             } else {
                 // Unknown role – log out and treat as invalid
+                Log::warning('auth.login.blocked', array_merge([
+                    'reason' => 'unknown_role',
+                    'role' => $user->role,
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ], $this->authRequestMeta($request)));
                 Auth::logout();
                 $redirectUrl = null;
             }
+
+            if ($redirectUrl === null) {
+                Log::warning('auth.login.failed_after_attempt', array_merge([
+                    'email' => $credentials['email'] ?? null,
+                ], $this->authRequestMeta($request)));
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'errors'  => ['credentials' => ['Invalid credentials']],
+                    ], 422);
+                }
+
+                return back()
+                    ->with('error', 'Invalid credentials')
+                    ->with('show_form', 'login')
+                    ->withInput();
+            }
+
+            Log::info('auth.login.success', array_merge([
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+            ], $this->authRequestMeta($request)));
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -156,6 +208,10 @@ class AuthController extends Controller
         }
 
         // Invalid credentials
+        Log::warning('auth.login.failed_invalid_credentials', array_merge([
+            'email' => $credentials['email'] ?? null,
+        ], $this->authRequestMeta($request)));
+
         $message = 'Invalid credentials';
 
         if ($request->expectsJson()) {
@@ -196,6 +252,11 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::notice('auth.student.register.validation_failed', array_merge([
+                'errors' => $validator->errors()->toArray(),
+                'student_code_prefix' => $this->maskStudentCode($request->input('student_code')),
+            ], $this->authRequestMeta($request)));
+
             return back()
                 ->withErrors($validator)
                 ->withInput()
@@ -207,6 +268,11 @@ class AuthController extends Controller
 
         // Verify default password
         if ($request->default_password !== $registrationCode->default_password) {
+            Log::notice('auth.student.register.wrong_default_password', array_merge([
+                'registration_code_id' => $registrationCode->id,
+                'student_code_prefix' => $this->maskStudentCode($request->student_code),
+            ], $this->authRequestMeta($request)));
+
             return back()
                 ->withErrors(['default_password' => 'The default password is incorrect.'])
                 ->withInput()
@@ -218,35 +284,60 @@ class AuthController extends Controller
         // Determine final password
         $finalPassword = $request->new_password ?? $request->default_password;
 
-        // Create the user with character stats
-        $user = User::create([
-            'name'        => $registrationCode->full_name,
-            'first_name'  => $registrationCode->first_name,
-            'last_name'   => $registrationCode->last_name,
-            'middle_name' => $registrationCode->middle_name,
-            'email'       => $registrationCode->username . '@asianista.com', // Auto-generated email
-            'username'    => $registrationCode->username,
-            'password'    => bcrypt($finalPassword),
-            'role'        => 'student',
-            'character'   => $request->character,
-            'gender'      => $request->gender,
-            'profile_pic' => $profilePic,
-            'status'      => 'pending',
-            'hp'          => 0, // Will be set by initializeCharacterStats
-            'ap'          => 0,
-        ]);
+        try {
+            // Create the user with character stats
+            $user = User::create([
+                'name'        => $registrationCode->full_name,
+                'first_name'  => $registrationCode->first_name,
+                'last_name'   => $registrationCode->last_name,
+                'middle_name' => $registrationCode->middle_name,
+                'email'       => $registrationCode->username . '@asianista.com', // Auto-generated email
+                'username'    => $registrationCode->username,
+                'password'    => bcrypt($finalPassword),
+                'role'        => 'student',
+                'character'   => $request->character,
+                'gender'      => $request->gender,
+                'profile_pic' => $profilePic,
+                'status'      => 'pending',
+                'hp'          => 0, // Will be set by initializeCharacterStats
+                'ap'          => 0,
+            ]);
 
-        // Initialize character stats (HP/AP)
-        $user->initializeCharacterStats($request->character);
-        $user->save();
+            // Initialize character stats (HP/AP)
+            $user->initializeCharacterStats($request->character);
+            $user->save();
 
-        // Mark the code as used and link to user
-        $registrationCode->update([
-            'used' => true,
+            // Mark the code as used and link to user
+            $registrationCode->update([
+                'used' => true,
+                'user_id' => $user->id,
+                'character' => $request->character,
+                'gender' => $request->gender,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            Log::error('auth.student.register.exception', array_merge([
+                'exception' => $e->getMessage(),
+                'student_code_prefix' => $this->maskStudentCode($request->input('student_code')),
+            ], $this->authRequestMeta($request)));
+
+            $msg = config('app.debug')
+                ? $e->getMessage()
+                : 'Registration could not be completed. Please try again or contact your teacher.';
+
+            return back()
+                ->with('error', $msg)
+                ->withInput()
+                ->with('show_form', 'register');
+        }
+
+        Log::info('auth.student.register.success', array_merge([
             'user_id' => $user->id,
+            'email' => $user->email,
+            'student_code_prefix' => $this->maskStudentCode($request->student_code),
             'character' => $request->character,
             'gender' => $request->gender,
-        ]);
+        ], $this->authRequestMeta($request)));
 
         // Show message on welcome page
         return redirect('/')
@@ -263,32 +354,61 @@ class AuthController extends Controller
             'student_code' => 'required|string',
         ]);
 
-        $code = RegistrationCode::where('student_code', $request->student_code)->first();
+        try {
+            $code = RegistrationCode::where('student_code', $request->student_code)->first();
 
-        if (!$code) {
+            if (!$code) {
+                Log::info('auth.student.code.invalid', array_merge([
+                    'student_code_prefix' => $this->maskStudentCode($request->student_code),
+                ], $this->authRequestMeta($request)));
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid student code.',
+                ], 404);
+            }
+
+            if ($code->used) {
+                Log::notice('auth.student.code.already_used', array_merge([
+                    'student_code_prefix' => $this->maskStudentCode($request->student_code),
+                    'registration_code_id' => $code->id,
+                ], $this->authRequestMeta($request)));
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This code has already been used.',
+                ], 400);
+            }
+
+            Log::info('auth.student.code.validated', array_merge([
+                'registration_code_id' => $code->id,
+                'student_code_prefix' => $this->maskStudentCode($request->student_code),
+            ], $this->authRequestMeta($request)));
+
+            return response()->json([
+                'success' => true,
+                'student' => [
+                    'first_name' => $code->first_name,
+                    'last_name' => $code->last_name,
+                    'middle_name' => $code->middle_name,
+                    'full_name' => $code->full_name,
+                    'username' => $code->username,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            Log::error('auth.student.code.exception', array_merge([
+                'exception' => $e->getMessage(),
+                'student_code_prefix' => $this->maskStudentCode($request->input('student_code')),
+            ], $this->authRequestMeta($request)));
+
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid student code.',
-            ], 404);
+                'message' => config('app.debug')
+                    ? $e->getMessage()
+                    : 'Unable to validate the code right now. Please try again.',
+            ], 500);
         }
-
-        if ($code->used) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This code has already been used.',
-            ], 400);
-        }
-
-        return response()->json([
-            'success' => true,
-            'student' => [
-                'first_name' => $code->first_name,
-                'last_name' => $code->last_name,
-                'middle_name' => $code->middle_name,
-                'full_name' => $code->full_name,
-                'username' => $code->username,
-            ],
-        ]);
     }
 
     public function validateStudentStepOne(Request $request)
@@ -334,6 +454,11 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::notice('auth.teacher.register.validation_failed', array_merge([
+                'errors' => $validator->errors()->toArray(),
+                'email' => $request->input('email'),
+            ], $this->authRequestMeta($request)));
+
             // If request is AJAX (Accept: application/json), return JSON
             if ($request->expectsJson()) {
                 return response()->json([
@@ -351,14 +476,44 @@ class AuthController extends Controller
 
         $defaultProfilePic = 'default-pp.png';
 
-        $user = User::create([
-            'name'        => $request->name,
-            'email'       => $request->email,
-            'password'    => bcrypt($request->password),
-            'role'        => 'teacher',
-            'profile_pic' => $defaultProfilePic,
-            'status'      => 'pending',
-        ]);
+        try {
+            $user = User::create([
+                'name'        => $request->name,
+                'email'       => $request->email,
+                'password'    => bcrypt($request->password),
+                'role'        => 'teacher',
+                'profile_pic' => $defaultProfilePic,
+                'status'      => 'pending',
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            Log::error('auth.teacher.register.exception', array_merge([
+                'exception' => $e->getMessage(),
+                'email' => $request->input('email'),
+            ], $this->authRequestMeta($request)));
+
+            $msg = config('app.debug')
+                ? $e->getMessage()
+                : 'Registration could not be completed. Please try again or contact support.';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $msg,
+                ], 500);
+            }
+
+            return back()
+                ->with('error', $msg)
+                ->withInput()
+                ->with('show_form', 'teacher_register');
+        }
+
+        Log::info('auth.teacher.register.success', array_merge([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+        ], $this->authRequestMeta($request)));
 
         $message = 'Registration submitted. Awaiting admin approval.';
 
@@ -396,6 +551,10 @@ class AuthController extends Controller
         if ($status === Password::RESET_LINK_SENT) {
             $message = __($status);
 
+            Log::info('auth.password.forgot.link_sent', array_merge([
+                'email' => $request->input('email'),
+            ], $this->authRequestMeta($request)));
+
             // AJAX / JSON request
             if ($request->expectsJson()) {
                 return response()->json([
@@ -412,6 +571,11 @@ class AuthController extends Controller
 
         // Failure (user not found, etc.)
         $errorMessage = __($status);
+
+        Log::notice('auth.password.forgot.failed', array_merge([
+            'email' => $request->input('email'),
+            'status' => $status,
+        ], $this->authRequestMeta($request)));
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -464,12 +628,21 @@ class AuthController extends Controller
         // AJAX success or failure
         if ($request->expectsJson()) {
             if ($status === Password::PASSWORD_RESET) {
+                Log::info('auth.password.reset.success', array_merge([
+                    'email' => $request->input('email'),
+                ], $this->authRequestMeta($request)));
+
                 return response()->json([
                     'success' => true,
                     'status'  => 'passwords.reset',
                     'message' => __($status),
                 ]);
             }
+
+            Log::notice('auth.password.reset.failed', array_merge([
+                'email' => $request->input('email'),
+                'status' => $status,
+            ], $this->authRequestMeta($request)));
 
             return response()->json([
                 'success' => false,
@@ -480,8 +653,41 @@ class AuthController extends Controller
         }
 
         // Normal (non-AJAX) fallback
-        return $status === Password::PASSWORD_RESET
-            ? redirect('/')->with('status', __($status))
-            : back()->withErrors(['email' => [__($status)]]);
+        if ($status === Password::PASSWORD_RESET) {
+            Log::info('auth.password.reset.success', array_merge([
+                'email' => $request->input('email'),
+            ], $this->authRequestMeta($request)));
+
+            return redirect('/')->with('status', __($status));
+        }
+
+        Log::notice('auth.password.reset.failed', array_merge([
+            'email' => $request->input('email'),
+            'status' => $status,
+        ], $this->authRequestMeta($request)));
+
+        return back()->withErrors(['email' => [__($status)]]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function authRequestMeta(Request $request): array
+    {
+        return array_filter([
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent() ? Str::limit($request->userAgent(), 200) : null,
+        ]);
+    }
+
+    private function maskStudentCode(?string $code): ?string
+    {
+        if ($code === null || $code === '') {
+            return null;
+        }
+
+        $code = strtoupper(trim($code));
+
+        return Str::limit($code, 4, '…');
     }
 }

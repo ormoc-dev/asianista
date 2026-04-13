@@ -87,7 +87,11 @@
       @if (session('show_form') === 'teacher_register' && session('success'))
         <p class="success">{{ session('success') }}</p>
       @endif
-<div id="teacherErrorContainer"></div>
+      <div id="teacherErrorContainer">
+        @if (session('show_form') === 'teacher_register' && session('error'))
+          <p class="error">{{ session('error') }}</p>
+        @endif
+      </div>
       <form id="teacherRegisterFormElement" method="POST" action="{{ route('register.teacher') }}" onsubmit="handleTeacherSubmit(event);">
         @csrf
         <input type="text" name="name" placeholder="Full Name" required>
@@ -124,7 +128,7 @@
             placeholder="STU-XXXXXX" required autocomplete="off" maxlength="10">
         </div>
         <div id="codeValidationMessage" class="val-msg"></div>
-        <button type="submit" class="btn btn-quest">
+        <button type="submit" id="studentValidateCodeBtn" class="btn btn-quest">
           <span>Validate Code</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
@@ -179,7 +183,11 @@
             <div class="reg-alert reg-alert-success">{{ session('success') }}</div>
           @endif
         </div>
-        <div id="studentErrorContainer"></div>
+        <div id="studentErrorContainer">
+          @if (session('show_form') === 'register' && session('error'))
+            <div class="reg-alert reg-alert-error">{{ session('error') }}</div>
+          @endif
+        </div>
 
         <form id="studentRegisterFormElement" method="POST" action="{{ route('register.student') }}">
           @csrf
@@ -298,6 +306,97 @@
     const forgotStatusContainer = document.getElementById('forgotStatusContainer');
     const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
     const studentSuccessContainer = document.getElementById('studentSuccessContainer');
+    const studentValidateCodeBtn = document.getElementById('studentValidateCodeBtn');
+
+    let studentValidateCodeBtnHtml = '';
+    let studentCompleteBtnHtml = '';
+    let teacherSubmitBtnHtml = '';
+
+    function setStudentValidateCodeLoading(loading) {
+      if (!studentValidateCodeBtn) return;
+      if (loading) {
+        if (!studentValidateCodeBtnHtml) studentValidateCodeBtnHtml = studentValidateCodeBtn.innerHTML;
+        studentValidateCodeBtn.disabled = true;
+        studentValidateCodeBtn.classList.add('btn-loading');
+        studentValidateCodeBtn.innerHTML = '<span class="spinner-small"></span><span>Validating...</span>';
+      } else {
+        studentValidateCodeBtn.disabled = false;
+        studentValidateCodeBtn.classList.remove('btn-loading');
+        studentValidateCodeBtn.innerHTML = studentValidateCodeBtnHtml;
+      }
+    }
+
+    function setTeacherSubmitLoading(loading) {
+      if (!teacherSubmitBtn) return;
+      if (loading) {
+        if (!teacherSubmitBtnHtml) teacherSubmitBtnHtml = teacherSubmitBtn.innerHTML;
+        teacherSubmitBtn.disabled = true;
+        teacherSubmitBtn.classList.add('btn-loading');
+        teacherSubmitBtn.innerHTML = '<span class="spinner-small"></span> SIGNING UP...';
+      } else {
+        teacherSubmitBtn.disabled = false;
+        teacherSubmitBtn.classList.remove('btn-loading');
+        teacherSubmitBtn.innerHTML = teacherSubmitBtnHtml;
+      }
+    }
+
+    function setStudentCompleteLoading(loading) {
+      if (!studentCompleteBtn) return;
+      if (loading) {
+        if (!studentCompleteBtnHtml) studentCompleteBtnHtml = studentCompleteBtn.innerHTML;
+        studentCompleteBtn.disabled = true;
+        studentCompleteBtn.classList.add('btn-loading');
+        studentCompleteBtn.innerHTML = '<span class="spinner-small"></span><span>Submitting...</span>';
+      } else {
+        studentCompleteBtn.disabled = false;
+        studentCompleteBtn.classList.remove('btn-loading');
+        studentCompleteBtn.innerHTML = studentCompleteBtnHtml;
+      }
+    }
+
+    /**
+     * Read Laravel / JSON error payloads so users see a real message instead of a generic one.
+     */
+    async function fetchErrorMessage(response, fallback) {
+      const defaultMsg = fallback || 'Something went wrong. Please try again.';
+      if (response.status === 419) {
+        return 'Your session expired. Refresh the page and try again.';
+      }
+      if (response.status === 401 || response.status === 403) {
+        return 'You are not allowed to complete this action. Try refreshing the page.';
+      }
+      const ct = (response.headers.get('content-type') || '');
+      if (ct.includes('application/json')) {
+        try {
+          const data = await response.json();
+          if (typeof data.message === 'string' && data.message.trim() !== '') {
+            return data.message;
+          }
+          if (data.errors && typeof data.errors === 'object') {
+            const parts = [];
+            Object.values(data.errors).forEach((v) => {
+              if (Array.isArray(v)) {
+                v.forEach((m) => {
+                  if (typeof m === 'string') parts.push(m);
+                });
+              } else if (typeof v === 'string') {
+                parts.push(v);
+              }
+            });
+            if (parts.length) return parts.join(' ');
+          }
+          if (typeof data.error === 'string' && data.error.trim() !== '') {
+            return data.error;
+          }
+        } catch (e) {
+          return defaultMsg;
+        }
+      }
+      if (response.status >= 500) {
+        return 'A server error occurred. Please try again in a few minutes.';
+      }
+      return defaultMsg;
+    }
 
     function showCard(which) {
       loginForm.classList.add('hidden');
@@ -307,15 +406,16 @@
       teacherRegisterForm.classList.add('hidden');
       forgotForm.classList.add('hidden');
 
+      // Backend uses show_form "register" for student hero wizard; treat like student_register
       if (which === 'student_code') studentCodeForm.classList.remove('hidden');
-      else if (which === 'student_register') studentRegisterForm.classList.remove('hidden');
+      else if (which === 'student_register' || which === 'register') studentRegisterForm.classList.remove('hidden');
       else if (which === 'teacher_register') teacherRegisterForm.classList.remove('hidden');
       else if (which === 'forgot') forgotForm.classList.remove('hidden');
       else if (which === 'role') roleSelectionForm.classList.remove('hidden');
       else loginForm.classList.remove('hidden');
 
       // Allow body scroll for tall hero wizard, reset for other cards
-      if (which === 'student_register') {
+      if (which === 'student_register' || which === 'register') {
         document.body.classList.add('wizard-active');
       } else {
         document.body.classList.remove('wizard-active');
@@ -457,18 +557,38 @@ if (backToLoginFromForgot) {
       }
 
       messageEl.innerHTML = '<span class="validating"><svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Validating your code...</span>';
+      setStudentValidateCodeLoading(true);
 
       try {
         const response = await fetch('{{ route('register.validate-code') }}', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
           },
           body: JSON.stringify({ student_code: code })
         });
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          let errText = 'Could not read the server response. Please try again.';
+          if (response.status === 419) errText = 'Your session expired. Refresh the page and try again.';
+          else if (response.status >= 500) errText = 'A server error occurred. Please try again later.';
+          messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> ' + errText + '</span>';
+          setStudentValidateCodeLoading(false);
+          return;
+        }
+
+        if (!response.ok && data.errors && typeof data.errors === 'object') {
+          const flat = Object.values(data.errors).flat().filter((m) => typeof m === 'string');
+          const errMsg = flat.length ? flat[0] : (data.message || 'Could not validate this code.');
+          messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ' + errMsg + '</span>';
+          setStudentValidateCodeLoading(false);
+          return;
+        }
 
         if (data.success) {
           messageEl.innerHTML = '<span class="success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Code validated! Welcome, ' + data.student.full_name + '!</span>';
@@ -486,20 +606,24 @@ if (backToLoginFromForgot) {
 
           // Show registration form after a short delay
           setTimeout(() => {
+            setStudentValidateCodeLoading(false);
             showCard('student_register');
           }, 800);
         } else {
           messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ' + (data.message || 'Invalid code') + '</span>';
+          setStudentValidateCodeLoading(false);
         }
       } catch (error) {
-        messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Connection error. Please try again.</span>';
+        messageEl.innerHTML = '<span class="error"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Connection error. Please check your network and try again.</span>';
         console.error('Validation error:', error);
+        setStudentValidateCodeLoading(false);
       }
     }
 
     // Go back to code entry
     function backToCodeEntry() {
       showCard('student_code');
+      setStudentValidateCodeLoading(false);
 
       // Clear inputs
       const codeInput = document.getElementById('studentCodeInput');
@@ -513,7 +637,7 @@ function handleTeacherSubmit(event) {
 
   teacherErrorContainer.innerHTML = '';
   const seenMessages = new Set();
-  teacherSubmitBtn.disabled = true;
+  setTeacherSubmitLoading(true);
 
   const formData = new FormData(teacherRegisterFormElement);
 
@@ -541,16 +665,17 @@ function handleTeacherSubmit(event) {
           });
         });
 
-        teacherSubmitBtn.disabled = false;
+        setTeacherSubmitLoading(false);
         return;
       }
 
       if (!response.ok) {
+        const msg = await fetchErrorMessage(response, 'Registration could not be completed. Please try again.');
         const p = document.createElement('p');
         p.classList.add('error');
-        p.textContent = 'An unexpected error occurred. Please try again.';
+        p.textContent = msg;
         teacherErrorContainer.appendChild(p);
-        teacherSubmitBtn.disabled = false;
+        setTeacherSubmitLoading(false);
         return;
       }
 
@@ -563,16 +688,21 @@ function handleTeacherSubmit(event) {
         teacherErrorContainer.appendChild(p);
 
         teacherRegisterFormElement.reset();
+      } else {
+        const p = document.createElement('p');
+        p.classList.add('error');
+        p.textContent = (data.message && String(data.message)) || 'Registration could not be completed.';
+        teacherErrorContainer.appendChild(p);
       }
 
-      teacherSubmitBtn.disabled = false;
+      setTeacherSubmitLoading(false);
     })
     .catch(() => {
       const p = document.createElement('p');
       p.classList.add('error');
       p.textContent = 'Unable to submit. Check your connection.';
       teacherErrorContainer.appendChild(p);
-      teacherSubmitBtn.disabled = false;
+      setTeacherSubmitLoading(false);
     });
 }
 
@@ -598,6 +728,8 @@ function handleTeacherSubmit(event) {
         if (!valid) {
           const firstErr = document.querySelector('.wiz-field-err[style*="block"]');
           if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          setStudentCompleteLoading(true);
         }
         return valid;
       });
@@ -653,9 +785,10 @@ async function handleLoginSubmit(event) {
     }
 
     if (!response.ok) {
+      const msg = await fetchErrorMessage(response, 'Login could not be completed. Please try again.');
       const p = document.createElement('p');
       p.classList.add('error');
-      p.textContent = 'An unexpected error occurred. Please try again.';
+      p.textContent = msg;
       loginErrorContainer.appendChild(p);
       loginSubmitBtn.disabled = false;
       return;
@@ -744,9 +877,10 @@ async function handleForgotSubmit(event) {
     }
 
     if (!response.ok) {
+      const msg = await fetchErrorMessage(response, 'We could not process your request. Please try again.');
       const p = document.createElement('p');
       p.classList.add('error');
-      p.textContent = 'An unexpected error occurred. Please try again.';
+      p.textContent = msg;
       forgotErrorContainer.appendChild(p);
       if (forgotSubmitBtn) forgotSubmitBtn.disabled = false;
       return;

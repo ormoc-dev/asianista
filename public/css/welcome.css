@@ -675,6 +675,11 @@ input:focus, select:focus {
   box-shadow: 0 6px 20px rgba(255,212,59,0.5);
 }
 
+.btn-quest.btn-loading .spinner-small {
+  border-color: rgba(11, 28, 68, 0.2);
+  border-top-color: #0b1c44;
+}
+
 /* === HERO WIZARD CARD === */
 .hero-wizard-card {
   display: flex;
