@@ -12,6 +12,8 @@ class RegistrationCode extends Model
     protected $fillable = [
         'code',
         'used',
+        'is_approved',
+        'approved_at',
         'first_name',
         'last_name',
         'middle_name',
@@ -25,6 +27,8 @@ class RegistrationCode extends Model
 
     protected $casts = [
         'used' => 'boolean',
+        'is_approved' => 'boolean',
+        'approved_at' => 'datetime',
     ];
 
     /**

@@ -4,25 +4,6 @@
 @section('page-title', 'Registration')
 
 @section('content')
-<!-- Alert Messages -->
-@if(session('success'))
-    <div class="alert alert-success" style="margin-bottom: 24px; padding: 16px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; color: #155724;">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-error" style="margin-bottom: 24px; padding: 16px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; color: #721c24;">
-        {{ session('error') }}
-    </div>
-@endif
-
-@if(session('warning'))
-    <div class="alert alert-warning" style="margin-bottom: 24px; padding: 16px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; color: #856404;">
-        {{ session('warning') }}
-    </div>
-@endif
-
 <!-- Excel Upload Section -->
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
@@ -37,10 +18,10 @@
                 </div>
                 <h3>Drop your Excel file here</h3>
                 <p>or click to browse</p>
-                <form action="{{ route('teacher.registration.upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <form action="{{ route('teacher.registration.upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm" class="js-loading-form">
                     @csrf
                     <input type="file" name="student_file" accept=".xlsx,.xls,.csv" required id="fileInput">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="submit" class="btn btn-primary btn-lg js-loading-button" data-loading-text="Uploading...">
                         <i class="fas fa-upload"></i> Upload Students
                     </button>
                 </form>
@@ -194,6 +175,11 @@
     margin-top: 8px;
 }
 
+.btn.is-loading {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .upload-grid {
         grid-template-columns: 1fr;
@@ -206,57 +192,124 @@
 </style>
 
 <script>
-// Drag and drop functionality
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const uploadForm = document.getElementById('uploadForm');
+document.addEventListener('DOMContentLoaded', () => {
+    // Drag and drop functionality
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
 
-if (dropZone && fileInput) {
-    // Click to browse
-    dropZone.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'BUTTON') {
-            fileInput.click();
+    if (dropZone && fileInput) {
+        // Click to browse
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        });
+        
+        // File selected
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                dropZone.querySelector('p').textContent = `Selected: ${fileName}`;
+            }
+        });
+        
+        // Drag events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+        
+        // Handle dropped file
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                const fileName = files[0].name;
+                dropZone.querySelector('p').textContent = `Selected: ${fileName}`;
+            }
+        });
+    }
+
+    // Registered students table: select all + bulk action state
+    const selectAllStudents = document.getElementById('selectAllStudents');
+    const bulkApproveStudentsBtn = document.getElementById('bulkApproveStudentsBtn');
+    const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+
+    function updateBulkApproveStudentsState() {
+        const selectedCount = Array.from(studentCheckboxes).filter((checkbox) => checkbox.checked).length;
+        if (bulkApproveStudentsBtn) {
+            bulkApproveStudentsBtn.disabled = selectedCount === 0;
         }
-    });
-    
-    // File selected
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name;
-            dropZone.querySelector('p').textContent = `Selected: ${fileName}`;
-        }
-    });
-    
-    // Drag events
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+    }
+
+    if (selectAllStudents) {
+        selectAllStudents.addEventListener('change', () => {
+            studentCheckboxes.forEach((checkbox) => {
+                checkbox.checked = selectAllStudents.checked;
+            });
+            updateBulkApproveStudentsState();
+        });
+    }
+
+    studentCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+            const allChecked = studentCheckboxes.length > 0
+                && Array.from(studentCheckboxes).every((item) => item.checked);
+
+            if (selectAllStudents) {
+                selectAllStudents.checked = allChecked;
+            }
+            updateBulkApproveStudentsState();
         });
     });
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.add('dragover');
+
+    // Form submit loading state to prevent duplicate CRUD actions
+    document.querySelectorAll('.js-loading-form').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+            const loadingButtons = submitter
+                ? [submitter]
+                : Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+
+            loadingButtons.forEach((button) => {
+                if (button.dataset.submitted === 'true') {
+                    event.preventDefault();
+                    return;
+                }
+
+                button.dataset.submitted = 'true';
+                button.disabled = true;
+                button.classList.add('is-loading');
+
+                if (button.tagName === 'BUTTON') {
+                    if (!button.dataset.originalHtml) {
+                        button.dataset.originalHtml = button.innerHTML;
+                    }
+                    button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${button.dataset.loadingText || 'Processing...'}`;
+                } else {
+                    if (!button.dataset.originalValue) {
+                        button.dataset.originalValue = button.value;
+                    }
+                    button.value = button.dataset.loadingText || 'Processing...';
+                }
+            });
         });
     });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.remove('dragover');
-        });
-    });
-    
-    // Handle dropped file
-    dropZone.addEventListener('drop', (e) => {
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            const fileName = files[0].name;
-            dropZone.querySelector('p').textContent = `Selected: ${fileName}`;
-        }
-    });
-}
+});
 </script>
 
 <!-- Pending Registrations -->
@@ -293,16 +346,16 @@ if (dropZone && fileInput) {
                         </td>
                         <td>
                             <div style="display: flex; gap: 8px;">
-                                <form action="{{ route('teacher.registration.regenerate', $registration->id) }}" method="POST" style="display: inline;">
+                                <form action="{{ route('teacher.registration.regenerate', $registration->id) }}" method="POST" style="display: inline;" class="js-loading-form">
                                     @csrf
-                                    <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Regenerate credentials for {{ $registration->full_name }}?')">
+                                    <button type="submit" class="btn btn-sm btn-secondary js-loading-button" data-loading-text="Regenerating..." onclick="return confirm('Regenerate credentials for {{ $registration->full_name }}?')">
                                         <i class="fas fa-sync"></i> Regenerate
                                     </button>
                                 </form>
-                                <form action="{{ route('teacher.registration.destroy-pending', $registration->id) }}" method="POST" style="display: inline;">
+                                <form action="{{ route('teacher.registration.destroy-pending', $registration->id) }}" method="POST" style="display: inline;" class="js-loading-form">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete pending registration for {{ $registration->full_name }}?')">
+                                    <button type="submit" class="btn btn-sm btn-danger js-loading-button" data-loading-text="Deleting..." onclick="return confirm('Delete pending registration for {{ $registration->full_name }}?')">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </form>
@@ -323,27 +376,46 @@ if (dropZone && fileInput) {
     </div>
 </div>
 
-<!-- Registered Students -->
+<!-- Students Pending Approval -->
 <div class="card">
     <div class="card-header">
-        <h2 class="card-title">Registered Students</h2>
+        <h2 class="card-title">Students Pending Approval</h2>
     </div>
     <div class="card-body" style="padding: 0;">
+        <div style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <label for="selectAllStudents" style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--text-primary);">
+                <input type="checkbox" id="selectAllStudents">
+                Select all students
+            </label>
+            <form action="{{ route('teacher.students.approve.bulk') }}" method="POST" id="bulkApproveStudentsForm" style="display: inline;" class="js-loading-form">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-primary js-loading-button" id="bulkApproveStudentsBtn" data-loading-text="Approving..." disabled onclick="return confirm('Approve selected student(s)?')">
+                    <i class="fas fa-check-circle"></i> Approve Selected
+                </button>
+            </form>
+        </div>
         <div class="table-container">
             <table class="table">
                 <thead>
                     <tr>
+                        <th style="width: 60px;">Select</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Character</th>
                         <th>HP/AP</th>
                         <th>Status</th>
                         <th>Registered</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($students as $student)
                     <tr>
+                        <td>
+                            @if($student->status === 'pending')
+                                <input type="checkbox" class="student-checkbox" name="student_ids[]" value="{{ $student->id }}" form="bulkApproveStudentsForm">
+                            @endif
+                        </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <img src="{{ asset('images/' . ($student->profile_pic ?? 'default-pp.png')) }}" style="width: 36px; height: 36px; border-radius: 50%;">
@@ -353,10 +425,13 @@ if (dropZone && fileInput) {
                         <td>{{ $student->email }}</td>
                         <td>
                             @if($student->character)
-                                <span class="badge" style="text-transform: capitalize; background: 
-                                    {{ $student->character === 'mage' ? '#6c5ce7' : ($student->character === 'warrior' ? '#e17055' : '#00b894') }};">
-                                    {{ $student->character }}
-                                </span>
+                                @if($student->character === 'mage')
+                                    <span class="badge" style="text-transform: capitalize; background: #6c5ce7;">{{ $student->character }}</span>
+                                @elseif($student->character === 'warrior')
+                                    <span class="badge" style="text-transform: capitalize; background: #e17055;">{{ $student->character }}</span>
+                                @else
+                                    <span class="badge" style="text-transform: capitalize; background: #00b894;">{{ $student->character }}</span>
+                                @endif
                             @else
                                 <span class="badge badge-secondary">Not Selected</span>
                             @endif
@@ -381,12 +456,24 @@ if (dropZone && fileInput) {
                             @endif
                         </td>
                         <td>{{ $student->created_at->format('M d, Y') }}</td>
+                        <td>
+                            @if($student->status === 'pending')
+                                <form action="{{ route('teacher.students.approve', $student->id) }}" method="POST" style="display: inline;" class="js-loading-form">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-primary js-loading-button" data-loading-text="Approving..." onclick="return confirm('Approve {{ $student->name }}?')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                </form>
+                            @else
+                                <span style="color: var(--text-muted);">-</span>
+                            @endif
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
-                            No students registered yet.
+                            No students pending approval.
                         </td>
                     </tr>
                     @endforelse

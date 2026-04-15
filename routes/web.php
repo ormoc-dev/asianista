@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\AdminUserManagementController;
 use App\Http\Controllers\AIAssistantController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\TeacherReportsController;
 
 
 /*
@@ -175,6 +176,8 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::post('/registration/upload', [TeacherRegistrationController::class, 'uploadExcel'])->name('registration.upload');
     Route::get('/registration/template', [TeacherRegistrationController::class, 'downloadTemplate'])->name('registration.template');
     Route::post('/registration/{id}/regenerate', [TeacherRegistrationController::class, 'regenerateCredentials'])->name('registration.regenerate');
+    Route::post('/students/{id}/approve', [TeacherRegistrationController::class, 'approveStudent'])->name('students.approve');
+    Route::post('/students/approve/bulk', [TeacherRegistrationController::class, 'bulkApproveStudents'])->name('students.approve.bulk');
     Route::delete('/registration/pending/{id}', [TeacherRegistrationController::class, 'destroyPending'])->name('registration.destroy-pending');
     // Students management
     Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');

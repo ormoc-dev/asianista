@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lesson;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 use App\Notifications\LessonStatusNotification;
 
 class AdminLessonController extends Controller
@@ -34,9 +35,9 @@ class AdminLessonController extends Controller
 
         $lesson->update(['status' => 'approved']);
 
-        // Optionally notify the teacher
-        if ($lesson->teacher && $lesson->teacher->email) {
-            Notification::send($lesson->teacher, new LessonStatusNotification($lesson, 'approved'));
+        // Notify teacher only when notifications table exists.
+        if ($lesson->teacher && Schema::hasTable('notifications')) {
+            Notification::send($lesson->teacher, new LessonStatusNotification('approved', $lesson->title));
         }
 
         return back()->with('success', '✅ Lesson approved successfully!');
@@ -55,8 +56,8 @@ class AdminLessonController extends Controller
 
         $lesson->update(['status' => 'rejected']);
 
-        if ($lesson->teacher && $lesson->teacher->email) {
-            Notification::send($lesson->teacher, new LessonStatusNotification($lesson, 'rejected'));
+        if ($lesson->teacher && Schema::hasTable('notifications')) {
+            Notification::send($lesson->teacher, new LessonStatusNotification('rejected', $lesson->title));
         }
 
         return back()->with('success', '❌ Lesson rejected successfully.');

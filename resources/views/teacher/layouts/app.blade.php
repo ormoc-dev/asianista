@@ -932,10 +932,10 @@
                         <a href="#" class="dropdown-item">
                             <i class="fas fa-cog"></i> Settings
                         </a>
-                        <form action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
-                        <a href="#" class="dropdown-item danger" onclick="event.preventDefault(); document.querySelector('form[action=\'{{ route('logout') }}\']').submit();">
+                        <a href="#" class="dropdown-item danger" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     </div>
@@ -946,13 +946,6 @@
         <div class="content">
             @if(session('success'))
                 <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if(session('success'))
-                <div class="alert alert-success" style="margin-bottom: 20px;">
                     <i class="fas fa-check-circle"></i>
                     {{ session('success') }}
                 </div>

@@ -27,7 +27,10 @@ class TeacherRegistrationController extends Controller
      */
     public function index()
     {
-        $students = User::where('role', 'student')->get();
+        $students = User::where('role', 'student')
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
         $pendingRegistrations = RegistrationCode::where('used', false)
             ->whereNotNull('student_code')
             ->orderBy('created_at', 'desc')
@@ -113,5 +116,37 @@ class TeacherRegistrationController extends Controller
         $registrationCode->delete();
 
         return back()->with('success', 'Pending registration deleted successfully.');
+    }
+
+    public function approveStudent($id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+
+        if ($student->status !== 'pending') {
+            return back()->with('warning', "{$student->name} is already {$student->status}.");
+        }
+
+        $student->update(['status' => 'approved']);
+
+        return back()->with('success', "{$student->name} has been approved.");
+    }
+
+    public function bulkApproveStudents(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids' => 'required|array|min:1',
+            'student_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $updated = User::whereIn('id', $validated['student_ids'])
+            ->where('role', 'student')
+            ->where('status', 'pending')
+            ->update(['status' => 'approved']);
+
+        if ($updated === 0) {
+            return back()->with('warning', 'No students were approved.');
+        }
+
+        return back()->with('success', "{$updated} student(s) approved successfully.");
     }
 }

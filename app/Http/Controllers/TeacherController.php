@@ -7,12 +7,25 @@ use App\Models\User;
 use App\Models\QuizAttempt;
 use App\Models\Quiz;
 use App\Models\Lesson;
+use App\Models\Quest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TeacherController extends Controller
 {
     public function dashboard() {
-        return view('teacher.dashboard');
+        $teacherId = Auth::id();
+
+        $stats = [
+            'pending_students' => User::where('role', 'student')->where('status', 'pending')->count(),
+            'approved_students' => User::where('role', 'student')->where('status', 'approved')->count(),
+            'quests_created' => Quest::where('teacher_id', $teacherId)->count(),
+            'lessons_created' => Lesson::where('teacher_id', $teacherId)->count(),
+            'quizzes_created' => Quiz::where('teacher_id', $teacherId)->count(),
+            'active_quizzes' => Quiz::where('teacher_id', $teacherId)->where('status', 'active')->count(),
+        ];
+
+        return view('teacher.dashboard', compact('stats'));
     }
 
     public function registration()
