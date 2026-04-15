@@ -25,21 +25,41 @@ class AdminUserManagementController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,teacher,student',
-            'character' => 'nullable|string',
-            'level' => 'nullable|integer|min:1',
-            'xp' => 'nullable|integer|min:0',
             'status' => 'required|in:pending,approved,rejected',
-        ]);
+        ];
 
-        $user->update($validated);
+        if ($request->input('role') === 'student') {
+            $rules['character'] = 'nullable|string|max:255';
+            $rules['level'] = 'nullable|integer|min:1';
+            $rules['xp'] = 'nullable|integer|min:0';
+        }
+
+        $validated = $request->validate($rules);
+
+        $data = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'status' => $validated['status'],
+        ];
+
+        if ($validated['role'] === 'student') {
+            $data['character'] = $validated['character'] ?? null;
+            $data['level'] = isset($validated['level']) ? (int) $validated['level'] : 1;
+            $data['xp'] = isset($validated['xp']) ? (int) $validated['xp'] : 0;
+        } else {
+            $data['character'] = null;
+        }
+
+        $user->update($data);
 
         return redirect()
             ->route('admin.user-management')
-            ->with('status', 'Hero updated successfully in the realm!');
+            ->with('status', 'User updated successfully.');
     }
 
     public function destroy(User $user)

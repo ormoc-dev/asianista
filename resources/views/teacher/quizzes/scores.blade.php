@@ -248,7 +248,6 @@
                     <th>Student</th>
                     <th>Score</th>
                     <th>Correct</th>
-                    <th>XP Earned</th>
                     <th>Date Taken</th>
                 </tr>
             </thead>
@@ -288,7 +287,6 @@
                             <span class="score-badge {{ $scoreClass }}">{{ $attempt->score }}%</span>
                         </td>
                         <td>{{ $attempt->correct_answers }} / {{ $attempt->total_questions }}</td>
-                        <td><span class="xp-badge">+{{ $attempt->xp_earned }} XP</span></td>
                         <td>{{ $attempt->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                     @php $rank++; @endphp

@@ -58,7 +58,6 @@
                             <th>Student</th>
                             <th>Quizzes</th>
                             <th>Avg Score</th>
-                            <th>Total XP</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,11 +83,10 @@
                                         {{ number_format($ranking->average_score, 1) }}%
                                     </span>
                                 </td>
-                                <td><span class="xp-badge">{{ $ranking->total_xp }} XP</span></td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="empty-cell">
+                                <td colspan="4" class="empty-cell">
                                     <i class="fas fa-inbox"></i>
                                     <p>No quiz attempts yet</p>
                                 </td>
@@ -150,7 +148,6 @@
                         <th>Quiz</th>
                         <th>Score</th>
                         <th>Correct</th>
-                        <th>XP Earned</th>
                         <th>Date</th>
                     </tr>
                 </thead>
@@ -165,12 +162,11 @@
                                 </span>
                             </td>
                             <td>{{ $attempt->correct_answers }}/{{ $attempt->total_questions }}</td>
-                            <td><span class="xp-badge">+{{ $attempt->xp_earned }}</span></td>
                             <td>{{ $attempt->created_at->diffForHumans() }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="empty-cell">
+                            <td colspan="5" class="empty-cell">
                                 <i class="fas fa-inbox"></i>
                                 <p>No recent attempts</p>
                             </td>

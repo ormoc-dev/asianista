@@ -13,19 +13,8 @@
             <div>
                 <h2 style="margin: 0;">{{ $student->first_name }} {{ $student->last_name }}</h2>
                 <p style="margin: 5px 0; color: var(--text-muted);">{{ $student->email }}</p>
-                <span style="display: inline-block; padding: 4px 12px; background: var(--bg-main); border-radius: 12px; font-size: 0.85rem;">
-                    {{ $student->character ?: 'No Class' }}
-                </span>
             </div>
             <div style="margin-left: auto; display: flex; gap: 30px; text-align: center;">
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--accent);">{{ $student->level }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">Level</div>
-                </div>
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: 600; color: #10b981;">{{ $student->xp }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">XP</div>
-                </div>
                 <div>
                     <div style="font-size: 1.5rem; font-weight: 600; color: #ef4444;">{{ $student->hp }}</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted);">HP</div>
@@ -70,7 +59,7 @@
                         </td>
                         <td style="font-weight: 600;">
                             @if($attempt->score)
-                                {{ $attempt->score }} XP
+                                {{ $attempt->score }}
                             @else
                                 -
                             @endif
@@ -108,7 +97,6 @@
                 <thead>
                     <tr>
                         <th>Event</th>
-                        <th>XP Change</th>
                         <th>Date</th>
                     </tr>
                 </thead>
@@ -116,15 +104,6 @@
                     @foreach($xpHistory as $event)
                     <tr>
                         <td>{{ $event->title }}</td>
-                        <td>
-                            @if($event->xp_reward > 0)
-                                <span style="color: #10b981; font-weight: 600;">+{{ $event->xp_reward }} XP</span>
-                            @elseif($event->xp_penalty > 0)
-                                <span style="color: #ef4444; font-weight: 600;">-{{ $event->xp_penalty }} XP</span>
-                            @else
-                                -
-                            @endif
-                        </td>
                         <td>{{ \Carbon\Carbon::parse($event->started_at)->format('M d, Y') }}</td>
                     </tr>
                     @endforeach

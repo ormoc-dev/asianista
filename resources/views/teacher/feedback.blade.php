@@ -78,7 +78,6 @@
                         </div>
                         <div class="student-info">
                             <h3>{{ $student->name }}</h3>
-                            <span class="student-class">{{ ucfirst($student->character ?? 'Student') }}</span>
                         </div>
                         <div class="performance-badge {{ $performanceClass }}">
                             {{ $performanceLabel }}
@@ -94,10 +93,6 @@
                             <span class="stat-label">Quizzes</span>
                             <span class="stat-value">{{ $student->quizzes_taken }}</span>
                         </div>
-                        <div class="stat">
-                            <span class="stat-label">XP</span>
-                            <span class="stat-value">{{ $student->total_xp }}</span>
-                        </div>
                     </div>
 
                     @if($student->last_attempt)
@@ -112,7 +107,7 @@
                     @endif
 
                     <div class="student-actions">
-                        <button class="btn-feedback" onclick="openFeedbackModal({{ $student->id }}, '{{ addslashes($student->name) }}')">
+                        <button type="button" class="btn-feedback" data-student-id="{{ $student->id }}" data-student-name="{{ e($student->name) }}">
                             <i class="fas fa-comment-dots"></i> Give Feedback
                         </button>
                         <a href="{{ route('teacher.reports.student', $student->id) }}" class="btn-view">
@@ -693,6 +688,12 @@
         document.getElementById('modalStudentName').textContent = studentName;
         document.getElementById('feedbackModal').classList.add('active');
     }
+
+    document.querySelectorAll('.btn-feedback').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            openFeedbackModal(this.dataset.studentId, this.dataset.studentName);
+        });
+    });
 
     function closeFeedbackModal() {
         document.getElementById('feedbackModal').classList.remove('active');

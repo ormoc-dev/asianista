@@ -4,7 +4,9 @@ namespace App\Http\Livewire\Teacher\Lessons;
 
 use Livewire\Component;
 use App\Models\Lesson;
+use App\View\Concerns\LivewireViewMacros;
 use Livewire\WithFileUploads;
+use Illuminate\View\View;
 
 class Create extends Component
 {
@@ -40,17 +42,19 @@ class Create extends Component
             'content' => $this->content,
             'file_path' => $filePath,
             'teacher_id' => $teacherId,
-            'status' => 'pending',
+            'status' => 'approved',
         ]);
 
-        session()->flash('success', 'Lesson submitted successfully and is pending admin approval.');
+        session()->flash('success', 'Lesson published successfully.');
 
         return redirect()->route('teacher.lessons.index');
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.teacher.lessons.create')
-            ->layout('livewire.teacher.app-layout');
+        /** @var View&LivewireViewMacros $page */
+        $page = view('livewire.teacher.lessons.create');
+
+        return $page->layout('livewire.teacher.app-layout');
     }
 }

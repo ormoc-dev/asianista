@@ -82,7 +82,6 @@
                         <th>Date/Time</th>
                         <th>Event</th>
                         <th>Type</th>
-                        <th>XP Effect</th>
                         <th>Target</th>
                     </tr>
                 </thead>
@@ -117,15 +116,6 @@
                             </span>
                         </td>
                         <td>
-                            @if($draw->xp_reward > 0)
-                                <span style="color: #10b981; font-weight: 600;">+{{ $draw->xp_reward }} XP</span>
-                            @elseif($draw->xp_penalty > 0)
-                                <span style="color: #ef4444; font-weight: 600;">-{{ $draw->xp_penalty }} XP</span>
-                            @else
-                                <span style="color: #94a3b8;">No XP</span>
-                            @endif
-                        </td>
-                        <td>
                             @php
                                 $targetLabels = [
                                     'single' => 'Single',
@@ -139,7 +129,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px;">
+                        <td colspan="4" style="text-align: center; padding: 40px;">
                             <div style="color: var(--text-muted);">
                                 <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
                                 No events drawn yet. Click the dice to draw your first event!
@@ -521,13 +511,7 @@ function drawRandomEvent() {
 
 function showEventModal(event) {
     const modalBody = document.getElementById('eventModalBody');
-    
-    const xpDisplay = event.xp_reward > 0 
-        ? `<span class="xp-reward">+${event.xp_reward} XP</span>`
-        : event.xp_penalty > 0
-            ? `<span class="xp-penalty">-${event.xp_penalty} XP</span>`
-            : '<span style="color: #94a3b8;">No XP Change</span>';
-    
+
     modalBody.innerHTML = `
         <div class="event-card-drawn">
             <div class="close-btn-container">
@@ -539,7 +523,6 @@ function showEventModal(event) {
                 <div class="scroll-draw-description">${event.description}</div>
                 <div class="scroll-draw-divider"></div>
                 <div class="scroll-draw-effect">${event.effect}</div>
-                <div class="scroll-draw-xp">${xpDisplay}</div>
                 <div class="scroll-draw-footer">
                     <button onclick="closeEventModal()" class="btn">
                         <i class="fas fa-check"></i> Done

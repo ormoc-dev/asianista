@@ -28,6 +28,8 @@ class User extends Authenticatable
         'status',
         'hp',
         'ap',
+        'xp',
+        'level',
         'first_name',
         'last_name',
         'middle_name',

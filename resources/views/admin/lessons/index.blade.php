@@ -230,7 +230,7 @@
                 <i class="fas fa-book"></i>
                 <div>
                     <h2>Lessons</h2>
-                    <p>Review and manage lessons</p>
+                    <p>View lessons uploaded by teachers</p>
                 </div>
             </div>
             <span class="page-date">{{ now()->format('M d, Y') }}</span>
@@ -284,27 +284,12 @@
                             </td>
                             <td>
                                 <div class="action-btns">
-                                    @if($lesson->status === 'pending')
-                                        <form action="{{ route('admin.lessons.approve', $lesson->id) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-approve">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                        </form>
-
-                                        <form action="{{ route('admin.lessons.reject', $lesson->id) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-reject">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </form>
-                                    @endif
-
+                                    <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn btn-view">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
                                     @if($lesson->file_path)
-                                        <a href="{{ asset('storage/' . $lesson->file_path) }}" target="_blank" class="btn btn-view">
-                                            <i class="fas fa-eye"></i> View
+                                        <a href="{{ asset('storage/' . $lesson->file_path) }}" target="_blank" rel="noopener noreferrer" class="btn btn-view" style="background:#6366f1;">
+                                            <i class="fas fa-file"></i> File
                                         </a>
                                     @endif
                                 </div>

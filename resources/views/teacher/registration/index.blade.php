@@ -401,8 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th style="width: 60px;">Select</th>
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Character</th>
-                        <th>HP/AP</th>
                         <th>Status</th>
                         <th>Registered</th>
                         <th>Actions</th>
@@ -423,29 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </td>
                         <td>{{ $student->email }}</td>
-                        <td>
-                            @if($student->character)
-                                @if($student->character === 'mage')
-                                    <span class="badge" style="text-transform: capitalize; background: #6c5ce7;">{{ $student->character }}</span>
-                                @elseif($student->character === 'warrior')
-                                    <span class="badge" style="text-transform: capitalize; background: #e17055;">{{ $student->character }}</span>
-                                @else
-                                    <span class="badge" style="text-transform: capitalize; background: #00b894;">{{ $student->character }}</span>
-                                @endif
-                            @else
-                                <span class="badge badge-secondary">Not Selected</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($student->hp > 0 || $student->ap > 0)
-                                <span style="font-size: 0.85rem;">
-                                    <span style="color: #e74c3c;">HP: {{ $student->hp }}</span> / 
-                                    <span style="color: #3498db;">AP: {{ $student->ap }}</span>
-                                </span>
-                            @else
-                                -
-                            @endif
-                        </td>
                         <td>
                             @if($student->status === 'active')
                                 <span class="badge badge-success">Active</span>
@@ -471,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
                             No students pending approval.
                         </td>

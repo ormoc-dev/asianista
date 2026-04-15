@@ -4,8 +4,10 @@ namespace App\Http\Livewire\Teacher\Lessons;
 
 use Livewire\Component;
 use App\Models\Lesson;
+use App\View\Concerns\LivewireViewMacros;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class Edit extends Component
 {
@@ -35,11 +37,6 @@ class Edit extends Component
         $this->validate();
 
         $lesson = Lesson::findOrFail($this->lessonId);
-        
-        if ($lesson->status === 'approved') {
-            session()->flash('error', 'Approved lessons cannot be edited.');
-            return;
-        }
 
         $filePath = $lesson->file_path;
 
@@ -54,17 +51,19 @@ class Edit extends Component
             'title' => $this->title,
             'section' => $this->section,
             'file_path' => $filePath,
-            'status' => 'pending',
+            'status' => 'approved',
         ]);
 
-        session()->flash('success', 'Lesson updated and sent for admin re-approval.');
+        session()->flash('success', 'Lesson updated successfully.');
 
         return redirect()->route('teacher.lessons.index');
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.teacher.lessons.edit')
-            ->layout('livewire.teacher.app-layout');
+        /** @var View&LivewireViewMacros $page */
+        $page = view('livewire.teacher.lessons.edit');
+
+        return $page->layout('livewire.teacher.app-layout');
     }
 }

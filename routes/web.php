@@ -87,6 +87,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/user-management', [AdminUserManagementController::class, 'index'])->name('user-management');
         Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
+        Route::get('/lessons/{lesson}', [AdminLessonController::class, 'show'])->name('lessons.show');
         Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
         Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
         Route::get('/data', [AdminController::class, 'data'])->name('data');
@@ -148,8 +149,7 @@ Route::prefix('student')->name('student.')->group(function () {
 // ADMIN LESSON ROUTES
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/lessons', [AdminLessonController::class, 'index'])->name('lessons.index');
-    Route::patch('/lessons/approve/{id}', [AdminLessonController::class, 'approve'])->name('lessons.approve');
-    Route::patch('/lessons/reject/{id}', [AdminLessonController::class, 'reject'])->name('lessons.reject');
+    Route::get('/lessons/{lesson}', [AdminLessonController::class, 'show'])->name('lessons.show');
 });
 
 /*

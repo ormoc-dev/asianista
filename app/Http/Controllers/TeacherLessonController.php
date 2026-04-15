@@ -31,7 +31,7 @@ class TeacherLessonController extends Controller
     }
 
     /**
-     * Store the uploaded lesson (text, file, or both) as pending.
+     * Store the uploaded lesson (text, file, or both); published immediately.
      */
     public function store(Request $request)
     {
@@ -57,11 +57,11 @@ class TeacherLessonController extends Controller
             'content'    => $request->content,
             'file_path'  => $filePath,
             'teacher_id' => $teacherId,
-            'status'     => 'pending', // admin must approve
+            'status'     => 'approved',
             'section'    => $request->section,
         ]);
 
-        return redirect()->route('teacher.lessons.index')->with('success', 'Lesson submitted successfully and is pending admin approval.');
+        return redirect()->route('teacher.lessons.index')->with('success', 'Lesson published successfully.');
     }
 
     /**
@@ -94,10 +94,6 @@ class TeacherLessonController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
 
-        if ($lesson->status === 'approved') {
-            return back()->with('error', 'Approved lessons cannot be edited.');
-        }
-
         $request->validate([
             'title'   => 'required|string|max:255',
             'content' => 'nullable|string',
@@ -119,10 +115,10 @@ class TeacherLessonController extends Controller
             'content'   => $request->content,
             'file_path' => $filePath,
             'section'   => $request->section,
-            'status'    => 'pending',
+            'status'    => 'approved',
         ]);
 
-        return redirect()->route('teacher.lessons.index')->with('success', 'Lesson updated and sent for admin re-approval.');
+        return redirect()->route('teacher.lessons.index')->with('success', 'Lesson updated successfully.');
     }
 
     /**

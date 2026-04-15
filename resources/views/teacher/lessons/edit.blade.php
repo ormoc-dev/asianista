@@ -12,13 +12,6 @@
         </a>
     </div>
     <div class="card-body">
-        @if($lesson->status === 'approved')
-            <div class="alert alert-warning" style="margin-bottom: 20px;">
-                <i class="fas fa-exclamation-triangle"></i>
-                Approved lessons cannot be edited.
-            </div>
-        @endif
-
         <form action="{{ route('teacher.lessons.update', $lesson->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('POST')
@@ -58,11 +51,9 @@
 
             <div style="display: flex; gap: 12px; margin-top: 24px;">
                 <a href="{{ route('teacher.lessons.index') }}" class="btn btn-secondary">Cancel</a>
-                @if($lesson->status !== 'approved')
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Update Lesson
                 </button>
-                @endif
             </div>
         </form>
     </div>

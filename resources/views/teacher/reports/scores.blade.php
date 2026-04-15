@@ -12,14 +12,6 @@
                 <span style="color: var(--text-muted); font-size: 0.9rem;">Students</span>
                 <div style="font-size: 1.5rem; font-weight: 600;">{{ $classAverage['total_students'] }}</div>
             </div>
-            <div>
-                <span style="color: var(--text-muted); font-size: 0.9rem;">Avg XP</span>
-                <div style="font-size: 1.5rem; font-weight: 600;">{{ number_format($classAverage['avg_xp']) }}</div>
-            </div>
-            <div>
-                <span style="color: var(--text-muted); font-size: 0.9rem;">Avg Level</span>
-                <div style="font-size: 1.5rem; font-weight: 600;">{{ number_format($classAverage['avg_level'], 1) }}</div>
-            </div>
         </div>
     </div>
 </div>
@@ -36,8 +28,6 @@
                     <tr>
                         <th>#</th>
                         <th>Student</th>
-                        <th>Level</th>
-                        <th>XP</th>
                         <th>HP</th>
                         <th>Quests Done</th>
                         <th>Action</th>
@@ -57,12 +47,9 @@
                                      style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
                                 <div>
                                     <div style="font-weight: 500;">{{ $student->first_name }} {{ $student->last_name }}</div>
-                                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ $student->character ?: 'No Class' }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>{{ $student->level }}</td>
-                        <td style="font-weight: 600; color: #10b981;">{{ $student->xp }}</td>
                         <td>{{ $student->hp }}</td>
                         <td>{{ $stats ? $stats->completed_quests : 0 }}</td>
                         <td>
@@ -73,7 +60,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px;">
+                        <td colspan="5" style="text-align: center; padding: 40px;">
                             No students found.
                         </td>
                     </tr>
