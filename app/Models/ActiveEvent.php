@@ -16,6 +16,8 @@ class ActiveEvent extends Model
         'expires_at',
         'is_active',
         'affected_students',
+        'recipient_mode',
+        'recipient_student_ids',
     ];
 
     protected $casts = [
@@ -23,6 +25,7 @@ class ActiveEvent extends Model
         'expires_at' => 'datetime',
         'is_active' => 'boolean',
         'affected_students' => 'array',
+        'recipient_student_ids' => 'array',
     ];
 
     public function randomEvent()
@@ -49,5 +52,21 @@ class ActiveEvent extends Model
     public static function deactivateAll()
     {
         return self::where('is_active', true)->update(['is_active' => false]);
+    }
+
+    /**
+     * Whether this student should receive the active random-event modal.
+     */
+    public function studentMayReceiveEvent(int $studentId): bool
+    {
+        $mode = $this->recipient_mode ?? 'all';
+
+        if ($mode === 'all') {
+            return true;
+        }
+
+        $ids = $this->recipient_student_ids ?? [];
+
+        return in_array($studentId, $ids, true);
     }
 }

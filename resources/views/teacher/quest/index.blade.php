@@ -58,9 +58,12 @@
                         <td>
                             {{ $quest->due_date ? \Carbon\Carbon::parse($quest->due_date)->format('M d, Y') : '—' }}
                         </td>
-                        <td>
-                            <a href="{{ route('teacher.quest.show', $quest->id) }}" class="btn btn-sm btn-secondary">
+                        <td style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <a href="{{ route('teacher.quest.show', $quest->id) }}" class="btn btn-sm btn-secondary" title="View">
                                 <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('teacher.quest.edit', $quest->id) }}" class="btn btn-sm btn-primary" title="Edit">
+                                <i class="fas fa-edit"></i>
                             </a>
                         </td>
                     </tr>

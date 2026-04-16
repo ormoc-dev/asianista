@@ -30,7 +30,7 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">#</th>
+                        <th style="width: 56px;">ID</th>
                         <th>Event</th>
                         <th>Type</th>
                         <th>Target</th>
@@ -42,7 +42,7 @@
                 <tbody>
                     @forelse($events as $event)
                     <tr>
-                        <td>{{ $event->sort_order }}</td>
+                        <td>{{ $event->id }}</td>
                         <td>
                             <div style="font-weight: 600;">{{ $event->title }}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">{{ Str::limit($event->description, 60) }}</div>

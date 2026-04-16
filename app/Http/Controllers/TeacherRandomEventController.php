@@ -21,18 +21,73 @@ class TeacherRandomEventController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('teacher.random-events.index', compact('drawHistory'));
+        $students = User::where('role', 'student')
+            ->where('status', 'approved')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->orderBy('name')
+            ->get(['id', 'first_name', 'last_name', 'middle_name', 'name', 'email']);
+
+        return view('teacher.random-events.index', compact('drawHistory', 'students'));
     }
 
     /**
      * Get a random event (for AJAX requests)
      */
-    public function drawRandom()
+    public function drawRandom(Request $request)
     {
+        $validated = $request->validate([
+            'recipient_mode' => 'required|in:all,random,selected',
+            'random_count' => 'nullable|integer|min:1|max:500',
+            'student_ids' => 'nullable|array',
+            'student_ids.*' => 'integer|exists:users,id',
+        ]);
+
         $event = RandomEvent::getRandomEvent();
-        
+
         if (!$event) {
             return response()->json(['error' => 'No active events found'], 404);
+        }
+
+        $mode = $validated['recipient_mode'];
+        $pool = User::where('role', 'student')
+            ->where('status', 'approved')
+            ->pluck('id')
+            ->all();
+
+        $recipientStudentIds = null;
+
+        if ($mode === 'random') {
+            $n = (int) ($validated['random_count'] ?? 1);
+            if ($n < 1) {
+                $n = 1;
+            }
+            if (count($pool) === 0) {
+                return response()->json(['error' => 'There are no approved students to pick from.'], 422);
+            }
+            $n = min($n, count($pool));
+            shuffle($pool);
+            $recipientStudentIds = array_values(array_slice($pool, 0, $n));
+        } elseif ($mode === 'selected') {
+            $requested = collect($validated['student_ids'] ?? [])
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (count($requested) === 0) {
+                return response()->json(['error' => 'Select at least one student.'], 422);
+            }
+
+            $recipientStudentIds = User::where('role', 'student')
+                ->where('status', 'approved')
+                ->whereIn('id', $requested)
+                ->pluck('id')
+                ->all();
+
+            if (count($recipientStudentIds) === 0) {
+                return response()->json(['error' => 'No valid approved students in your selection.'], 422);
+            }
         }
 
         // Deactivate any previous active events
@@ -46,6 +101,8 @@ class TeacherRandomEventController extends Controller
             'expires_at' => now()->addMinutes(5), // Event lasts 5 minutes
             'is_active' => true,
             'affected_students' => [],
+            'recipient_mode' => $mode,
+            'recipient_student_ids' => $recipientStudentIds,
         ]);
 
         // Save to draw history
@@ -59,6 +116,8 @@ class TeacherRandomEventController extends Controller
             'xp_penalty' => $event->xp_penalty ?? 0,
             'target_type' => $event->target_type,
             'effect' => $event->effect,
+            'recipient_mode' => $mode,
+            'recipient_student_ids' => $recipientStudentIds,
         ]);
 
         // Store in session for immediate student display

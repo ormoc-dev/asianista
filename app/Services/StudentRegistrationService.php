@@ -175,7 +175,7 @@ class StudentRegistrationService
         // Write headers
         fputcsv($file, $headers);
 
-        // Add sample rows
+        // Add sample rows (students choose grade & section when they register online)
         fputcsv($file, ['John', 'Doe', 'Michael']);
         fputcsv($file, ['Jane', 'Smith', '']);
         fputcsv($file, ['Robert', 'Johnson', 'James']);

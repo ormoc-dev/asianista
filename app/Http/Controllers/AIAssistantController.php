@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AIAssistantController extends Controller
 {
@@ -27,7 +28,7 @@ class AIAssistantController extends Controller
                 'data' => $generatedData
             ]);
         } catch (\Exception $e) {
-            \Log::error('Groq API Error: ' . $e->getMessage());
+            Log::error('Groq API Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'The Neural Link was interrupted.'
@@ -53,7 +54,7 @@ class AIAssistantController extends Controller
         3. Challenges: Generate exactly one challenge for each stage from 1 to {$totalLevels}.
            - For each level, provide either a Multiple Choice or Identification question.
            - Ensure levels are sequential (1, 2, 3...).
-        4. Rewards: Numeric values for XP (100-300), AB (20-60), GP (10-40) based on complexity.
+        4. Rewards: Numeric values for XP (100-300), AP (20-60) in ab_reward, GP (10-40) based on complexity.
         
         JSON structure:
         {
@@ -129,7 +130,7 @@ class AIAssistantController extends Controller
                 'data' => $questionData
             ]);
         } catch (\Exception $e) {
-            \Log::error('Groq Question API Error: ' . $e->getMessage());
+            Log::error('Groq Question API Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'The Neural Realm is unresponsive.'
@@ -199,6 +200,145 @@ class AIAssistantController extends Controller
     }
 
     /**
+     * Generate a classroom random event (for admin or teacher forms).
+     */
+    public function generateRandomEvent(Request $request)
+    {
+        $request->validate([
+            'topic' => 'required|string|max:500',
+            'event_type' => 'nullable|string|in:positive,negative,neutral,challenge,auto',
+        ]);
+
+        if (empty(env('GROQ_API_KEY'))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'AI is not configured. Add GROQ_API_KEY to your environment.',
+            ], 503);
+        }
+
+        $topic = $request->input('topic');
+        $eventTypeHint = $request->input('event_type', 'auto');
+
+        try {
+            $raw = $this->callGroqForRandomEvent($topic, $eventTypeHint);
+            $data = $this->normalizeRandomEventPayload($raw);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Groq Random Event API Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Could not generate an event. Try a different topic.',
+            ], 500);
+        }
+    }
+
+    private function callGroqForRandomEvent(string $topic, string $eventTypeHint): array
+    {
+        $apiKey = env('GROQ_API_KEY');
+        $endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+
+        $typeInstruction = $eventTypeHint === 'auto'
+            ? 'Choose the most fitting event_type: positive, negative, neutral, or challenge.'
+            : "Use event_type \"{$eventTypeHint}\".";
+
+        $prompt = "You design short 'random encounter' events for the RPG-themed learning platform ASIANISTA.
+Topic or situation from the teacher: {$topic}
+
+{$typeInstruction}
+
+Return a JSON object with:
+- title: short catchy title (max 80 chars)
+- description: 1-2 sentences of flavor for the class
+- effect: clear sentence(s) explaining what the teacher should do or what students experience
+- xp_reward: non-negative integer (0-200). Use greater than 0 mainly for positive/challenge rewards.
+- xp_penalty: non-negative integer (0-120). Use greater than 0 mainly for negative events. Usually 0 for positive/neutral.
+- target_type: one of: single, all, pair, random
+- event_type: one of: positive, negative, neutral, challenge
+
+Rules: For positive, xp_reward should be positive and xp_penalty 0. For negative, xp_penalty greater than 0 and xp_reward 0. For neutral, both can be 0. For challenge, moderate xp_reward and xp_penalty 0 unless you describe a risk.
+
+Return ONLY valid JSON with exactly these keys: title, description, effect, xp_reward, xp_penalty, target_type, event_type.";
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => "Bearer {$apiKey}",
+            'Content-Type' => 'application/json',
+        ])->post($endpoint, [
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => [
+                ['role' => 'system', 'content' => 'You output only valid JSON objects. No markdown.'],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'response_format' => ['type' => 'json_object'],
+            'temperature' => 0.75,
+            'max_tokens' => 700,
+            'stream' => false,
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception('Groq Request Failed: ' . $response->body());
+        }
+
+        $result = $response->json();
+        $textResponse = $result['choices'][0]['message']['content'] ?? '';
+        $decoded = json_decode($textResponse, true);
+
+        if (! is_array($decoded)) {
+            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        }
+
+        return $decoded;
+    }
+
+    private function normalizeRandomEventPayload(array $raw): array
+    {
+        $allowedTypes = ['positive', 'negative', 'neutral', 'challenge'];
+        $allowedTargets = ['single', 'all', 'pair', 'random'];
+
+        $eventType = $raw['event_type'] ?? 'neutral';
+        if (! in_array($eventType, $allowedTypes, true)) {
+            $eventType = 'neutral';
+        }
+
+        $targetType = $raw['target_type'] ?? 'single';
+        if (! in_array($targetType, $allowedTargets, true)) {
+            $targetType = 'single';
+        }
+
+        $xpReward = max(0, min(500, (int) ($raw['xp_reward'] ?? 0)));
+        $xpPenalty = max(0, min(500, (int) ($raw['xp_penalty'] ?? 0)));
+
+        if ($eventType === 'positive' || $eventType === 'challenge') {
+            $xpPenalty = 0;
+            if ($xpReward < 5) {
+                $xpReward = 40;
+            }
+        } elseif ($eventType === 'negative') {
+            $xpReward = 0;
+            if ($xpPenalty < 5) {
+                $xpPenalty = 25;
+            }
+        } elseif ($eventType === 'neutral') {
+            $xpReward = min($xpReward, 40);
+            $xpPenalty = min($xpPenalty, 20);
+        }
+
+        return [
+            'title' => mb_substr(strip_tags((string) ($raw['title'] ?? 'Mystery Event')), 0, 255),
+            'description' => strip_tags((string) ($raw['description'] ?? '')),
+            'effect' => strip_tags((string) ($raw['effect'] ?? '')),
+            'xp_reward' => $xpReward,
+            'xp_penalty' => $xpPenalty,
+            'target_type' => $targetType,
+            'event_type' => $eventType,
+        ];
+    }
+
+    /**
      * Handle student support chat requests.
      */
     public function studentChat(Request $request)
@@ -218,7 +358,7 @@ class AIAssistantController extends Controller
                 'reply' => $aiResponse
             ]);
         } catch (\Exception $e) {
-            \Log::error('Student AI Support Error: ' . $e->getMessage());
+            Log::error('Student AI Support Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'The Neural Connection was lost.'
@@ -246,7 +386,7 @@ class AIAssistantController extends Controller
                 'reply' => $aiResponse
             ]);
         } catch (\Exception $e) {
-            \Log::error('Teacher AI Support Error: ' . $e->getMessage());
+            Log::error('Teacher AI Support Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'The Neural Connection was lost.'
@@ -353,7 +493,7 @@ class AIAssistantController extends Controller
                 'data' => $content
             ]);
         } catch (\Exception $e) {
-            \Log::error('AI Lesson Generation Error: ' . $e->getMessage());
+            Log::error('AI Lesson Generation Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to generate lesson content.'
@@ -444,7 +584,7 @@ class AIAssistantController extends Controller
                 'data' => $questions
             ]);
         } catch (\Exception $e) {
-            \Log::error('AI Quiz Generation Error: ' . $e->getMessage());
+            Log::error('AI Quiz Generation Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to generate quiz questions.'

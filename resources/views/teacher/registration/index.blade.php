@@ -35,7 +35,7 @@
                     </div>
                     <div class="info-content">
                         <h4>Excel Format</h4>
-                        <p>Column headers: <code>FNAME</code>, <code>LNAME</code>, <code>MNAME</code> (optional)</p>
+                        <p>Column headers: <code>FNAME</code>, <code>LNAME</code>, <code>MNAME</code> (optional). Students choose <strong>grade</strong> and <strong>section</strong> from the school roster when they complete registration online.</p>
                     </div>
                 </div>
                 
@@ -323,6 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <thead>
                     <tr>
                         <th>Student Name</th>
+                        <th>Grade</th>
+                        <th>Section</th>
                         <th>Student Code</th>
                         <th>Username</th>
                         <th>Default Password</th>
@@ -336,6 +338,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <span style="font-weight: 500;">{{ $registration->full_name }}</span>
                             </div>
+                        </td>
+                        <td>
+                            @if($registration->grade)
+                                <span class="badge badge-secondary" style="font-weight: 500;">{{ $registration->grade->name }}</span>
+                            @else
+                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($registration->section)
+                                <span class="badge badge-info" style="font-weight: 500;">{{ $registration->section->name }}</span>
+                            @else
+                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
+                            @endif
                         </td>
                         <td>
                             <code style="padding: 4px 8px; background: #f4f4f4; border-radius: 4px; font-family: monospace;">{{ $registration->student_code }}</code>
@@ -364,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
                             No pending registrations. Upload an Excel file to add students.
                         </td>
@@ -400,6 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <th style="width: 60px;">Select</th>
                         <th>Name</th>
+                        <th>Grade</th>
+                        <th>Section</th>
                         <th>Email</th>
                         <th>Status</th>
                         <th>Registered</th>
@@ -419,6 +437,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <img src="{{ asset('images/' . ($student->profile_pic ?? 'default-pp.png')) }}" style="width: 36px; height: 36px; border-radius: 50%;">
                                 <span style="font-weight: 500;">{{ $student->name }}</span>
                             </div>
+                        </td>
+                        <td>
+                            @if($student->grade)
+                                <span class="badge badge-secondary" style="font-weight: 500;">{{ $student->grade->name }}</span>
+                            @else
+                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($student->section)
+                                <span class="badge badge-info" style="font-weight: 500;">{{ $student->section->name }}</span>
+                            @else
+                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
+                            @endif
                         </td>
                         <td>{{ $student->email }}</td>
                         <td>
@@ -446,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
                             No students pending approval.
                         </td>

@@ -22,6 +22,10 @@ class StudentEventController extends Controller
         if (!$activeEvent) {
             return response()->json(['has_event' => false]);
         }
+
+        if (!$activeEvent->studentMayReceiveEvent((int) $studentId)) {
+            return response()->json(['has_event' => false]);
+        }
         
         // Check if student has already seen this event
         $seenEvents = Session::get('seen_events', []);
@@ -68,9 +72,12 @@ class StudentEventController extends Controller
         
         $activeEvent = ActiveEvent::find($activeEventId);
         if ($activeEvent) {
+            $studentId = (int) auth()->id();
+            if (!$activeEvent->studentMayReceiveEvent($studentId)) {
+                return response()->json(['success' => true]);
+            }
             $acknowledged = $activeEvent->affected_students ?? [];
-            $studentId = auth()->id();
-            
+
             if (!in_array($studentId, $acknowledged)) {
                 $acknowledged[] = $studentId;
                 $activeEvent->update(['affected_students' => $acknowledged]);

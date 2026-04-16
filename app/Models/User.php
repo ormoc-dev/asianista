@@ -33,6 +33,8 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'middle_name',
+        'grade_id',
+        'section_id',
     ];
 
     /**
@@ -77,6 +79,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\QuizAttempt::class, 'student_id');
     }
+
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'section_id');
+    }
+
     public function isOnline(): bool
     {
         if (!$this->last_seen_at) {

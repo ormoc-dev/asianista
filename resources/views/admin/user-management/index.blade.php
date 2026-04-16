@@ -78,6 +78,36 @@
         color: #fff;
     }
 
+    .role-filter-select {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        min-width: 160px;
+        cursor: pointer;
+    }
+
+    .role-filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .alert {
         margin: 16px 24px;
         padding: 12px 16px;
@@ -227,22 +257,6 @@
     .status-rejected {
         background: #fee2e2;
         color: #991b1b;
-    }
-
-    .character-tag {
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: #f3f4f6;
-        color: #6b7280;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .xp-info {
-        font-size: 0.8rem;
-        color: #6b7280;
     }
 
     .action-btns {
@@ -417,11 +431,6 @@
             width: 100%;
             justify-content: flex-start;
         }
-
-        .data-table th:nth-child(5),
-        .data-table td:nth-child(5) {
-            display: none;
-        }
     }
 </style>
 
@@ -437,13 +446,19 @@
             </div>
 
             <div class="filter-group">
-                <button class="filter-btn active" data-filter="all">
+                <label for="userRoleFilter" class="sr-only">Filter by role</label>
+                <select id="userRoleFilter" class="role-filter-select" title="Show users">
+                    <option value="all" selected>All users</option>
+                    <option value="teacher">Teachers only</option>
+                    <option value="student">Students only</option>
+                </select>
+                <button type="button" class="filter-btn active" data-filter="all">
                     <i class="fas fa-layer-group"></i> All
                 </button>
-                <button class="filter-btn" data-filter="teacher">
+                <button type="button" class="filter-btn" data-filter="teacher">
                     <i class="fas fa-chalkboard-teacher"></i> Teachers
                 </button>
-                <button class="filter-btn" data-filter="student">
+                <button type="button" class="filter-btn" data-filter="student">
                     <i class="fas fa-user-graduate"></i> Students
                 </button>
             </div>
@@ -463,24 +478,22 @@
             </div>
             <div class="stat-item">
                 <i class="fas fa-chalkboard-teacher"></i>
-                <span><strong>{{ $users->where('role','teacher')->count() }}</strong> teachers</span>
+                <span><strong>{{ $users->where('role', 'teacher')->count() }}</strong> teachers</span>
             </div>
             <div class="stat-item">
                 <i class="fas fa-user-graduate"></i>
-                <span><strong>{{ $users->where('role','student')->count() }}</strong> students</span>
+                <span><strong>{{ $users->where('role', 'student')->count() }}</strong> students</span>
             </div>
         </div>
 
-        <div class="table-wrapper">
+        <div class="table-wrapper" style="padding: 0 24px 24px;">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>User</th>
                         <th>Role</th>
-                        <th>Character</th>
-                        <th>XP / Level</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -497,39 +510,16 @@
                             </td>
                             <td>
                                 @php
-                                    $roleClass = $user->role === 'admin' ? 'role-admin' : ($user->role === 'teacher' ? 'role-teacher' : 'role-student');
+                                    $roleClass = $user->role === 'teacher' ? 'role-teacher' : 'role-student';
                                 @endphp
                                 <span class="role-badge {{ $roleClass }}">
-                                    @if($user->role === 'admin')
-                                        <i class="fas fa-crown"></i>
-                                    @elseif($user->role === 'teacher')
+                                    @if($user->role === 'teacher')
                                         <i class="fas fa-chalkboard-teacher"></i>
                                     @else
                                         <i class="fas fa-user-graduate"></i>
                                     @endif
                                     {{ $user->role }}
                                 </span>
-                            </td>
-                            <td>
-                                @if ($user->character)
-                                    <span class="character-tag">
-                                        <i class="fas fa-magic"></i>
-                                        {{ ucfirst($user->character) }}
-                                    </span>
-                                @else
-                                    <span style="color: #d1d5db;">—</span>
-                                @endif
-                            </td>
-                            <td>
-                                @php
-                                    $xp = $user->xp ?? null;
-                                    $level = $user->level ?? null;
-                                @endphp
-                                @if($xp || $level)
-                                    <span class="xp-info">Lv. <strong>{{ $level ?? '01' }}</strong> @if($xp) • {{ number_format($xp) }} XP @endif</span>
-                                @else
-                                    <span style="color: #d1d5db; font-size: 0.8rem;">No data</span>
-                                @endif
                             </td>
                             <td>
                                 @php
@@ -541,8 +531,8 @@
                                     {{ $status }}
                                 </span>
                             </td>
-                            <td>
-                                <div class="action-btns">
+                            <td style="text-align: right;">
+                                <div class="action-btns" style="justify-content: flex-end;">
                                     <a href="{{ route('admin.user-management.show', $user->id) }}" class="btn-icon view" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -561,7 +551,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
+                            <td colspan="4">
                                 <div class="empty-state">
                                     <i class="fas fa-users"></i>
                                     <p>No users found</p>
@@ -602,25 +592,35 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Filter buttons
         const filterButtons = document.querySelectorAll('.filter-btn');
+        const roleSelect = document.getElementById('userRoleFilter');
         const rows = document.querySelectorAll('.user-row');
+
+        function applyRoleFilter(filter) {
+            rows.forEach(row => {
+                const role = row.getAttribute('data-role');
+                row.style.display = (filter === 'all' || role === filter) ? '' : 'none';
+            });
+            filterButtons.forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-filter') === filter);
+            });
+            if (roleSelect && roleSelect.value !== filter) {
+                roleSelect.value = filter;
+            }
+        }
 
         filterButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const filter = btn.getAttribute('data-filter');
-
-                filterButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                rows.forEach(row => {
-                    const role = row.getAttribute('data-role');
-                    row.style.display = (filter === 'all' || role === filter) ? '' : 'none';
-                });
+                applyRoleFilter(btn.getAttribute('data-filter'));
             });
         });
 
-        // Delete modal
+        if (roleSelect) {
+            roleSelect.addEventListener('change', function () {
+                applyRoleFilter(this.value);
+            });
+        }
+
         const deleteModal = document.getElementById('deleteModal');
         const deleteButtons = document.querySelectorAll('.btn-delete');
         const deleteUserName = document.getElementById('deleteUserName');

@@ -19,6 +19,12 @@ class EventDrawHistory extends Model
         'xp_penalty',
         'target_type',
         'effect',
+        'recipient_mode',
+        'recipient_student_ids',
+    ];
+
+    protected $casts = [
+        'recipient_student_ids' => 'array',
     ];
 
     public function randomEvent()

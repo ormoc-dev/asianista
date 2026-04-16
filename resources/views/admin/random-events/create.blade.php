@@ -12,6 +12,8 @@
         </a>
     </div>
     <div class="card-body">
+        @include('partials.random-event-ai-generator', ['generateUrl' => route('admin.random-events.generate-ai')])
+
         <form action="{{ route('admin.random-events.store') }}" method="POST">
             @csrf
             

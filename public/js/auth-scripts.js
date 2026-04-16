@@ -2,6 +2,26 @@
  * Character-based Registration System - JavaScript Functions
  */
 
+function registrationRefreshSectionOptions(preserveSectionId) {
+    var gSelect = document.getElementById('regGradeSelect');
+    var sSelect = document.getElementById('regSectionSelect');
+    if (!gSelect || !sSelect || !window.__registrationGrades || !window.__registrationGrades.length) return;
+    var gid = gSelect.value;
+    var prev = preserveSectionId != null && preserveSectionId !== '' ? String(preserveSectionId) : sSelect.value;
+    sSelect.innerHTML = '<option value="">Select section</option>';
+    window.__registrationGrades.forEach(function (g) {
+        if (String(g.id) !== String(gid)) return;
+        (g.sections || []).forEach(function (s) {
+            var o = document.createElement('option');
+            o.value = s.id;
+            o.textContent = s.name;
+            sSelect.appendChild(o);
+        });
+    });
+    if (prev) sSelect.value = prev;
+}
+window.registrationRefreshSectionOptions = registrationRefreshSectionOptions;
+
 // Character selection for new registration flow
 function selectCharacterClass(character) {
     // Remove selected class from all options
@@ -34,7 +54,7 @@ function selectCharacterClass(character) {
 async function validateStudentCode() {
     const codeInput = document.getElementById('studentCodeInput');
     const messageEl = document.getElementById('codeValidationMessage');
-    const code = codeInput.value.trim();
+    const code = codeInput.value.trim().toUpperCase();
 
     if (!code) {
         messageEl.innerHTML = '<span style="color: #e74c3c;">Please enter a student code.</span>';
@@ -64,6 +84,15 @@ async function validateStudentCode() {
             document.getElementById('displayStudentName').value = data.student.full_name;
             document.getElementById('displayUsername').value = data.student.username;
             document.getElementById('studentCodeHidden').value = code;
+            const gSel = document.getElementById('regGradeSelect');
+            const sSel = document.getElementById('regSectionSelect');
+            if (gSel && data.student.grade_id) {
+                gSel.value = String(data.student.grade_id);
+                registrationRefreshSectionOptions(data.student.section_id);
+            } else if (gSel) {
+                gSel.value = '';
+                if (sSel) sSel.innerHTML = '<option value="">Select section</option>';
+            }
 
             // Show registration form after a short delay
             setTimeout(() => {
@@ -100,6 +129,10 @@ function backToCodeEntry() {
     const messageEl = document.getElementById('codeValidationMessage');
     if (codeInput) codeInput.value = '';
     if (messageEl) messageEl.innerHTML = '';
+    const gSel = document.getElementById('regGradeSelect');
+    const sSel = document.getElementById('regSectionSelect');
+    if (gSel) gSel.value = '';
+    if (sSel) sSel.innerHTML = '<option value="">Select section</option>';
 }
 
 // Show student code entry form (called when student role is selected)
@@ -140,6 +173,11 @@ function validateStudentRegistrationForm() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    var rg = document.getElementById('regGradeSelect');
+    if (rg) {
+        rg.addEventListener('change', function () { registrationRefreshSectionOptions(null); });
+    }
+
     // Add form validation to student registration form
     const form = document.getElementById('studentRegisterFormElement');
     if (form) {

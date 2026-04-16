@@ -1,7 +1,7 @@
 @extends('teacher.layouts.app')
 
-@section('title', 'Create Quest')
-@section('page-title', 'Create Quest')
+@section('title', isset($quest) ? 'Edit Quest' : 'Create Quest')
+@section('page-title', isset($quest) ? 'Edit Quest' : 'Create Quest')
 
 @push('styles')
 <style>
@@ -168,8 +168,11 @@
 @endpush
 
 @section('content')
-<form id="questForm" method="POST" action="{{ route('teacher.quest.store') }}">
+<form id="questForm" method="POST" action="{{ isset($quest) ? route('teacher.quest.update', $quest) : route('teacher.quest.store') }}">
     @csrf
+    @if(isset($quest))
+        @method('PUT')
+    @endif
     
     <!-- Step Indicator -->
     <div class="step-indicator">
@@ -196,39 +199,55 @@
             <div class="card-body">
                 <div class="form-group">
                     <label class="form-label">Quest Title</label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., The Algebra Adventure" required>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., The Algebra Adventure" value="{{ old('title', $quest->title ?? '') }}" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="3" placeholder="Describe the quest adventure..." required></textarea>
+                    <textarea name="description" class="form-control" rows="3" placeholder="Describe the quest adventure..." required>{{ old('description', $quest->description ?? '') }}</textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Difficulty</label>
                         <select name="difficulty" class="form-control">
-                            <option value="easy">Easy</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="hard">Hard</option>
+                            @php $diff = old('difficulty', $quest->difficulty ?? 'medium'); @endphp
+                            <option value="easy" @selected($diff === 'easy')>Easy</option>
+                            <option value="medium" @selected($diff === 'medium')>Medium</option>
+                            <option value="hard" @selected($diff === 'hard')>Hard</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Total Levels</label>
-                        <input type="number" name="level" class="form-control" value="3" min="1" max="10">
+                        <input type="number" name="level" class="form-control" value="{{ old('level', $quest->level ?? 3) }}" min="1" max="10">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label"><i class="fas fa-map"></i> Quest Map</label>
-                    <input type="hidden" name="map_image" id="mapImage" value="">
+                    @php
+                        $mapHidden = old('map_image');
+                        if ($mapHidden === null) {
+                            $mapHidden = (isset($quest) && $quest->map_image && $quest->map_image !== 'quest_map_bg.png')
+                                ? 'existing:' . $quest->map_image
+                                : 'default';
+                        }
+                    @endphp
+                    <input type="hidden" name="map_image" id="mapImage" value="{{ $mapHidden }}">
                     <div class="map-selector" id="mapSelector">
                         <!-- Default Maps -->
-                        <div class="map-option selected" data-map="default" onclick="selectMap(this, 'default')">
+                        <div class="map-option {{ (isset($quest) && $quest->map_image && $quest->map_image !== 'quest_map_bg.png') ? '' : 'selected' }}" data-map="default" onclick="selectMap(this, 'default')">
                             <img src="{{ asset('images/quest_map_bg.png') }}" alt="Default Map">
                             <span class="map-label">Default Map</span>
                             <span class="check-icon"><i class="fas fa-check"></i></span>
                         </div>
+                        @if(isset($quest) && $quest->map_image && $quest->map_image !== 'quest_map_bg.png')
+                        <div class="map-option selected" data-map="existing" data-existing-path="{{ $quest->map_image }}" onclick="selectMapExisting(this)">
+                            <img src="{{ asset('storage/' . $quest->map_image) }}" alt="Current Map">
+                            <span class="map-label">Current Map</span>
+                            <span class="check-icon"><i class="fas fa-check"></i></span>
+                        </div>
+                        @endif
                         
                         <!-- Upload Button -->
                         <div class="map-option map-upload-btn" onclick="document.getElementById('mapUploadInput').click()">
@@ -247,28 +266,28 @@
                     <div class="reward-card">
                         <i class="fas fa-star" style="color: var(--primary);"></i>
                         <label class="form-label" style="font-size: 0.8rem;">XP Reward</label>
-                        <input type="number" name="xp_reward" class="form-control" value="100">
+                        <input type="number" name="xp_reward" class="form-control" value="{{ old('xp_reward', $quest->xp_reward ?? 100) }}">
                     </div>
                     <div class="reward-card">
                         <i class="fas fa-shield-alt" style="color: var(--success);"></i>
-                        <label class="form-label" style="font-size: 0.8rem;">AB Reward</label>
-                        <input type="number" name="ab_reward" class="form-control" value="50">
+                        <label class="form-label" style="font-size: 0.8rem;">AP Reward</label>
+                        <input type="number" name="ab_reward" class="form-control" value="{{ old('ab_reward', $quest->ab_reward ?? 50) }}">
                     </div>
                     <div class="reward-card">
                         <i class="fas fa-coins" style="color: var(--accent);"></i>
                         <label class="form-label" style="font-size: 0.8rem;">GP Reward</label>
-                        <input type="number" name="gp_reward" class="form-control" value="25">
+                        <input type="number" name="gp_reward" class="form-control" value="{{ old('gp_reward', $quest->gp_reward ?? 25) }}">
                     </div>
                 </div>
 
                 <div class="form-row" style="margin-top: 20px;">
                     <div class="form-group">
                         <label class="form-label">Assign Date</label>
-                        <input type="datetime-local" name="assign_date" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}" required>
+                        <input type="datetime-local" name="assign_date" class="form-control" value="{{ old('assign_date', isset($quest) ? \Carbon\Carbon::parse($quest->assign_date)->format('Y-m-d\TH:i') : now()->format('Y-m-d\TH:i')) }}" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Due Date</label>
-                        <input type="datetime-local" name="due_date" class="form-control" value="{{ now()->addDays(7)->format('Y-m-d\TH:i') }}" required>
+                        <input type="datetime-local" name="due_date" class="form-control" value="{{ old('due_date', isset($quest) ? \Carbon\Carbon::parse($quest->due_date)->format('Y-m-d\TH:i') : now()->addDays(7)->format('Y-m-d\TH:i')) }}" required>
                     </div>
                 </div>
 
@@ -277,12 +296,12 @@
                     <div class="reward-card">
                         <i class="fas fa-clock" style="color: #3b82f6;"></i>
                         <label class="form-label" style="font-size: 0.8rem;">Time Limit (minutes)</label>
-                        <input type="number" name="time_limit_minutes" class="form-control" value="10" min="1" placeholder="Minutes per level">
+                        <input type="number" name="time_limit_minutes" class="form-control" value="{{ old('time_limit_minutes', $quest->time_limit_minutes ?? 10) }}" min="1" placeholder="Minutes per level">
                     </div>
                     <div class="reward-card">
                         <i class="fas fa-heart-broken" style="color: #ef4444;"></i>
                         <label class="form-label" style="font-size: 0.8rem;">HP Penalty</label>
-                        <input type="number" name="hp_penalty" class="form-control" value="10" min="0" placeholder="HP lost per wrong answer">
+                        <input type="number" name="hp_penalty" class="form-control" value="{{ old('hp_penalty', $quest->hp_penalty ?? 10) }}" min="0" placeholder="HP lost per wrong answer">
                     </div>
                 </div>
             </div>
@@ -382,7 +401,7 @@
                         <select name="grade_id" id="gradeSelect" class="form-control" onchange="loadSections()" required>
                             <option value="">Select Grade</option>
                             @foreach($grades as $grade)
-                            <option value="{{ $grade->id }}">{{ $grade->name }}</option>
+                            <option value="{{ $grade->id }}" {{ old('grade_id', isset($quest) ? $quest->grade_id : null) == $grade->id ? 'selected' : '' }}>{{ $grade->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -406,7 +425,7 @@
                 <i class="fas fa-arrow-left"></i> Back
             </button>
             <button type="submit" class="btn btn-success btn-lg">
-                <i class="fas fa-check"></i> Create Quest
+                <i class="fas fa-check"></i> {{ isset($quest) ? 'Update Quest' : 'Create Quest' }}
             </button>
         </div>
     </div>
@@ -476,11 +495,44 @@
 </div>
 
 @push('scripts')
+@php
+    $questInitialQuestions = isset($quest)
+        ? $quest->questions->map(fn ($q) => [
+            'id' => $q->id,
+            'text' => $q->question,
+            'type' => $q->type,
+            'level' => (int) $q->level,
+            'answer' => $q->answer,
+            'points' => (int) $q->points,
+            'options' => $q->options,
+        ])->values()->all()
+        : [];
+    $questIsEdit = isset($quest);
+    $questInitialSectionId = $questIsEdit ? old('section_id', $quest->section_id) : null;
+    $questScriptBootstrap = [
+        'questions' => $questInitialQuestions,
+        'isEdit' => $questIsEdit,
+        'initialSectionId' => $questInitialSectionId,
+    ];
+@endphp
+<script type="application/json" id="quest-bootstrap-data">
+{!! json_encode($questScriptBootstrap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}
+</script>
 <script>
-let questions = [];
+const __questBoot = JSON.parse(document.getElementById('quest-bootstrap-data').textContent);
+let questions = __questBoot.questions;
+const questIsEdit = __questBoot.isEdit;
+const questInitialSectionId = __questBoot.initialSectionId;
 let options = [];
 let currentStep = 1;
 let uploadedMaps = [];
+
+function selectMapExisting(element) {
+    const path = element.getAttribute('data-existing-path');
+    if (path) {
+        selectMap(element, 'existing:' + path);
+    }
+}
 
 function selectMap(element, mapValue) {
     document.querySelectorAll('.map-option').forEach(el => {
@@ -703,17 +755,20 @@ function addQuestion() {
 
 function renderQuestions() {
     const container = document.getElementById('questionsContainer');
-    container.innerHTML = questions.map((q, i) => `
+    container.innerHTML = questions.map((q, i) => {
+        const preview = (q.text && q.text.length > 50) ? q.text.substring(0, 50) + '...' : (q.text || '');
+        return `
         <div class="question-item">
             <div>
-                <strong>Level ${q.level}:</strong> ${q.text.substring(0, 50)}...
+                <strong>Level ${q.level}:</strong> ${preview}
                 <div style="font-size: 0.8rem; color: var(--text-muted);">${q.type} • ${q.points} pts</div>
             </div>
             <button type="button" class="btn btn-sm btn-danger" onclick="removeQuestion(${i})">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Update hidden inputs for form submission
     updateHiddenInputs();
@@ -732,6 +787,9 @@ function updateHiddenInputs() {
     const form = document.getElementById('questForm');
     questions.forEach((q, i) => {
         Object.keys(q).forEach(key => {
+            if (q[key] === null || q[key] === undefined) {
+                return;
+            }
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = `questions[${i}][${key}]`;
@@ -749,14 +807,14 @@ function loadSections() {
     
     if (!gradeId) {
         sectionSelect.innerHTML = '<option value="">Select Section</option>';
-        return;
+        return Promise.resolve();
     }
 
     // Show loading state
     sectionSelect.innerHTML = '<option value="">Loading sections...</option>';
     sectionSelect.disabled = true;
 
-    fetch(`{{ url('/api/grades') }}/${gradeId}/sections`)
+    return fetch(`{{ url('/api/grades') }}/${gradeId}/sections`)
         .then(res => {
             console.log('Response status:', res.status);
             if (!res.ok) {
@@ -849,6 +907,20 @@ document.getElementById('questForm').addEventListener('submit', function(e) {
 // Initialize level dropdowns on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateLevelDropdowns();
+    if (questIsEdit) {
+        if (questions.length) {
+            renderQuestions();
+        }
+        const gradeEl = document.getElementById('gradeSelect');
+        if (gradeEl && gradeEl.value) {
+            loadSections().then(() => {
+                const sectionEl = document.getElementById('sectionSelect');
+                if (sectionEl && questInitialSectionId != null) {
+                    sectionEl.value = String(questInitialSectionId);
+                }
+            });
+        }
+    }
 });
 </script>
 @endpush

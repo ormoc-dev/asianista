@@ -12,7 +12,33 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Route URLs for JavaScript -->
     <meta name="validate-code-url" content="{{ route('register.validate-code') }}">
-    
+    <style>
+      .hero-wizard-card.success-fx { animation: successPulse 900ms ease-out; }
+      .hero-success-badge {
+        margin: 12px 0 16px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ecfdf3 0%, #d1fae5 100%);
+        border: 1px solid #86efac;
+        color: #065f46;
+        display: none;
+      }
+      .hero-success-badge.show { display: block; animation: fadeInUp 450ms ease-out; }
+      .hero-success-badge .title { font-weight: 700; }
+      .hero-success-badge .desc { margin-top: 4px; font-size: 0.9rem; }
+      .wizard-steps .ws-step.done-now .ws-dot { background: #10b981; color: #fff; border-color: #10b981; }
+      .wizard-steps .ws-line.done-now { background: #10b981; }
+      @keyframes successPulse {
+        0% { transform: scale(0.985); }
+        60% { transform: scale(1.005); }
+        100% { transform: scale(1); }
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+
 </head>
 @php
   $initialForm = session('show_form') ?? 'login';
@@ -20,6 +46,7 @@
              || session('status')
              || session('success')
              || ($errors ?? collect())->any();
+  $registrationGrades = $registrationGrades ?? collect();
 @endphp
 <body data-skip-splash="{{ $skipSplash ? '1' : '0' }}"
       data-initial-form="{{ $initialForm }}">
@@ -169,11 +196,11 @@
 
         <!-- Progress -->
         <div class="wizard-steps">
-          <div class="ws-step done"><div class="ws-dot">✓</div><span>Code</span></div>
-          <div class="ws-line active"></div>
-          <div class="ws-step active"><div class="ws-dot">2</div><span>Hero</span></div>
-          <div class="ws-line"></div>
-          <div class="ws-step"><div class="ws-dot">3</div><span>Done</span></div>
+          <div class="ws-step done" id="wsStepCode"><div class="ws-dot">✓</div><span>Code</span></div>
+          <div class="ws-line active" id="wsLineCodeHero"></div>
+          <div class="ws-step active" id="wsStepHero"><div class="ws-dot">2</div><span>Hero</span></div>
+          <div class="ws-line" id="wsLineHeroDone"></div>
+          <div class="ws-step" id="wsStepDone"><div class="ws-dot">3</div><span>Done</span></div>
         </div>
 
         <h2 class="wizard-title">Build Your <span class="text-gold">Hero</span></h2>
@@ -182,6 +209,10 @@
           @if (session('show_form') === 'register' && session('success'))
             <div class="reg-alert reg-alert-success">{{ session('success') }}</div>
           @endif
+        </div>
+        <div id="studentSuccessEffects" class="hero-success-badge" aria-live="polite">
+          <div class="title">Registration Complete! Your hero is ready.</div>
+          <div class="desc">Next step: wait for teacher approval, then log in and begin your quests.</div>
         </div>
         <div id="studentErrorContainer">
           @if (session('show_form') === 'register' && session('error'))
@@ -234,6 +265,41 @@
             <p id="genderError" class="wiz-field-err" style="display:none;">Please select a gender</p>
           </div>
 
+          <!-- Grade & section (from school roster) -->
+          <div class="wiz-section">
+            <p class="wiz-label">Grade &amp; section</p>
+            @if($registrationGrades->isEmpty())
+              <p class="wiz-field-err" style="display:block;">Grades and sections are not set up yet. Please contact your administrator.</p>
+            @else
+              <select name="grade_id" id="regGradeSelect" required
+                style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);font-size:1rem;background:#fff;">
+                <option value="">Select grade</option>
+                @foreach($registrationGrades as $g)
+                  <option value="{{ $g->id }}" {{ old('grade_id') == $g->id ? 'selected' : '' }}>{{ preg_replace('/^\s*id\)?>\s*/i', '', $g->name) }}</option>
+                @endforeach
+              </select>
+              <select name="section_id" id="regSectionSelect" required
+                style="width:100%;margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);font-size:1rem;background:#fff;">
+                <option value="">Select section</option>
+                @if(old('grade_id'))
+                  @php $oldGrade = $registrationGrades->firstWhere('id', (int) old('grade_id')); @endphp
+                  @if($oldGrade)
+                    @foreach($oldGrade->sections as $s)
+                      <option value="{{ $s->id }}" {{ old('section_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                    @endforeach
+                  @endif
+                @endif
+              </select>
+              <p class="wiz-hint">Choose the grade and section you belong to (managed by your school in the system).</p>
+            @endif
+            @error('grade_id')
+              <p class="wiz-field-err" style="display:block;">{{ $message }}</p>
+            @enderror
+            @error('section_id')
+              <p class="wiz-field-err" style="display:block;">{{ $message }}</p>
+            @enderror
+          </div>
+
           <!-- Password -->
           <div class="wiz-section">
             <p class="wiz-label">🔐 Password</p>
@@ -283,7 +349,75 @@
 
   </div>
 
+  <script id="registration-grades-json" type="application/json">{!! json_encode($registrationGrades, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
   <script>
+    window.__registrationGrades = JSON.parse(document.getElementById('registration-grades-json')?.textContent || '[]');
+    function registrationRefreshSectionOptions(preserveSectionId) {
+      var gSelect = document.getElementById('regGradeSelect');
+      var sSelect = document.getElementById('regSectionSelect');
+      if (!gSelect || !sSelect || !window.__registrationGrades || !window.__registrationGrades.length) return;
+      var gid = gSelect.value;
+      var prev = preserveSectionId != null && preserveSectionId !== '' ? String(preserveSectionId) : sSelect.value;
+      sSelect.innerHTML = '<option value="">Select section</option>';
+      window.__registrationGrades.forEach(function (g) {
+        if (String(g.id) !== String(gid)) return;
+        (g.sections || []).forEach(function (s) {
+          var o = document.createElement('option');
+          o.value = s.id;
+          o.textContent = s.name;
+          sSelect.appendChild(o);
+        });
+      });
+      if (prev) sSelect.value = prev;
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      var rg = document.getElementById('regGradeSelect');
+      if (rg) {
+        rg.addEventListener('change', function () { registrationRefreshSectionOptions(null); });
+      }
+      // Ensure buttons are never stuck in loading state after refresh/back navigation.
+      setStudentValidateCodeLoading(false);
+      setStudentCompleteLoading(false);
+      setTeacherSubmitLoading(false);
+
+      // Debug aid: log any server-side flashed registration errors after redirect.
+      const flashedStudentErrors = Array.from(document.querySelectorAll('#studentErrorContainer .reg-alert-error, #studentErrorContainer .error'))
+        .map((el) => (el.textContent || '').trim())
+        .filter(Boolean);
+      if (flashedStudentErrors.length) {
+        console.error('[Student Submit] Server returned errors after submit:', flashedStudentErrors);
+      }
+
+      // Registration success effect after POST/redirect.
+      const flashedSuccess = document.querySelector('#studentSuccessContainer .reg-alert-success');
+      const successCard = document.getElementById('studentRegisterForm');
+      if (flashedSuccess && successCard) {
+        successCard.classList.add('success-fx');
+        setTimeout(() => successCard.classList.remove('success-fx'), 950);
+
+        const successFx = document.getElementById('studentSuccessEffects');
+        if (successFx) successFx.classList.add('show');
+
+        const stepHero = document.getElementById('wsStepHero');
+        const lineHeroDone = document.getElementById('wsLineHeroDone');
+        const stepDone = document.getElementById('wsStepDone');
+        if (stepHero) stepHero.classList.add('done');
+        if (lineHeroDone) lineHeroDone.classList.add('active', 'done-now');
+        if (stepDone) {
+          stepDone.classList.remove('active');
+          stepDone.classList.add('done', 'done-now');
+          const doneDot = stepDone.querySelector('.ws-dot');
+          if (doneDot) doneDot.textContent = '✓';
+        }
+
+        const completeBtn = document.getElementById('studentCompleteBtn');
+        if (completeBtn) {
+          completeBtn.disabled = true;
+          completeBtn.innerHTML = '<span>Journey Started</span>';
+        }
+      }
+    });
+
     // --- DOM references
     const loginForm = document.getElementById('loginForm');
     const roleSelectionForm = document.getElementById('roleSelectionForm');
@@ -308,9 +442,9 @@
     const studentSuccessContainer = document.getElementById('studentSuccessContainer');
     const studentValidateCodeBtn = document.getElementById('studentValidateCodeBtn');
 
-    let studentValidateCodeBtnHtml = '';
-    let studentCompleteBtnHtml = '';
-    let teacherSubmitBtnHtml = '';
+    let studentValidateCodeBtnHtml = studentValidateCodeBtn ? studentValidateCodeBtn.innerHTML : '';
+    let studentCompleteBtnHtml = studentCompleteBtn ? studentCompleteBtn.innerHTML : '';
+    let teacherSubmitBtnHtml = teacherSubmitBtn ? teacherSubmitBtn.innerHTML : '';
 
     function setStudentValidateCodeLoading(loading) {
       if (!studentValidateCodeBtn) return;
@@ -322,7 +456,9 @@
       } else {
         studentValidateCodeBtn.disabled = false;
         studentValidateCodeBtn.classList.remove('btn-loading');
-        studentValidateCodeBtn.innerHTML = studentValidateCodeBtnHtml;
+        if (studentValidateCodeBtnHtml && studentValidateCodeBtnHtml.trim() !== '') {
+          studentValidateCodeBtn.innerHTML = studentValidateCodeBtnHtml;
+        }
       }
     }
 
@@ -336,7 +472,9 @@
       } else {
         teacherSubmitBtn.disabled = false;
         teacherSubmitBtn.classList.remove('btn-loading');
-        teacherSubmitBtn.innerHTML = teacherSubmitBtnHtml;
+        if (teacherSubmitBtnHtml && teacherSubmitBtnHtml.trim() !== '') {
+          teacherSubmitBtn.innerHTML = teacherSubmitBtnHtml;
+        }
       }
     }
 
@@ -350,7 +488,9 @@
       } else {
         studentCompleteBtn.disabled = false;
         studentCompleteBtn.classList.remove('btn-loading');
-        studentCompleteBtn.innerHTML = studentCompleteBtnHtml;
+        if (studentCompleteBtnHtml && studentCompleteBtnHtml.trim() !== '') {
+          studentCompleteBtn.innerHTML = studentCompleteBtnHtml;
+        }
       }
     }
 
@@ -419,6 +559,16 @@
         document.body.classList.add('wizard-active');
       } else {
         document.body.classList.remove('wizard-active');
+      }
+
+      // Reset loading indicators when switching between cards.
+      if (which !== 'student_register' && which !== 'register') {
+        setStudentCompleteLoading(false);
+        const successFx = document.getElementById('studentSuccessEffects');
+        if (successFx) successFx.classList.remove('show');
+      }
+      if (which !== 'student_code') {
+        setStudentValidateCodeLoading(false);
       }
     }
 
@@ -536,7 +686,7 @@ if (backToLoginFromForgot) {
       }
 
       if (character && gender && previewImg && placeholder) {
-        previewImg.src = '{{ asset('images') }}/' + gender + '_' + character + '.png';
+        previewImg.src = "{{ asset('images') }}/" + gender + '_' + character + '.png';
         previewImg.style.display = 'block';
         placeholder.style.display = 'none';
       } else if (placeholder && previewImg) {
@@ -560,12 +710,12 @@ if (backToLoginFromForgot) {
       setStudentValidateCodeLoading(true);
 
       try {
-        const response = await fetch('{{ route('register.validate-code') }}', {
+        const response = await fetch("{{ route('register.validate-code') }}", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': "{{ csrf_token() }}"
           },
           body: JSON.stringify({ student_code: code })
         });
@@ -598,6 +748,13 @@ if (backToLoginFromForgot) {
           document.getElementById('displayUsername').value = data.student.username;
           document.getElementById('studentCodeHidden').value = code;
 
+          var gSel = document.getElementById('regGradeSelect');
+          var sSel = document.getElementById('regSectionSelect');
+          if (gSel && data.student.grade_id) {
+            gSel.value = String(data.student.grade_id);
+            registrationRefreshSectionOptions(data.student.section_id);
+          }
+
           // Populate hero preview panel
           const previewName = document.getElementById('previewStudentName');
           const previewUser = document.getElementById('previewStudentUser');
@@ -628,8 +785,12 @@ if (backToLoginFromForgot) {
       // Clear inputs
       const codeInput = document.getElementById('studentCodeInput');
       const messageEl = document.getElementById('codeValidationMessage');
+      const gSel = document.getElementById('regGradeSelect');
+      const sSel = document.getElementById('regSectionSelect');
       if (codeInput) codeInput.value = '';
       if (messageEl) messageEl.innerHTML = '';
+      if (gSel) gSel.value = '';
+      if (sSel) sSel.innerHTML = '<option value="">Select section</option>';
     }
 
 function handleTeacherSubmit(event) {
@@ -709,6 +870,23 @@ function handleTeacherSubmit(event) {
     // STUDENT: Form validation for hero wizard
     if (studentRegisterFormElement) {
       studentRegisterFormElement.addEventListener('submit', function(event) {
+        console.log('[Student Submit] Start button clicked');
+
+        // Run native form validation first so we don't lock button on invalid required fields.
+        if (!studentRegisterFormElement.checkValidity()) {
+          console.warn('[Student Submit] Native form validation failed', {
+            student_code: document.getElementById('studentCodeHidden')?.value || null,
+            grade_id: document.getElementById('regGradeSelect')?.value || null,
+            section_id: document.getElementById('regSectionSelect')?.value || null,
+            character: document.getElementById('characterInput')?.value || null,
+            gender: document.getElementById('genderInput')?.value || null,
+          });
+          event.preventDefault();
+          studentRegisterFormElement.reportValidity();
+          setStudentCompleteLoading(false);
+          return false;
+        }
+
         const characterInput = document.getElementById('characterInput');
         const genderInput    = document.getElementById('genderInput');
         const charErrorEl    = document.getElementById('characterError');
@@ -716,19 +894,31 @@ function handleTeacherSubmit(event) {
         let valid = true;
 
         if (!characterInput || !characterInput.value) {
+          console.warn('[Student Submit] Missing character selection');
           event.preventDefault();
           if (charErrorEl) charErrorEl.style.display = 'block';
           valid = false;
         }
         if (!genderInput || !genderInput.value) {
+          console.warn('[Student Submit] Missing gender selection');
           event.preventDefault();
           if (genderErrorEl) genderErrorEl.style.display = 'block';
           valid = false;
         }
         if (!valid) {
+          console.warn('[Student Submit] Blocked before POST due to custom validation');
           const firstErr = document.querySelector('.wiz-field-err[style*="block"]');
           if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
+          console.log('[Student Submit] Validation passed, posting form', {
+            action: studentRegisterFormElement.action,
+            method: (studentRegisterFormElement.method || 'POST').toUpperCase(),
+            student_code: document.getElementById('studentCodeHidden')?.value || null,
+            grade_id: document.getElementById('regGradeSelect')?.value || null,
+            section_id: document.getElementById('regSectionSelect')?.value || null,
+            character: document.getElementById('characterInput')?.value || null,
+            gender: document.getElementById('genderInput')?.value || null,
+          });
           setStudentCompleteLoading(true);
         }
         return valid;

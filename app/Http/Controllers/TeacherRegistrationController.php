@@ -29,10 +29,12 @@ class TeacherRegistrationController extends Controller
     {
         $students = User::where('role', 'student')
             ->where('status', 'pending')
+            ->with(['grade', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();
         $pendingRegistrations = RegistrationCode::where('used', false)
             ->whereNotNull('student_code')
+            ->with(['grade', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();
 

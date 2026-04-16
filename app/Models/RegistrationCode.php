@@ -17,6 +17,8 @@ class RegistrationCode extends Model
         'first_name',
         'last_name',
         'middle_name',
+        'grade_id',
+        'section_id',
         'username',
         'default_password',
         'student_code',
@@ -37,6 +39,16 @@ class RegistrationCode extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'section_id');
     }
 
     /**

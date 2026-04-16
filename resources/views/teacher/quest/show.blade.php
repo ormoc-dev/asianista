@@ -77,6 +77,8 @@
         height: 100%;
         object-fit: cover;
         opacity: 0.9;
+        pointer-events: none;
+        user-select: none;
     }
 
     .map-paths {
@@ -95,7 +97,8 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 20;
+        z-index: 30;
+        pointer-events: auto;
     }
 
     .map-node {
@@ -106,11 +109,16 @@
         align-items: center;
         cursor: pointer;
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* Larger hit area so each level is easy to tap (markers alone are tiny) */
+        padding: 14px 16px;
+        box-sizing: content-box;
+        /* Higher levels stack above so overlapping nodes stay clickable */
+        z-index: var(--map-node-z, 20);
     }
 
     .map-node:hover {
         transform: translate(-50%, -50%) scale(1.1);
-        z-index: 100;
+        z-index: calc(var(--map-node-z, 20) + 50);
     }
 
     .node-marker {
@@ -144,6 +152,11 @@
         font-size: 0.75rem;
         font-weight: 700;
         white-space: nowrap;
+        max-width: min(120px, 28vw);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        user-select: none;
     }
 
     .node-tooltip {
@@ -213,7 +226,7 @@
     }
 
     .reward-pill.xp { background: #eef2ff; color: #4f46e5; }
-    .reward-pill.ab { background: #fffbeb; color: #d97706; }
+    .reward-pill.ap { background: #fffbeb; color: #d97706; }
     .reward-pill.gp { background: #ecfdf5; color: #059669; }
 
     .questions-list h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--text-primary); }
@@ -281,16 +294,53 @@
     .modal-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
+        gap: 16px;
         margin-bottom: 25px;
         border-bottom: 1px solid var(--border);
         padding-bottom: 15px;
+    }
+
+    .modal-header-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
     }
 
     .modal-header h3 {
         color: var(--primary);
         margin: 0;
         font-size: 1.5rem;
+        line-height: 1.25;
+    }
+
+    .btn-modal-back {
+        flex-shrink: 0;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg-main);
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-modal-back:hover {
+        border-color: var(--primary);
+        background: #eef2ff;
+    }
+
+    .modal-picker-hint {
+        margin: 0 0 16px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
     }
 
     .btn-close-modal {
@@ -315,6 +365,27 @@
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
         padding: 20px;
+    }
+
+    .modal-question-pick {
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+        text-align: left;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .modal-question-pick:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .modal-question-pick .pick-cue {
+        margin-top: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary);
     }
 
     .modal-q-header {
@@ -385,11 +456,68 @@
         justify-content: flex-end;
     }
 
+    .student-progress-section {
+        margin-top: 24px;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+    }
+
+    .student-progress-section h4 {
+        margin: 0 0 12px;
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .student-progress-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .student-progress-col {
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+    }
+
+    .student-progress-col h5 {
+        margin: 0 0 8px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .student-progress-col ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .student-progress-col li {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+    }
+
+    .student-progress-col .empty {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .student-progress-col.passed h5 { color: #059669; }
+    .student-progress-col.in-progress h5 { color: #2563eb; }
+    .student-progress-col.failed h5 { color: #dc2626; }
+    .student-progress-col.not-started h5 { color: #6b7280; }
+
     @media (max-width: 768px) {
         .quest-summary-panel { grid-template-columns: 1fr; }
         .map-node { transform: translate(-50%, -50%) scale(0.6); }
         .map-node:hover { transform: translate(-50%, -50%) scale(0.75); }
         .modal-q-options { grid-template-columns: 1fr; }
+        .student-progress-grid { grid-template-columns: 1fr; }
     }
 </style>
 @endpush
@@ -397,9 +525,14 @@
 @section('content')
 <div class="quest-details-container">
     <div class="quest-details-header">
-        <a href="{{ route('teacher.quest') }}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Board
-        </a>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <a href="{{ route('teacher.quest') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Board
+            </a>
+            <a href="{{ route('teacher.quest.edit', $quest) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit"></i> Edit Quest
+            </a>
+        </div>
         <div class="quest-title-area">
             <h1>{{ $quest->title }}</h1>
             <div class="quest-tags">
@@ -446,26 +579,53 @@
                 @for($lvl = 1; $lvl <= $quest->level; $lvl++)
                     @php
                         $levelQuestions = $quest->questions->where('level', $lvl);
-                        $pos = $positions[($lvl - 1) % count($positions)];
+                        $positionCount = count($positions);
+                        $positionIndex = ($lvl - 1) % $positionCount;
+                        $basePos = $positions[$positionIndex];
+
+                        // Evenly space all levels on a circle so nodes never stack on the same landmark.
+                        $totalLevels = max(1, (int) $quest->level);
+                        $angle = (2 * M_PI * ($lvl - 1) / $totalLevels) - (M_PI / 2);
+                        $radiusPct = $totalLevels <= 1 ? 0 : 36;
+                        $leftPos = 50 + cos($angle) * $radiusPct;
+                        $topPos = 50 + sin($angle) * $radiusPct;
+                        $leftPos = max(6, min(94, $leftPos));
+                        $topPos = max(10, min(90, $topPos));
                         $isLast = ($lvl == $quest->level);
                         $isFirst = ($lvl == 1);
-                        $nodeIcon = $isLast ? 'fa-flag-checkered' : ($isFirst ? 'fa-play' : $pos['icon']);
+                        $nodeIcon = $isLast ? 'fa-flag-checkered' : ($isFirst ? 'fa-play' : $basePos['icon']);
                     @endphp
-                    <div class="map-node {{ $isFirst ? 'node-start' : ($isLast ? 'node-end' : '') }}" 
-                         style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"
-                         data-level="{{ $lvl }}">
+                    <div class="map-node {{ $isFirst ? 'node-start' : ($isLast ? 'node-end' : '') }}"
+                         data-level="{{ $lvl }}"
+                         data-pos-left="{{ sprintf('%.3f', $leftPos) }}"
+                         data-pos-top="{{ sprintf('%.3f', $topPos) }}"
+                         data-node-z="{{ 20 + $lvl }}"
+                         role="button"
+                         tabindex="0">
                         <div class="node-marker">
                             <i class="fas {{ $nodeIcon }}"></i>
                         </div>
                         <div class="node-label">Level {{ $lvl }}</div>
                         <div class="node-tooltip">
-                            <strong>{{ $pos['label'] }}</strong><br>
+                            <strong>{{ $basePos['label'] }}</strong><br>
                             {{ $levelQuestions->count() }} Challenges Found<br>
                             <span style="color: var(--accent)">Worth {{ $levelQuestions->sum('points') }} PTS</span>
                         </div>
                     </div>
                 @endfor
             </div>
+            <script>
+                (function () {
+                    document.querySelectorAll('.map-nodes .map-node').forEach(function (n) {
+                        var l = n.getAttribute('data-pos-left');
+                        var t = n.getAttribute('data-pos-top');
+                        var z = n.getAttribute('data-node-z');
+                        if (l !== null && l !== '') n.style.left = l + '%';
+                        if (t !== null && t !== '') n.style.top = t + '%';
+                        if (z !== null && z !== '') n.style.setProperty('--map-node-z', z);
+                    });
+                })();
+            </script>
         </div>
     </div>
 
@@ -475,7 +635,7 @@
             <h3>Quest Rewards</h3>
             <div class="reward-pills">
                 <div class="reward-pill xp"><i class="fas fa-star"></i> {{ $quest->xp_reward ?? 0 }} XP</div>
-                <div class="reward-pill ab"><i class="fas fa-bolt"></i> {{ $quest->ab_reward ?? 0 }} AB</div>
+                <div class="reward-pill ap"><i class="fas fa-bolt"></i> {{ $quest->ab_reward ?? 0 }} AP</div>
                 <div class="reward-pill gp"><i class="fas fa-coins"></i> {{ $quest->gp_reward ?? 0 }} GP</div>
             </div>
         </div>
@@ -499,11 +659,25 @@
 <div id="levelDetailsModal" class="modal-overlay" style="display: none;">
     <div class="level-details-modal">
         <div class="modal-header">
-            <h3><i class="fas fa-scroll"></i> Level <span id="modalLevel">1</span> Challenges</h3>
-            <button onclick="closeLevelModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header-main">
+                <button type="button" id="modalQuestionBack" class="btn-modal-back" aria-label="Back to challenge list">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h3><i class="fas fa-scroll"></i> <span id="modalTitleText">Level <span id="modalLevel">1</span> Challenges</span></h3>
+            </div>
+            <button type="button" onclick="closeLevelModal()" class="btn-close-modal"><i class="fas fa-times"></i></button>
         </div>
+        <p id="modalPickerHint" class="modal-picker-hint" style="display: none;">
+            This level has more than one challenge. Click a card to view the full question, answer, and who passed or is still on it.
+        </p>
         <div id="modalQuestionsList" class="modal-questions-list">
-            {{-- Questions will be injected here --}}
+            {{-- Question picker or detail view --}}
+        </div>
+        <div id="modalStudentProgressSection" class="student-progress-section" style="display: none;">
+            <h4><i class="fas fa-users"></i> Student Progress <span style="font-weight: 500; color: var(--text-muted);">(this challenge)</span></h4>
+            <div id="modalStudentProgress" class="student-progress-grid">
+                {{-- Per-question student status --}}
+            </div>
         </div>
         <div class="modal-footer">
             <button onclick="closeLevelModal()" class="btn btn-primary">Close Journey</button>
@@ -512,54 +686,218 @@
 </div>
 
 @push('scripts')
+<script type="application/json" id="quest-questions-by-level">
+{!! json_encode($questionsByLevel, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}
+</script>
+<script type="application/json" id="quest-students-by-question">
+{!! json_encode($studentsByQuestion ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}
+</script>
 <script>
-function showLevelDetails(level, questions) {
-    document.getElementById('modalLevel').textContent = level;
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+let currentModalLevel = null;
+
+const questionsByLevel = JSON.parse(document.getElementById('quest-questions-by-level').textContent);
+const studentsByQuestion = JSON.parse(document.getElementById('quest-students-by-question').textContent);
+
+function questionsForLevel(level) {
+    const k = String(level);
+    const raw = questionsByLevel[k] ?? questionsByLevel[level];
+    const arr = Array.isArray(raw) ? raw.slice() : [];
+    arr.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+    return arr;
+}
+
+function progressForQuestion(questionId) {
+    const k = String(questionId);
+    const raw = studentsByQuestion[k] ?? studentsByQuestion[questionId];
+    if (raw && typeof raw === 'object') {
+        return {
+            passed: Array.isArray(raw.passed) ? raw.passed : [],
+            in_progress: Array.isArray(raw.in_progress) ? raw.in_progress : [],
+            failed: Array.isArray(raw.failed) ? raw.failed : [],
+            not_started: Array.isArray(raw.not_started) ? raw.not_started : [],
+        };
+    }
+    return { passed: [], in_progress: [], failed: [], not_started: [] };
+}
+
+function renderStudentColumn(title, className, students) {
+    const safeStudents = Array.isArray(students) ? students : [];
+    const items = safeStudents.length
+        ? safeStudents.map(name => `<li>${escapeHtml(name)}</li>`).join('')
+        : '<li class="empty">None</li>';
+
+    return `
+        <div class="student-progress-col ${className}">
+            <h5>${title} (${safeStudents.length})</h5>
+            <ul>${items}</ul>
+        </div>
+    `;
+}
+
+function renderProgressGrid(progress) {
+    return (
+        renderStudentColumn('Passed', 'passed', progress.passed) +
+        renderStudentColumn('In Progress', 'in-progress', progress.in_progress) +
+        renderStudentColumn('Failed', 'failed', progress.failed) +
+        renderStudentColumn('Not Started', 'not-started', progress.not_started)
+    );
+}
+
+function buildQuestionDetailHtml(q) {
+    const typeLabel = escapeHtml(String(q.type || '').replace(/-/g, ' ') || 'Question');
+    const pts = escapeHtml(q.points != null ? String(q.points) : '0');
+    const body = q.type === 'multiple_choice'
+        ? `<div class="modal-q-options">${Array.isArray(q.options) ? q.options.map(opt => {
+            const o = escapeHtml(opt);
+            const isCorrect = opt === q.answer;
+            return `<div class="modal-opt ${isCorrect ? 'correct' : ''}">${o}</div>`;
+        }).join('') : ''}</div>`
+        : `<div class="modal-q-answer">Correct Answer: <strong>${escapeHtml(q.answer)}</strong></div>`;
+    return `
+        <div class="modal-question-card">
+            <div class="modal-q-header">
+                <span class="q-type-badge">${typeLabel}</span>
+                <span class="q-points-badge">${pts} PTS</span>
+            </div>
+            <p class="q-text">${escapeHtml(q.question)}</p>
+            ${body}
+        </div>
+    `;
+}
+
+function setModalListMode(level, questions) {
+    currentModalLevel = String(level);
+    document.getElementById('modalTitleText').innerHTML =
+        'Level <span id="modalLevel">' + escapeHtml(currentModalLevel) + '</span> Challenges';
+
+    const backBtn = document.getElementById('modalQuestionBack');
+    const hint = document.getElementById('modalPickerHint');
+    const progSection = document.getElementById('modalStudentProgressSection');
+
+    backBtn.style.display = 'none';
+    progSection.style.display = 'none';
+    hint.style.display = questions.length > 1 ? 'block' : 'none';
+
     const list = document.getElementById('modalQuestionsList');
     list.innerHTML = '';
 
     if (questions.length === 0) {
         list.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">No questions assigned to this level yet.</p>';
-    } else {
-        questions.forEach((q, i) => {
-            const card = document.createElement('div');
-            card.className = 'modal-question-card';
-            card.innerHTML = `
-                <div class="modal-q-header">
-                    <span class="q-type-badge">${q.type.replace('-', ' ')}</span>
-                    <span class="q-points-badge">${q.points} PTS</span>
-                </div>
-                <p class="q-text">${q.question}</p>
-                ${q.type === 'multiple_choice' ? `
-                    <div class="modal-q-options">
-                        ${q.options ? q.options.map(opt => `<div class="modal-opt ${opt === q.answer ? 'correct' : ''}">${opt}</div>`).join('') : ''}
-                    </div>
-                ` : `
-                    <div class="modal-q-answer">Correct Answer: <strong>${q.answer}</strong></div>
-                `}
-            `;
-            list.appendChild(card);
-        });
+        return;
     }
+
+    questions.forEach(function (q, i) {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'modal-question-card modal-question-pick';
+        card.setAttribute('data-question-id', String(q.id));
+        const previewRaw = String(q.question || '');
+        const preview = previewRaw.length > 160 ? previewRaw.slice(0, 160) + '…' : previewRaw;
+        const typeLabel = escapeHtml(String(q.type || '').replace(/-/g, ' ') || 'Question');
+        const pts = escapeHtml(q.points != null ? String(q.points) : '0');
+        card.innerHTML = `
+            <div class="modal-q-header">
+                <span class="q-type-badge">${typeLabel}</span>
+                <span class="q-points-badge">${pts} PTS</span>
+            </div>
+            <p class="q-text" style="margin-bottom: 0;">${escapeHtml(preview)}</p>
+            <div class="pick-cue">View full challenge &amp; student progress <i class="fas fa-chevron-right"></i></div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+function showQuestionDetail(q) {
+    const backBtn = document.getElementById('modalQuestionBack');
+    const hint = document.getElementById('modalPickerHint');
+    const progSection = document.getElementById('modalStudentProgressSection');
+    const list = document.getElementById('modalQuestionsList');
+    const progress = document.getElementById('modalStudentProgress');
+
+    backBtn.style.display = 'inline-flex';
+    hint.style.display = 'none';
+    progSection.style.display = 'block';
+
+    document.getElementById('modalTitleText').textContent =
+        'Challenge — Level ' + (currentModalLevel != null ? currentModalLevel : '');
+
+    list.innerHTML = buildQuestionDetailHtml(q);
+
+    const pq = progressForQuestion(q.id);
+    progress.innerHTML = renderProgressGrid(pq);
+
+    document.getElementById('levelDetailsModal').style.display = 'flex';
+}
+
+function showLevelQuestionPicker(level) {
+    const questions = questionsForLevel(level);
+    setModalListMode(level, questions);
     document.getElementById('levelDetailsModal').style.display = 'flex';
 }
 
 function closeLevelModal() {
     document.getElementById('levelDetailsModal').style.display = 'none';
+    currentModalLevel = null;
+    document.getElementById('modalQuestionBack').style.display = 'none';
+    document.getElementById('modalPickerHint').style.display = 'none';
+    document.getElementById('modalStudentProgressSection').style.display = 'none';
+    document.getElementById('modalQuestionsList').innerHTML = '';
+    document.getElementById('modalTitleText').innerHTML =
+        'Level <span id="modalLevel">1</span> Challenges';
 }
 
-// Questions data grouped by level (from PHP)
-const questionsByLevel = {{ json_encode($questionsByLevel) }};
+function openLevelFromNode(node) {
+    if (!node) return;
+    const level = node.getAttribute('data-level');
+    if (!level) return;
+    showLevelQuestionPicker(level);
+}
 
-// Add click event listeners to all map nodes
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.map-node').forEach(node => {
-        node.addEventListener('click', function() {
-            const level = this.getAttribute('data-level');
-            const questions = questionsByLevel[level] || [];
-            showLevelDetails(level, questions);
+    const mapNodesRoot = document.querySelector('.map-nodes');
+    if (mapNodesRoot) {
+        mapNodesRoot.addEventListener('click', function (e) {
+            const node = e.target.closest('.map-node');
+            if (!node || !mapNodesRoot.contains(node)) return;
+            openLevelFromNode(node);
         });
-    });
+        mapNodesRoot.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const node = e.target.closest('.map-node');
+            if (!node || !mapNodesRoot.contains(node)) return;
+            e.preventDefault();
+            openLevelFromNode(node);
+        });
+    }
+
+    const backBtn = document.getElementById('modalQuestionBack');
+    if (backBtn) {
+        backBtn.addEventListener('click', function () {
+            if (currentModalLevel == null) return;
+            const questions = questionsForLevel(currentModalLevel);
+            setModalListMode(currentModalLevel, questions);
+        });
+    }
+
+    const qList = document.getElementById('modalQuestionsList');
+    if (qList) {
+        qList.addEventListener('click', function (e) {
+            const pick = e.target.closest('.modal-question-pick');
+            if (!pick || !qList.contains(pick)) return;
+            const id = pick.getAttribute('data-question-id');
+            if (!id || currentModalLevel == null) return;
+            const questions = questionsForLevel(currentModalLevel);
+            const q = questions.find(function (qq) { return String(qq.id) === String(id); });
+            if (q) showQuestionDetail(q);
+        });
+    }
 });
 </script>
 @endpush

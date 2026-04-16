@@ -550,6 +550,11 @@
         .alert-warning { background: #fef3c7; color: #d97706; }
         .alert-info { background: #dbeafe; color: #2563eb; }
 
+        /* Flash messages that auto-dismiss (see teacher flash script below) */
+        .teacher-flash-auto {
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -945,14 +950,14 @@
 
         <div class="content">
             @if(session('success'))
-                <div class="alert alert-success">
+                <div class="alert alert-success teacher-flash-auto" data-teacher-flash role="status" aria-live="polite">
                     <i class="fas fa-check-circle"></i>
                     {{ session('success') }}
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="alert alert-danger">
+                <div class="alert alert-danger teacher-flash-auto" data-teacher-flash role="alert" aria-live="assertive">
                     <i class="fas fa-exclamation-circle"></i>
                     {{ session('error') }}
                 </div>
@@ -1104,6 +1109,25 @@
                 sendAiMessage();
             }
         });
+
+        /** Auto-dismiss CRUD / flash notifications after 5s (teacher area) */
+        (function () {
+            var DISMISS_MS = 5000;
+            function fadeRemove(el) {
+                if (!el || el.getAttribute('data-flash-removing') === '1') return;
+                el.setAttribute('data-flash-removing', '1');
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-8px)';
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 350);
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('.teacher-flash-auto').forEach(function (el) {
+                    setTimeout(function () { fadeRemove(el); }, DISMISS_MS);
+                });
+            });
+        })();
     </script>
     @stack('scripts')
 </body>

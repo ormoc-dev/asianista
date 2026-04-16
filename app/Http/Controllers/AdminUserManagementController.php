@@ -9,7 +9,11 @@ class AdminUserManagementController extends Controller
 {
     public function index()
     {
-        $users = User::whereIn('role', ['teacher', 'student'])->get();
+        $users = User::whereIn('role', ['teacher', 'student'])
+            ->orderByRaw("CASE role WHEN 'teacher' THEN 0 WHEN 'student' THEN 1 ELSE 2 END")
+            ->orderBy('name')
+            ->get();
+
         return view('admin.user-management.index', compact('users'));
     }
 

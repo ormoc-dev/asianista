@@ -38,7 +38,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     {
         $firstName = trim($row['fname'] ?? $row['first_name'] ?? $row['firstname'] ?? '');
         $lastName = trim($row['lname'] ?? $row['last_name'] ?? $row['lastname'] ?? '');
-        $middleName = trim($row['mname'] ?? $row['middle_name'] ?? $row['middlename'] ?? null);
+        $middleName = trim($row['mname'] ?? $row['middle_name'] ?? $row['middlename'] ?? '');
 
         if (empty($firstName) || empty($lastName)) {
             return null;
@@ -53,7 +53,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'code' => $credentials['code'],
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'middle_name' => $middleName,
+            'middle_name' => $middleName !== '' ? $middleName : null,
             'username' => $credentials['username'],
             'default_password' => $credentials['default_password'],
             'student_code' => $credentials['student_code'],

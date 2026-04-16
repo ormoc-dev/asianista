@@ -6,7 +6,7 @@
 <div class="page-container">
     <!-- Success Message -->
     @if(session('success'))
-        <div class="alert-success">
+        <div class="alert-success teacher-flash-auto" data-teacher-flash role="status">
             <i class="fas fa-check-circle"></i>
             {{ session('success') }}
         </div>

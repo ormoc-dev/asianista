@@ -1,3 +1,7 @@
+@php
+  $registrationGrades = $registrationGrades ?? collect();
+@endphp
+
 <!-- ROLE SELECTION FORM -->
 <div id="roleSelectionForm" class="card hidden">
   <h2>Select Your Role</h2>
@@ -105,6 +109,40 @@
       </div>
     </div>
 
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: 500;">Grade &amp; section</label>
+      @if($registrationGrades->isEmpty())
+        <p class="error" style="margin-top: 8px;">Grades and sections are not set up yet. Please contact your administrator.</p>
+      @else
+        <select name="grade_id" id="regGradeSelect" required
+          style="width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <option value="">Select grade</option>
+          @foreach($registrationGrades as $g)
+            <option value="{{ $g->id }}" {{ old('grade_id') == $g->id ? 'selected' : '' }}>{{ preg_replace('/^\s*id\)?>\s*/i', '', $g->name) }}</option>
+          @endforeach
+        </select>
+        <select name="section_id" id="regSectionSelect" required
+          style="width: 100%; margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <option value="">Select section</option>
+          @if(old('grade_id'))
+            @php $oldGrade = $registrationGrades->firstWhere('id', (int) old('grade_id')); @endphp
+            @if($oldGrade)
+              @foreach($oldGrade->sections as $s)
+                <option value="{{ $s->id }}" {{ old('section_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+              @endforeach
+            @endif
+          @endif
+        </select>
+        <small style="color: var(--text-muted); display: block; margin-top: 6px;">Choose the grade and section you belong to (school roster). If your teacher assigned them to your code, they may fill in after you validate.</small>
+      @endif
+      @error('grade_id')
+        <p class="error" style="margin-top: 8px;">{{ $message }}</p>
+      @enderror
+      @error('section_id')
+        <p class="error" style="margin-top: 8px;">{{ $message }}</p>
+      @enderror
+    </div>
+
     <!-- Password Section -->
     <div style="margin-bottom: 20px;">
       <label style="display: block; margin-bottom: 12px; font-weight: 500;">Password</label>
@@ -152,3 +190,9 @@
   <h2>Choose Your Gender</h2>
   <div class="gender-options" id="genderOptionsContainer"></div>
 </div>
+
+<script id="registration-grades-json" type="application/json">{!! json_encode($registrationGrades, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
+<script>
+  window.__registrationGrades = JSON.parse(document.getElementById('registration-grades-json')?.textContent || '[]');
+</script>
+<script src="{{ asset('js/auth-scripts.js') }}" defer></script>

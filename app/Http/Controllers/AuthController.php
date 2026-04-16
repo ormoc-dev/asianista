@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\RegistrationCode;
+use App\Models\Grade;
+use App\Models\Section;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +18,12 @@ class AuthController extends Controller
 {
     public function showHome()
     {
-        return view('welcome');
+        $registrationGrades = Grade::query()
+            ->with(['sections' => fn ($q) => $q->orderBy('name')])
+            ->orderBy('name')
+            ->get();
+
+        return view('welcome', compact('registrationGrades'));
     }
 
     public function showLogin()
@@ -31,7 +38,12 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        $registrationGrades = Grade::query()
+            ->with(['sections' => fn ($q) => $q->orderBy('name')])
+            ->orderBy('name')
+            ->get();
+
+        return view('auth.register', compact('registrationGrades'));
     }
 
     private function getProfilePicForGender(?string $gender): string
@@ -279,6 +291,26 @@ class AuthController extends Controller
                 ->with('show_form', 'register');
         }
 
+        $request->validate([
+            'grade_id' => 'required|integer|exists:grades,id',
+            'section_id' => 'required|integer|exists:sections,id',
+        ]);
+
+        $gradeId = (int) $request->input('grade_id');
+        $sectionId = (int) $request->input('section_id');
+
+        $schoolSection = Section::query()
+            ->where('id', $sectionId)
+            ->where('grade_id', $gradeId)
+            ->first();
+
+        if (!$schoolSection) {
+            return back()
+                ->withErrors(['section_id' => 'Choose a section that belongs to the selected grade.'])
+                ->withInput()
+                ->with('show_form', 'register');
+        }
+
         $profilePic = $this->getProfilePicForGender($request->gender . '_' . $request->character);
 
         // Determine final password
@@ -291,6 +323,8 @@ class AuthController extends Controller
                 'first_name'  => $registrationCode->first_name,
                 'last_name'   => $registrationCode->last_name,
                 'middle_name' => $registrationCode->middle_name,
+                'grade_id'    => $gradeId,
+                'section_id'  => $sectionId,
                 'email'       => $registrationCode->username . '@asianista.com', // Auto-generated email
                 'username'    => $registrationCode->username,
                 'password'    => bcrypt($finalPassword),
@@ -313,6 +347,8 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'character' => $request->character,
                 'gender' => $request->gender,
+                'grade_id' => $gradeId,
+                'section_id' => $sectionId,
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -393,6 +429,8 @@ class AuthController extends Controller
                     'middle_name' => $code->middle_name,
                     'full_name' => $code->full_name,
                     'username' => $code->username,
+                    'grade_id' => $code->grade_id,
+                    'section_id' => $code->section_id,
                 ],
             ]);
         } catch (\Throwable $e) {

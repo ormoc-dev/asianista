@@ -102,6 +102,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'update'])->name('random-events.update');
         Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'destroy'])->name('random-events.destroy');
         Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\AdminRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
+        Route::post('/random-events/generate-ai', [AIAssistantController::class, 'generateRandomEvent'])->name('random-events.generate-ai');
         
         // show
         Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])
@@ -278,9 +279,11 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/quest', [TeacherQuestController::class, 'index'])->name('quest');
     Route::get('/quest/create', [TeacherQuestController::class, 'create'])->name('quest.create');
     Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');
+    Route::get('/quest/{quest}/edit', [TeacherQuestController::class, 'edit'])->name('quest.edit');
+    Route::put('/quest/{quest}', [TeacherQuestController::class, 'update'])->name('quest.update');
     Route::get('/quest/{quest}', [TeacherQuestController::class, 'show'])->name('quest.show');
     
-    // Random Events Routes (Teacher - Draw Only)
+    // Random Events (draw only; pool is managed in admin)
     Route::get('/random-events', [App\Http\Controllers\TeacherRandomEventController::class, 'index'])->name('random-events.index');
     Route::post('/random-events/draw', [App\Http\Controllers\TeacherRandomEventController::class, 'drawRandom'])->name('random-events.draw');
     
