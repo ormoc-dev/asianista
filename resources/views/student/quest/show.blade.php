@@ -19,31 +19,30 @@
 
     @php
         // Order questions by level, then by id (same order as gameplay)
-        $orderedQuestions = $quest->questions->sortBy('level')->sortBy('id')->values();
+        $orderedQuestions = $quest->questions->sort(function ($a, $b) {
+            return $a->level <=> $b->level ?: $a->id <=> $b->id;
+        })->values();
         $totalQuestions = $orderedQuestions->count();
-        $completedCount = 0;
-        $currentQuestionIndex = 0;
+        $currentQuestionIndex = false;
         $status = $attempt->status ?? 'not_started';
+        $questionOutcomes = ($attempt && is_array($attempt->question_outcomes)) ? $attempt->question_outcomes : [];
 
         if ($attempt) {
-            // Find current question position in ordered list
             $questionIds = $orderedQuestions->pluck('id')->toArray();
-            $currentQuestionIndex = array_search($attempt->current_question_id, $questionIds);
-            
-            // If found, completed = all questions before current one
-            if ($currentQuestionIndex !== false) {
-                $completedCount = $currentQuestionIndex;
-            } else {
-                // If current_question_id not found, student might be at start
-                $completedCount = 0;
-            }
-            
-            if ($status === 'completed') {
-                $completedCount = $totalQuestions;
-            }
+            $currentQuestionIndex = array_search((int) $attempt->current_question_id, array_map('intval', $questionIds), true);
         }
-        
-        $progressPercent = $totalQuestions > 0 ? ($completedCount / $totalQuestions) * 100 : 0;
+
+        if ($status === 'completed') {
+            $progressPercent = 100;
+        } elseif ($attempt && $status === 'started' && $totalQuestions > 0) {
+            if ($currentQuestionIndex !== false) {
+                $progressPercent = (($currentQuestionIndex + 1) / $totalQuestions) * 100;
+            } else {
+                $progressPercent = (1 / $totalQuestions) * 100;
+            }
+        } else {
+            $progressPercent = 0;
+        }
         
         // Map image
         $mapImage = $quest->map_image ?? 'quest_map_bg.png';
@@ -148,7 +147,7 @@
                     <span class="progress-percent">{{ round($progressPercent) }}%</span>
                 </div>
                 <div class="action-card-progress">
-                    <div class="progress-track"><div class="progress-fill" style="width: {{ $progressPercent }}%;"></div></div>
+                    <div class="progress-fill" style="width: {{ min(100, round($progressPercent, 1)) }}%;"></div>
                 </div>
                 <div class="action-card-footer">
                     @php
@@ -229,15 +228,35 @@
         <div class="steps-scroll">
             @foreach($orderedQuestions as $index => $step)
             @php
-                // Step is completed if: quest is completed OR current question index > this step's index
-                $isStepCompleted = ($status === 'completed') || ($currentQuestionIndex !== false && $currentQuestionIndex > $index);
-                $isStepCurrent = $attempt && $status === 'started' && $attempt->current_question_id == $step->id;
-                $isStepLocked = !$isStepCompleted && !$isStepCurrent;
+                $qid = (string) $step->id;
+                $outcome = array_key_exists($qid, $questionOutcomes) ? $questionOutcomes[$qid] : (array_key_exists($step->id, $questionOutcomes) ? $questionOutcomes[$step->id] : null);
+                $isStepCurrent = $attempt && $status === 'started' && (int) $attempt->current_question_id === (int) $step->id;
+                $isPast = $currentQuestionIndex !== false && $index < $currentQuestionIndex;
+
+                if ($status === 'completed') {
+                    $stepState = ($outcome === false) ? 'failed' : 'completed';
+                } elseif ($isStepCurrent) {
+                    $stepState = 'current';
+                } elseif ($isPast) {
+                    $stepState = ($outcome === false) ? 'failed' : 'completed';
+                } else {
+                    $stepState = 'locked';
+                }
+                if ($stepState === 'failed') {
+                    $stepCardClass = 'step-failed';
+                } elseif ($stepState === 'completed') {
+                    $stepCardClass = 'completed';
+                } elseif ($stepState === 'current') {
+                    $stepCardClass = 'current';
+                } else {
+                    $stepCardClass = 'locked';
+                }
             @endphp
-            <div class="step-card {{ $isStepCompleted ? 'completed' : ($isStepCurrent ? 'current' : 'locked') }}">
+            <div class="step-card {{ $stepCardClass }}">
                 <div class="step-status">
-                    @if($isStepCompleted) <i class="fas fa-check"></i>
-                    @elseif($isStepCurrent) <i class="fas fa-play"></i>
+                    @if($stepState === 'failed') <i class="fas fa-times"></i>
+                    @elseif($stepState === 'completed') <i class="fas fa-check"></i>
+                    @elseif($stepState === 'current') <i class="fas fa-play"></i>
                     @else <i class="fas fa-lock"></i> @endif
                 </div>
                 <div class="step-details">
@@ -261,6 +280,9 @@
     }
     .step-card.completed { background: #ecfdf5; border-color: #10b981; }
     .step-card.completed .step-status { color: #10b981; }
+    .step-card.step-failed { background: #fef2f2; border-color: #ef4444; }
+    .step-card.step-failed .step-status { color: #ef4444; background: #fee2e2; }
+    .step-card.step-failed .step-label { color: #b91c1c; }
 </style>
 
 <style>
@@ -435,8 +457,20 @@
     .action-card-header h4 { font-size: 1rem; color: var(--primary); font-weight: 800; }
     .progress-percent { font-size: 0.9rem; font-weight: 800; color: var(--accent-dark); }
 
-    .action-card-progress { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
-    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+    .action-card-progress {
+        height: 8px;
+        background: #eee;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+    .action-card-progress > .progress-fill {
+        height: 100%;
+        min-width: 0;
+        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
 
     .action-card-footer p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 600; }
 

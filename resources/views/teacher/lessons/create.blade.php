@@ -166,17 +166,26 @@
                 <input type="text" name="title" id="lessonTitle" class="form-control" placeholder="Enter lesson title" required>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Assign to Section</label>
-                <select name="section" class="form-control" required>
-                    <option value="">Select Section</option>
-                    @foreach($grades as $grade)
-                        @foreach($grade->sections as $section)
-                            <option value="{{ $grade->name }} - {{ $section->name }}">{{ $grade->name }} - {{ $section->name }}</option>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Grade <span style="color: var(--danger);">*</span></label>
+                    <select name="grade_id" id="lessonGradeSelect" class="form-control" required>
+                        <option value="">Select grade first</option>
+                        @foreach($grades as $grade)
+                            <option value="{{ $grade->id }}" {{ (string) old('grade_id') === (string) $grade->id ? 'selected' : '' }}>{{ $grade->name }}</option>
                         @endforeach
-                    @endforeach
-                </select>
+                    </select>
+                    @error('grade_id') <small style="color: var(--danger);">{{ $message }}</small> @enderror
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Section <span style="color: var(--danger);">*</span></label>
+                    <select name="section_id" id="lessonSectionSelect" class="form-control" required>
+                        <option value="">{{ old('grade_id') ? 'Select section' : 'Select grade first' }}</option>
+                    </select>
+                    @error('section_id') <small style="color: var(--danger);">{{ $message }}</small> @enderror
+                </div>
             </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: -8px 0 16px;">Select a grade first; sections for that grade will load next.</p>
 
             <div class="form-group">
                 <label class="form-label">Lesson Content</label>
@@ -205,6 +214,48 @@
 
 @push('scripts')
 <script>
+function lessonLoadSections(selectedId) {
+    const gradeEl = document.getElementById('lessonGradeSelect');
+    const sectionSelect = document.getElementById('lessonSectionSelect');
+    if (!gradeEl || !sectionSelect) return;
+    const gradeId = gradeEl.value;
+    if (!gradeId) {
+        sectionSelect.innerHTML = '<option value="">Select grade first</option>';
+        sectionSelect.disabled = true;
+        return;
+    }
+    sectionSelect.disabled = false;
+    sectionSelect.innerHTML = '<option value="">Loading...</option>';
+    fetch(`{{ url('/api/grades') }}/${gradeId}/sections`)
+        .then(r => r.json())
+        .then(data => {
+            const sections = Array.isArray(data) ? data : [];
+            let html = '<option value="">Select section</option>';
+            sections.forEach(s => {
+                const sel = selectedId != null && String(selectedId) === String(s.id) ? ' selected' : '';
+                html += `<option value="${s.id}"${sel}>${s.name}</option>`;
+            });
+            sectionSelect.innerHTML = html;
+        })
+        .catch(() => {
+            sectionSelect.innerHTML = '<option value="">Error loading sections</option>';
+        });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const g = document.getElementById('lessonGradeSelect');
+    const sectionSelect = document.getElementById('lessonSectionSelect');
+    if (g && sectionSelect) {
+        if (!g.value) {
+            sectionSelect.disabled = true;
+        }
+        g.addEventListener('change', () => lessonLoadSections(null));
+        const initial = <?php echo json_encode(old('section_id')); ?>;
+        if (g.value) {
+            lessonLoadSections(initial);
+        }
+    }
+});
+
 async function generateLessonContent() {
     const topic = document.getElementById('aiTopic').value.trim();
     const gradeLevel = document.getElementById('aiGradeLevel').value;

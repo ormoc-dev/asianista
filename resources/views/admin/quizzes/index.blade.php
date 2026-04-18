@@ -268,6 +268,7 @@
                 <thead>
                     <tr>
                         <th>Title</th>
+                        <th>Class</th>
                         <th>Type</th>
                         <th>Mentor</th>
                         <th>Status</th>
@@ -280,6 +281,14 @@
                             <td>
                                 <div class="item-title">{{ $quiz->title }}</div>
                                 <div class="item-meta">{{ $quiz->created_at->diffForHumans() }}</div>
+                            </td>
+                            <td>
+                                @if($quiz->grade_id || $quiz->section_id)
+                                    <span class="type-tag">{{ $quiz->grade->name ?? '—' }}</span>
+                                    <span class="type-tag">{{ $quiz->section->name ?? '—' }}</span>
+                                @else
+                                    <span class="type-tag">All classes</span>
+                                @endif
                             </td>
                             <td>
                                 <span class="type-tag">{{ $quiz->type }}</span>
@@ -329,7 +338,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="empty-state">
                                     <i class="fas fa-clipboard-list"></i>
                                     <p>No quizzes found</p>

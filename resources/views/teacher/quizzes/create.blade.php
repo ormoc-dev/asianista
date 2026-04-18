@@ -184,6 +184,27 @@
                 @error('type') <small style="color: var(--danger);">{{ $message }}</small> @enderror
             </div>
 
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Grade <span style="color: var(--danger);">*</span></label>
+                    <select name="grade_id" id="gradeSelect" class="form-control" required>
+                        <option value="">Select Grade</option>
+                        @foreach($grades as $grade)
+                            <option value="{{ $grade->id }}" {{ (string) old('grade_id') === (string) $grade->id ? 'selected' : '' }}>{{ $grade->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('grade_id') <small style="color: var(--danger);">{{ $message }}</small> @enderror
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Section <span style="color: var(--danger);">*</span></label>
+                    <select name="section_id" id="sectionSelect" class="form-control" required>
+                        <option value="">Select Section</option>
+                    </select>
+                    @error('section_id') <small style="color: var(--danger);">{{ $message }}</small> @enderror
+                </div>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: -8px 0 16px;">Only students in this grade and section will see the quiz after it is approved.</p>
+
             <div class="form-group">
                 <label class="form-label">Upload File (Optional)</label>
                 <input type="file" name="file" class="form-control" accept=".pdf,.docx,.pptx,.txt">
@@ -228,6 +249,45 @@
 
 @push('scripts')
 <script>
+function teacherQuizLoadSections(selectedId) {
+    const gradeEl = document.getElementById('gradeSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    if (!gradeEl || !sectionSelect) return;
+    const gradeId = gradeEl.value;
+    if (!gradeId) {
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        return;
+    }
+    sectionSelect.innerHTML = '<option value="">Loading...</option>';
+    sectionSelect.disabled = true;
+    fetch(`{{ url('/api/grades') }}/${gradeId}/sections`)
+        .then(r => r.json())
+        .then(data => {
+            const sections = Array.isArray(data) ? data : [];
+            let html = '<option value="">Select Section</option>';
+            sections.forEach(s => {
+                const sel = selectedId && String(selectedId) === String(s.id) ? ' selected' : '';
+                html += `<option value="${s.id}"${sel}>${s.name}</option>`;
+            });
+            sectionSelect.innerHTML = html;
+            sectionSelect.disabled = false;
+        })
+        .catch(() => {
+            sectionSelect.innerHTML = '<option value="">Error loading sections</option>';
+            sectionSelect.disabled = false;
+        });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const g = document.getElementById('gradeSelect');
+    if (g) {
+        g.addEventListener('change', () => teacherQuizLoadSections(null));
+        const initial = <?php echo json_encode(old('section_id')); ?>;
+        if (g.value) {
+            teacherQuizLoadSections(initial);
+        }
+    }
+});
+
 let questionIndex = 0;
 
 // Add Question

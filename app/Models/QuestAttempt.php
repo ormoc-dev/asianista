@@ -10,7 +10,18 @@ class QuestAttempt extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'quest_id', 'current_question_id', 'status', 'score'
+        'user_id',
+        'quest_id',
+        'current_question_id',
+        'status',
+        'score',
+        'question_outcomes',
+        'completed_at',
+    ];
+
+    protected $casts = [
+        'question_outcomes' => 'array',
+        'completed_at' => 'datetime',
     ];
 
     public function user()

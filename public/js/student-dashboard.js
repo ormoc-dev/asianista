@@ -92,6 +92,30 @@ function appendFloatingMessage(role, text) {
     floatingHistory.push({ role: role === 'ai' ? 'assistant' : 'user', content: text });
 }
 
+function bindFloatingChatSend() {
+    const btn = document.getElementById('floating-chat-send-btn');
+    const input = document.getElementById('floating-chat-input');
+    if (!btn || !input || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    const send = function () {
+        const route = btn.getAttribute('data-chat-route');
+        const csrf = btn.getAttribute('data-csrf');
+        if (route && csrf) {
+            sendFloatingMessage(route, csrf);
+        }
+    };
+    btn.addEventListener('click', send);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            send();
+        }
+    });
+}
+
+bindFloatingChatSend();
+document.addEventListener('DOMContentLoaded', bindFloatingChatSend);
+document.addEventListener('turbolinks:load', bindFloatingChatSend);
+
 async function openQuestDrawer(url) {
     if (url.includes('/0')) return; 
     

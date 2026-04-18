@@ -34,4 +34,45 @@ class Quest extends Model
     {
         return $this->hasMany(QuestAttempt::class);
     }
+
+    /**
+     * Same rules as Quiz::isVisibleToStudent: untargeted quests (no grade/section) are visible
+     * to all students; targeted quests require the student's roster grade and section to match.
+     */
+    public function isVisibleToStudent(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->grade_id === null && $this->section_id === null) {
+            return true;
+        }
+
+        if (! $user->grade_id || ! $user->section_id) {
+            return false;
+        }
+
+        return (int) $this->grade_id === (int) $user->grade_id
+            && (int) $this->section_id === (int) $user->section_id;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeVisibleToStudent($query, ?User $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where(function ($inner) {
+                $inner->whereNull('grade_id')->whereNull('section_id');
+            });
+            if ($user && $user->grade_id && $user->section_id) {
+                $q->orWhere(function ($inner) use ($user) {
+                    $inner->where('grade_id', $user->grade_id)
+                        ->where('section_id', $user->section_id);
+                });
+            }
+        });
+    }
 }

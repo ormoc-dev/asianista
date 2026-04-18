@@ -20,6 +20,7 @@
                 <thead>
                     <tr>
                         <th>Title</th>
+                        <th>Class</th>
                         <th>Type</th>
                         <th>Status</th>
                         <th>Due Date</th>
@@ -32,6 +33,14 @@
                         <td>
                             <div style="font-weight: 600;">{{ $quiz->title }}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">{{ Str::limit($quiz->description, 40) }}</div>
+                        </td>
+                        <td>
+                            @if($quiz->grade_id || $quiz->section_id)
+                                <span class="badge badge-secondary">{{ $quiz->grade->name ?? '—' }}</span>
+                                <span class="badge badge-info">{{ $quiz->section->name ?? '—' }}</span>
+                            @else
+                                <span class="badge badge-warning" title="Legacy quiz visible to all students">All classes</span>
+                            @endif
                         </td>
                         <td>
                             <span class="badge badge-info">{{ ucfirst($quiz->type) }}</span>
@@ -64,7 +73,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-clipboard" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
                             No quizzes yet. Click "Create Quiz" to start.
                         </td>

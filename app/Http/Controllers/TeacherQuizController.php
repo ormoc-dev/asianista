@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Grade;
 use App\Models\Quiz;
 use App\Models\Question;
 use App\Models\QuizAttempt;
+use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,6 +19,7 @@ class TeacherQuizController extends Controller
     public function index()
     {
         $quizzes = Quiz::where('teacher_id', Auth::id())
+            ->with(['grade', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -28,7 +31,9 @@ class TeacherQuizController extends Controller
      */
     public function create()
     {
-        return view('teacher.quizzes.create');
+        $grades = Grade::orderBy('name')->get();
+
+        return view('teacher.quizzes.create', compact('grades'));
     }
 
     /**
@@ -40,6 +45,8 @@ class TeacherQuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,pre-test,post-test',
+            'grade_id' => 'required|exists:grades,id',
+            'section_id' => 'required|exists:sections,id',
             'assign_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assign_date',
             'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:20480',
@@ -48,6 +55,11 @@ class TeacherQuizController extends Controller
             'questions.*.type' => 'required|in:multiple_choice,identification',
             'questions.*.answer' => 'required|string',
         ]);
+
+        $section = Section::find($request->section_id);
+        if (! $section || (int) $section->grade_id !== (int) $request->grade_id) {
+            return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
+        }
 
         $filePath = null;
 
@@ -64,6 +76,8 @@ class TeacherQuizController extends Controller
             'assign_date' => $request->assign_date,
             'due_date' => $request->due_date,
             'teacher_id' => Auth::id(),
+            'grade_id' => $request->grade_id,
+            'section_id' => $request->section_id,
         ]);
 
         // Save questions
@@ -90,7 +104,9 @@ class TeacherQuizController extends Controller
     public function edit($id)
     {
         $quiz = Quiz::findOrFail($id);
-        return view('teacher.quizzes.edit', compact('quiz'));
+        $grades = Grade::orderBy('name')->get();
+
+        return view('teacher.quizzes.edit', compact('quiz', 'grades'));
     }
 
     /**
@@ -104,6 +120,8 @@ class TeacherQuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,pre-test,post-test',
+            'grade_id' => 'required|exists:grades,id',
+            'section_id' => 'required|exists:sections,id',
             'assign_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assign_date',
             'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,zip,rar|max:20480',
@@ -112,6 +130,11 @@ class TeacherQuizController extends Controller
             'questions.*.type' => 'required|in:multiple_choice,identification',
             'questions.*.answer' => 'required|string',
         ]);
+
+        $section = Section::find($request->section_id);
+        if (! $section || (int) $section->grade_id !== (int) $request->grade_id) {
+            return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
+        }
 
         if ($request->hasFile('file')) {
             if ($quiz->file_path && Storage::disk('public')->exists($quiz->file_path)) {
@@ -127,6 +150,8 @@ class TeacherQuizController extends Controller
             'assign_date' => $request->assign_date,
             'due_date' => $request->due_date,
             'file_path' => $quiz->file_path,
+            'grade_id' => $request->grade_id,
+            'section_id' => $request->section_id,
             // Status stays unchanged (still pending or active)
         ]);
 

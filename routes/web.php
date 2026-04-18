@@ -24,7 +24,7 @@ use App\Http\Controllers\TeacherQuestController;
 use App\Http\Controllers\StudentQuestController;
 use App\Http\Controllers\TargetAudienceController;
 use App\Http\Controllers\StudentMessagesController;
-use App\Http\Controllers\StudentMessageController;
+use App\Http\Controllers\TeacherMessagesController;
 use App\Http\Controllers\AdminUserManagementController;
 use App\Http\Controllers\AIAssistantController;
 use App\Http\Controllers\GradeController;
@@ -57,12 +57,17 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('student')->name('student.')->group(function () {
         Route::get('/dashboard', \App\Http\Livewire\Student\Dashboard::class)->name('dashboard');
         Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
-        Route::get('/lessons', [StudentController::class, 'lessons'])->name('lessons');
         Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
         Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
         Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
         Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
         Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
+
+        Route::get('/messages', [StudentMessagesController::class, 'index'])->name('messages');
+        Route::get('/messages/poll', [StudentMessagesController::class, 'poll'])->name('messages.poll');
+        Route::post('/messages/start', [StudentMessagesController::class, 'start'])->name('messages.start');
+        Route::post('/messages/{conversation}/send', [StudentMessagesController::class, 'send'])->name('messages.send');
+        Route::delete('/messages/{conversation}', [StudentMessagesController::class, 'destroy'])->name('messages.destroy');
     });
 
     // Teacher routes
@@ -80,6 +85,12 @@ Route::middleware(['auth'])->group(function () {
         // Route::get('/reports', [TeacherController::class, 'reports'])->name('reports'); // Replaced by TeacherReportsController
         Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
         Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
+
+        Route::get('/messages', [TeacherMessagesController::class, 'index'])->name('messages');
+        Route::get('/messages/poll', [TeacherMessagesController::class, 'poll'])->name('messages.poll');
+        Route::post('/messages/start', [TeacherMessagesController::class, 'start'])->name('messages.start');
+        Route::post('/messages/{conversation}/send', [TeacherMessagesController::class, 'send'])->name('messages.send');
+        Route::delete('/messages/{conversation}', [TeacherMessagesController::class, 'destroy'])->name('messages.destroy');
     });
 
     // Admin Routes
@@ -342,22 +353,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/section/{id}', [TargetAudienceController::class, 'deleteSection'])
             ->name('target-audience.section.delete');
     });
-
-});
-
-Route::prefix('student')->name('student.')->group(function () {
-
-    Route::get('/messages', [StudentMessagesController::class, 'index'])
-        ->name('messages');
-
-    Route::post('/messages/start', [StudentMessagesController::class, 'start'])
-        ->name('messages.start');
-
-    Route::post('/messages/{conversation}/send', [StudentMessagesController::class, 'send'])
-        ->name('messages.send');
-
-    Route::delete('/messages/{conversation}', [StudentMessagesController::class, 'destroy'])
-        ->name('messages.destroy');
 
 });
 

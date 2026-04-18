@@ -12,32 +12,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Route URLs for JavaScript -->
     <meta name="validate-code-url" content="{{ route('register.validate-code') }}">
-    <style>
-      .hero-wizard-card.success-fx { animation: successPulse 900ms ease-out; }
-      .hero-success-badge {
-        margin: 12px 0 16px;
-        padding: 14px 16px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #ecfdf3 0%, #d1fae5 100%);
-        border: 1px solid #86efac;
-        color: #065f46;
-        display: none;
-      }
-      .hero-success-badge.show { display: block; animation: fadeInUp 450ms ease-out; }
-      .hero-success-badge .title { font-weight: 700; }
-      .hero-success-badge .desc { margin-top: 4px; font-size: 0.9rem; }
-      .wizard-steps .ws-step.done-now .ws-dot { background: #10b981; color: #fff; border-color: #10b981; }
-      .wizard-steps .ws-line.done-now { background: #10b981; }
-      @keyframes successPulse {
-        0% { transform: scale(0.985); }
-        60% { transform: scale(1.005); }
-        100% { transform: scale(1); }
-      }
-      @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-    </style>
 
 </head>
 @php
@@ -47,6 +21,16 @@
              || session('success')
              || ($errors ?? collect())->any();
   $registrationGrades = $registrationGrades ?? collect();
+  $registrationCharacterSkills = [];
+  foreach (\App\Models\User::CHARACTER_CLASSES as $key => $data) {
+      $registrationCharacterSkills[$key] = [
+          'label' => $data['name'] ?? ucfirst($key),
+          'abilities' => collect($data['abilities'] ?? [])
+              ->map(fn ($desc, $name) => ['name' => $name, 'desc' => $desc])
+              ->values()
+              ->all(),
+      ];
+  }
 @endphp
 <body data-skip-splash="{{ $skipSplash ? '1' : '0' }}"
       data-initial-form="{{ $initialForm }}">
@@ -137,7 +121,7 @@
     </div>
 
     <!-- STUDENT CODE ENTRY FORM -->
-    <div id="studentCodeForm" class="card reg-code-card hidden">
+    <div id="studentCodeForm" class="card reg-code-card reg-glass hidden">
       <div class="rcc-icon">🗝️</div>
       <h2 class="rcc-title">Enter Your <span class="text-gold">Student Code</span></h2>
       <p class="rcc-subtitle">Your teacher has given you a unique code to start your adventure</p>
@@ -165,7 +149,7 @@
     </div>
 
     <!-- STUDENT REGISTRATION FORM -->
-    <div id="studentRegisterForm" class="hero-wizard-card hidden">
+    <div id="studentRegisterForm" class="hero-wizard-card reg-hero-shell hidden">
 
       <!-- LEFT: Live Character Preview Panel -->
       <div class="hero-preview-panel">
@@ -177,13 +161,9 @@
           </div>
         </div>
         <p class="hero-class-label" id="previewClassName"></p>
-        <div class="hero-stat-row" id="previewStatHP" style="display:none;">
-          <div class="hstat-head"><span>❤️ HP</span><span id="previewHPVal">0</span></div>
-          <div class="hstat-track"><div class="hstat-fill hp-fill" id="previewHPBar" style="width:0%"></div></div>
-        </div>
-        <div class="hero-stat-row" id="previewStatAP" style="display:none;">
-          <div class="hstat-head"><span>⚡ AP</span><span id="previewAPVal">0</span></div>
-          <div class="hstat-track"><div class="hstat-fill ap-fill" id="previewAPBar" style="width:0%"></div></div>
+        <div id="previewSkillsWrap" class="hero-skills-preview" style="display:none;">
+          <p class="hero-skills-heading">Skills</p>
+          <ul id="previewSkillsList" class="hero-skills-list"></ul>
         </div>
         <div class="hero-student-badge">
           <p class="hsb-name" id="previewStudentName">-</p>
@@ -230,21 +210,20 @@
           <div class="wiz-section">
             <p class="wiz-label">⚔️ Choose Your Class</p>
             <div class="class-chips">
-              <div class="class-chip" id="char-mage" onclick="selectCharacterClass('mage')">
-                <img src="{{ asset('images/mage.png') }}" alt="Mage">
-                <span>Mage</span>
-                <small>HP 30 | AP 50</small>
-              </div>
-              <div class="class-chip" id="char-warrior" onclick="selectCharacterClass('warrior')">
-                <img src="{{ asset('images/warrior.png') }}" alt="Warrior">
-                <span>Warrior</span>
-                <small>HP 80 | AP 30</small>
-              </div>
-              <div class="class-chip" id="char-healer" onclick="selectCharacterClass('healer')">
-                <img src="{{ asset('images/healer.png') }}" alt="Healer">
-                <span>Healer</span>
-                <small>HP 50 | AP 35</small>
-              </div>
+              @foreach ($registrationCharacterSkills as $classKey => $classMeta)
+                @php
+                  $abilities = $classMeta['abilities'] ?? [];
+                  $skillTeaser = $abilities[0]['name'] ?? '';
+                  $moreSkills = count($abilities) > 1 ? ' +' . (count($abilities) - 1) : '';
+                @endphp
+                <div class="class-chip" id="char-{{ $classKey }}" onclick="selectCharacterClass('{{ $classKey }}')">
+                  <img src="{{ asset('images/' . $classKey . '.png') }}" alt="{{ $classMeta['label'] }}">
+                  <span>{{ $classMeta['label'] }}</span>
+                  @if ($skillTeaser !== '')
+                    <small>{{ $skillTeaser }}{{ $moreSkills }}</small>
+                  @endif
+                </div>
+              @endforeach
             </div>
             <input type="hidden" name="character" id="characterInput">
             <p id="characterError" class="wiz-field-err" style="display:none;">Please select a class</p>
@@ -271,15 +250,13 @@
             @if($registrationGrades->isEmpty())
               <p class="wiz-field-err" style="display:block;">Grades and sections are not set up yet. Please contact your administrator.</p>
             @else
-              <select name="grade_id" id="regGradeSelect" required
-                style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);font-size:1rem;background:#fff;">
+              <select name="grade_id" id="regGradeSelect" class="reg-select" required>
                 <option value="">Select grade</option>
                 @foreach($registrationGrades as $g)
                   <option value="{{ $g->id }}" {{ old('grade_id') == $g->id ? 'selected' : '' }}>{{ preg_replace('/^\s*id\)?>\s*/i', '', $g->name) }}</option>
                 @endforeach
               </select>
-              <select name="section_id" id="regSectionSelect" required
-                style="width:100%;margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);font-size:1rem;background:#fff;">
+              <select name="section_id" id="regSectionSelect" class="reg-select reg-select--follow" required>
                 <option value="">Select section</option>
                 @if(old('grade_id'))
                   @php $oldGrade = $registrationGrades->firstWhere('id', (int) old('grade_id')); @endphp
@@ -350,8 +327,10 @@
   </div>
 
   <script id="registration-grades-json" type="application/json">{!! json_encode($registrationGrades, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
+  <script id="registration-character-skills-json" type="application/json">{!! json_encode($registrationCharacterSkills, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
   <script>
     window.__registrationGrades = JSON.parse(document.getElementById('registration-grades-json')?.textContent || '[]');
+    window.__registrationCharacterSkills = JSON.parse(document.getElementById('registration-character-skills-json')?.textContent || '{}');
     function registrationRefreshSectionOptions(preserveSectionId) {
       var gSelect = document.getElementById('regGradeSelect');
       var sSelect = document.getElementById('regSectionSelect');
@@ -659,30 +638,35 @@ if (backToLoginFromForgot) {
       const previewImg   = document.getElementById('charPreviewImg');
       const placeholder  = document.getElementById('noCharPlaceholder');
       const classLabel   = document.getElementById('previewClassName');
-      const hpStat = document.getElementById('previewStatHP');
-      const apStat = document.getElementById('previewStatAP');
-      const hpVal  = document.getElementById('previewHPVal');
-      const apVal  = document.getElementById('previewAPVal');
-      const hpBar  = document.getElementById('previewHPBar');
-      const apBar  = document.getElementById('previewAPBar');
+      const skillsWrap = document.getElementById('previewSkillsWrap');
+      const skillsList = document.getElementById('previewSkillsList');
+      const skillsByClass = window.__registrationCharacterSkills || {};
 
-      const stats = {
-        mage:    { label: '🧙 Mage',    hp: 30, ap: 50 },
-        warrior: { label: '⚔️ Warrior', hp: 80, ap: 30 },
-        healer:  { label: '💚 Healer',  hp: 50, ap: 35 }
-      };
-      const maxHP = 100, maxAP = 100;
-
-      if (character && stats[character]) {
-        if (classLabel) classLabel.textContent = stats[character].label;
-        if (hpStat && apStat) {
-          hpStat.style.display = 'block';
-          apStat.style.display = 'block';
-          if (hpVal) hpVal.textContent = stats[character].hp;
-          if (apVal) apVal.textContent = stats[character].ap;
-          if (hpBar) hpBar.style.width = (stats[character].hp / maxHP * 100) + '%';
-          if (apBar) apBar.style.width = (stats[character].ap / maxAP * 100) + '%';
+      if (character && skillsByClass[character]) {
+        if (classLabel) classLabel.textContent = skillsByClass[character].label || '';
+        if (skillsWrap && skillsList) {
+          skillsWrap.style.display = 'block';
+          skillsList.innerHTML = '';
+          const abilities = skillsByClass[character].abilities || [];
+          abilities.forEach(function (ab) {
+            const li = document.createElement('li');
+            const nameEl = document.createElement('span');
+            nameEl.className = 'hero-skill-name';
+            nameEl.textContent = ab.name || '';
+            li.appendChild(nameEl);
+            if (ab.desc) {
+              const descEl = document.createElement('span');
+              descEl.className = 'hero-skill-desc';
+              descEl.textContent = ab.desc;
+              li.appendChild(descEl);
+            }
+            skillsList.appendChild(li);
+          });
         }
+      } else {
+        if (classLabel) classLabel.textContent = '';
+        if (skillsWrap) skillsWrap.style.display = 'none';
+        if (skillsList) skillsList.innerHTML = '';
       }
 
       if (character && gender && previewImg && placeholder) {

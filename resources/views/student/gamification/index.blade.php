@@ -30,9 +30,10 @@
     <div class="bg-white rounded shadow p-4">
         <ul>
             @foreach($challenges as $c)
-            <li class="border-b py-2 flex justify-between">
+            <li class="border-b py-2 flex justify-between items-center gap-2">
                 <span>{{ $c['title'] }}</span>
-                <span class="{{ $c['status'] === 'Unlocked' ? 'text-green-600' : 'text-gray-400' }}">{{ $c['status'] }}</span>
+                <span class="text-sm text-gray-600">{{ $c['points'] ?? '' }} pts</span>
+                <span class="{{ ($c['status'] ?? '') === 'Available' || ($c['status'] ?? '') === 'Unlocked' ? 'text-green-600' : 'text-gray-400' }}">{{ $c['status'] }}</span>
             </li>
             @endforeach
         </ul>

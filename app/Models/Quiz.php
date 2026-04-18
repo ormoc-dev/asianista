@@ -27,6 +27,8 @@ class Quiz extends Model
         'assign_date',
         'due_date',
         'teacher_id',
+        'grade_id',
+        'section_id',
     ];
 
     /**
@@ -43,6 +45,38 @@ class Quiz extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'section_id');
+    }
+
+    /**
+     * Legacy rows with no grade/section are visible to all students.
+     * Targeted rows match the student's roster grade and section.
+     */
+    public function isVisibleToStudent(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->grade_id === null && $this->section_id === null) {
+            return true;
+        }
+
+        if (! $user->grade_id || ! $user->section_id) {
+            return false;
+        }
+
+        return (int) $this->grade_id === (int) $user->grade_id
+            && (int) $this->section_id === (int) $user->section_id;
     }
 
     /**

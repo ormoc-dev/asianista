@@ -323,8 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <thead>
                     <tr>
                         <th>Student Name</th>
-                        <th>Grade</th>
-                        <th>Section</th>
                         <th>Student Code</th>
                         <th>Username</th>
                         <th>Default Password</th>
@@ -338,20 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <span style="font-weight: 500;">{{ $registration->full_name }}</span>
                             </div>
-                        </td>
-                        <td>
-                            @if($registration->grade)
-                                <span class="badge badge-secondary" style="font-weight: 500;">{{ $registration->grade->name }}</span>
-                            @else
-                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($registration->section)
-                                <span class="badge badge-info" style="font-weight: 500;">{{ $registration->section->name }}</span>
-                            @else
-                                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
-                            @endif
                         </td>
                         <td>
                             <code style="padding: 4px 8px; background: #f4f4f4; border-radius: 4px; font-family: monospace;">{{ $registration->student_code }}</code>
@@ -380,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 16px; display: block;"></i>
                             No pending registrations. Upload an Excel file to add students.
                         </td>

@@ -1,5 +1,7 @@
-{{-- resources/views/student/messages/index.blade.php --}}
-@extends('student.dashboard')
+@extends('teacher.layouts.app')
+
+@section('title', 'Messages')
+@section('page-title', 'Messages')
 
 @section('content')
 @php
@@ -653,7 +655,7 @@
         <div class="messages-sidebar-header">
             <h3>
                 <i class="fas fa-comments"></i>
-                Party Chat
+                Messages
             </h3>
             <span>Messages</span>
         </div>
@@ -665,7 +667,7 @@
                 type="text"
                 name="q"
                 id="messages-search-input"
-                placeholder="Search party members…"
+                placeholder="Search students or teachers…"
                 autocomplete="off"
                 value="{{ $search ?? '' }}"
             >
@@ -772,7 +774,7 @@
                 </a>
             @empty
                 <div style="font-size:0.8rem; color:#cbd5e1; padding:6px 4px;">
-                    No party chats yet. Start a new conversation from your contacts.
+                    No conversations yet. Start one from your contacts.
                 </div>
             @endforelse
 
@@ -891,7 +893,7 @@
                 </form>
             @else
                 <div class="empty-thread">
-                    Select a conversation on the left to begin chatting with your party.
+                    Select a conversation on the left to begin chatting.
                 </div>
             @endif
         </div>
@@ -987,7 +989,7 @@
                 '<div class="chat-time">' + escapeHtml(c.last_time || '') + '</div></div></div>' + unread + '</a>';
         });
         if (!conversations.length) {
-            html = '<div style="font-size:0.8rem; color:#cbd5e1; padding:6px 4px;">No party chats yet. Start a new conversation from your contacts.</div>';
+            html = '<div style="font-size:0.8rem; color:#cbd5e1; padding:6px 4px;">No conversations yet. Start a new conversation from your contacts.</div>';
         }
         list.innerHTML = html;
         if (typeof window.__messagesApplyFilter === 'function') {

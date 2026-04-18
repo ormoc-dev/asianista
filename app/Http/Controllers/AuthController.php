@@ -241,7 +241,7 @@ class AuthController extends Controller
 
     public function registerStudent(Request $request)
     {
-        $validator = \Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'student_code' => [
                 'required',
                 'string',
@@ -333,13 +333,11 @@ class AuthController extends Controller
                 'gender'      => $request->gender,
                 'profile_pic' => $profilePic,
                 'status'      => 'pending',
-                'hp'          => 0, // Will be set by initializeCharacterStats
+                'hp'          => 0,
                 'ap'          => 0,
+                'xp'          => 0,
+                'level'       => 1,
             ]);
-
-            // Initialize character stats (HP/AP)
-            $user->initializeCharacterStats($request->character);
-            $user->save();
 
             // Mark the code as used and link to user
             $registrationCode->update([
@@ -451,7 +449,7 @@ class AuthController extends Controller
 
     public function validateStudentStepOne(Request $request)
     {
-        $validator = \Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
@@ -484,7 +482,7 @@ class AuthController extends Controller
 
     public function registerTeacher(Request $request)
     {
-        $validator = \Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'name'                  => 'required|string|max:255',
             'email'                 => 'required|email|unique:users,email',
             'password'              => 'required|min:6|confirmed',

@@ -14,6 +14,7 @@
 
     <!-- Turbolinks for SPA navigation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js" defer></script>
+    <meta name="turbolinks-cache-control" content="no-cache">
     @livewireStyles
 
     <style>

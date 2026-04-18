@@ -13,17 +13,51 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentQuestController extends Controller
 {
+    protected function authStudent(): User
+    {
+        $user = Auth::user();
+        if (! $user instanceof User) {
+            abort(403);
+        }
+
+        return $user;
+    }
+
+    protected function authorizeQuestForStudent(Quest $quest): void
+    {
+        if (! $quest->isVisibleToStudent($this->authStudent())) {
+            abort(403, 'This quest is not assigned to your class.');
+        }
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    protected function mergeQuestionOutcome(QuestAttempt $attempt, QuestQuestion $question, bool $correct): array
+    {
+        $outcomes = $attempt->question_outcomes ?? [];
+        $outcomes[(string) $question->id] = $correct;
+
+        return $outcomes;
+    }
+
     public function index()
     {
-        // For now, fetch all quests until student-grade linking is implemented
-        $quests = Quest::with(['grade', 'section', 'attempts' => function($query) {
-            $query->where('user_id', Auth::id());
-        }])->latest()->get();
+        $user = $this->authStudent();
+        $quests = Quest::query()
+            ->visibleToStudent($user)
+            ->with(['grade', 'section', 'attempts' => function ($query) {
+                $query->where('user_id', Auth::id());
+            }])
+            ->latest()
+            ->get();
+
         return view('student.quest.index', compact('quests'));
     }
 
     public function show(Quest $quest)
     {
+        $this->authorizeQuestForStudent($quest);
         $quest->load(['questions', 'grade', 'section']);
         $attempt = QuestAttempt::where('user_id', Auth::id())
                                 ->where('quest_id', $quest->id)
@@ -34,6 +68,7 @@ class StudentQuestController extends Controller
 
     public function start(Quest $quest)
     {
+        $this->authorizeQuestForStudent($quest);
         $firstQuestion = $quest->questions()->orderBy('id')->first();
 
         if (!$firstQuestion) {
@@ -61,6 +96,7 @@ class StudentQuestController extends Controller
 
     public function play(Quest $quest, QuestQuestion $question = null)
     {
+        $this->authorizeQuestForStudent($quest);
         $attempt = QuestAttempt::where('user_id', Auth::id())
                                 ->where('quest_id', $quest->id)
                                 ->with('usedPowers')
@@ -87,27 +123,52 @@ class StudentQuestController extends Controller
 
     public function usePower(Request $request, Quest $quest, QuestAttempt $attempt)
     {
+        $this->authorizeQuestForStudent($quest);
         // Verify the attempt belongs to the current user
         if ($attempt->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $powerName = $request->input('power_name');
-        $level = $request->input('level', 1);
+        $level = (int) $request->input('level', 1);
+
+        if ($powerName === null || $powerName === '') {
+            return response()->json(['error' => 'Power name required'], 422);
+        }
 
         // Check if power already used for this level
         if ($attempt->hasUsedPower($powerName, $level)) {
             return response()->json(['error' => 'Power already used for this level'], 400);
         }
 
-        // Record power usage
+        $user = $this->authStudent();
+        $apCost = User::apCostForPower($powerName);
+
+        if ($user->ap < $apCost) {
+            return response()->json([
+                'error' => 'Not enough AP to use this power.',
+                'insufficient_ap' => true,
+                'required' => $apCost,
+                'current' => $user->ap,
+            ], 400);
+        }
+
+        $user->ap = max(0, $user->ap - $apCost);
+        $user->save();
+
         $attempt->usePower($powerName, $level);
 
-        return response()->json(['success' => true, 'message' => 'Power activated!']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Power activated!',
+            'new_ap' => $user->fresh()->ap,
+            'ap_spent' => $apCost,
+        ]);
     }
 
     public function submitStep(Request $request, Quest $quest, QuestQuestion $question)
     {
+        $this->authorizeQuestForStudent($quest);
         // Final security check: Is the quest expired?
         if ($quest->due_date && \Carbon\Carbon::parse($quest->due_date)->isPast()) {
             $attempt = QuestAttempt::where('user_id', Auth::id())
@@ -130,7 +191,7 @@ class StudentQuestController extends Controller
             $isCorrect = (strtolower(trim($request->answer)) === strtolower(trim($question->answer)));
         }
 
-        $user = Auth::user();
+        $user = $this->authStudent();
         $attempt = QuestAttempt::where('user_id', Auth::id())
                                 ->where('quest_id', $quest->id)
                                 ->first();
@@ -160,7 +221,10 @@ class StudentQuestController extends Controller
                                  ->first();
 
             if ($nextQuestion) {
-                $attempt->update(['current_question_id' => $nextQuestion->id]);
+                $attempt->update([
+                    'current_question_id' => $nextQuestion->id,
+                    'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, true),
+                ]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Victory! You restored ' . $restoreAmount . ' HP! Moving to the next challenge.',
@@ -187,7 +251,8 @@ class StudentQuestController extends Controller
                 $attempt->update([
                     'status' => 'completed',
                     'score' => $xpReward,
-                    'completed_at' => now()
+                    'completed_at' => now(),
+                    'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, true),
                 ]);
                 
                 $powerBonusMsg = $activePower === 'powerstrike' ? ' (Power Strike doubled your XP!)' : '';
@@ -230,7 +295,10 @@ class StudentQuestController extends Controller
                              ->first();
 
         if ($nextQuestion) {
-            $attempt->update(['current_question_id' => $nextQuestion->id]);
+            $attempt->update([
+                'current_question_id' => $nextQuestion->id,
+                'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, false),
+            ]);
             return response()->json([
                 'success' => true, // Changed to true to allow proceeding
                 'correct' => false, // But mark as incorrect
@@ -252,7 +320,8 @@ class StudentQuestController extends Controller
             $attempt->update([
                 'status' => 'completed',
                 'score' => $xpReward,
-                'completed_at' => now()
+                'completed_at' => now(),
+                'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, false),
             ]);
             
             return response()->json([
@@ -270,7 +339,8 @@ class StudentQuestController extends Controller
 
     public function timeOut(Request $request, Quest $quest, QuestQuestion $question)
     {
-        $user = Auth::user();
+        $this->authorizeQuestForStudent($quest);
+        $user = $this->authStudent();
         $attempt = QuestAttempt::where('user_id', Auth::id())
                                 ->where('quest_id', $quest->id)
                                 ->first();
@@ -301,7 +371,10 @@ class StudentQuestController extends Controller
         }
 
         if ($nextQuestion) {
-            $attempt->update(['current_question_id' => $nextQuestion->id]);
+            $attempt->update([
+                'current_question_id' => $nextQuestion->id,
+                'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, false),
+            ]);
             return response()->json([
                 'success' => true,
                 'message' => "Time's up! You lost {$hpPenalty} HP. Moving to next challenge.",
@@ -322,7 +395,8 @@ class StudentQuestController extends Controller
             $attempt->update([
                 'status' => 'completed',
                 'score' => $xpReward,
-                'completed_at' => now()
+                'completed_at' => now(),
+                'question_outcomes' => $this->mergeQuestionOutcome($attempt, $question, false),
             ]);
             
             return response()->json([

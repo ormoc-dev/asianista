@@ -11,13 +11,17 @@ class Dashboard extends Component
 {
     public function render()
     {
-        $activeQuest = Quest::latest()->first();
+        $user = Auth::user();
+        $activeQuest = Quest::query()
+            ->visibleToStudent($user)
+            ->latest()
+            ->first();
         $activeAttempt = null;
-        
+
         if ($activeQuest) {
             $activeAttempt = QuestAttempt::where('user_id', Auth::id())
-                                        ->where('quest_id', $activeQuest->id)
-                                        ->first();
+                ->where('quest_id', $activeQuest->id)
+                ->first();
         }
 
         return view('livewire.student.dashboard', compact('activeQuest', 'activeAttempt'))

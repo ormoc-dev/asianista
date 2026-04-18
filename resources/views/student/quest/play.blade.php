@@ -2,6 +2,14 @@
 
 @section('content')
 <div class="quest-play-page">
+    <div id="quest-play-config" hidden
+        data-time-seconds="{{ (int) ($quest->time_limit_minutes ? $quest->time_limit_minutes * 60 : 0) }}"
+        data-csrf="{{ csrf_token() }}"
+        data-timeout-url="{{ route('student.quest.timeout', [$quest->id, $question->id]) }}"
+        data-use-power-url="{{ route('student.quest.use-power', [$quest->id, $attempt->id]) }}"
+        data-submit-url="{{ route('student.quest.submit', [$quest->id, $question->id]) }}"
+        data-quest-show-url="{{ route('student.quest.show', $quest->id) }}"
+        data-question-level="{{ (int) $question->level }}"></div>
     <div class="play-header">
         <div class="play-header-left">
             <a href="{{ route('student.quest.show', $quest->id) }}" class="btn-exit">
@@ -107,16 +115,32 @@
                     <div class="hero-stat">
                         <span class="stat-label"><i class="fas fa-heart"></i> HP</span>
                         <div class="stat-bar">
-                            <div class="stat-fill hp-fill" style="width: {{ min(($currentHP / 100) * 100, 100) }}%;"></div>
+                            <svg class="stat-bar-svg" viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="questPlayHpGrad" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stop-color="#ef4444" />
+                                        <stop offset="100%" stop-color="#f87171" />
+                                    </linearGradient>
+                                </defs>
+                                <rect class="hp-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayHpGrad)" width="{{ min(100, max(0, (int) round(($currentHP / 100) * 100))) }}" />
+                            </svg>
                         </div>
-                        <span class="stat-value">{{ $currentHP }}</span>
+                        <span class="stat-value js-hp-value">{{ $currentHP }}</span>
                     </div>
                     <div class="hero-stat">
                         <span class="stat-label"><i class="fas fa-bolt"></i> AP</span>
                         <div class="stat-bar">
-                            <div class="stat-fill ap-fill" style="width: {{ min(($currentAP / 100) * 100, 100) }}%;"></div>
+                            <svg class="stat-bar-svg" viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="questPlayApGrad" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stop-color="#3b82f6" />
+                                        <stop offset="100%" stop-color="#60a5fa" />
+                                    </linearGradient>
+                                </defs>
+                                <rect class="ap-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayApGrad)" width="{{ min(100, max(0, (int) round(($currentAP / 100) * 100))) }}" />
+                            </svg>
                         </div>
-                        <span class="stat-value">{{ $currentAP }}</span>
+                        <span class="stat-value js-ap-value">{{ $currentAP }}</span>
                     </div>
                 </div>
                 <div class="character-badge">
@@ -127,14 +151,15 @@
             <!-- Powers Card -->
             <div class="powers-card">
                 <h4><i class="fas fa-magic"></i> Powers</h4>
-                <div class="powers-list">
+                <div class="powers-list" id="quest-powers-list">
                     @forelse($powers as $powerName => $powerDesc)
                         @php
                             $isUsed = in_array($powerName, $usedPowers);
+                            $powerApCost = \App\Models\User::apCostForPower($powerName);
                         @endphp
-                        <button type="button" class="power-btn {{ $isUsed ? 'used' : '' }}" 
-                                @if(!$isUsed) onclick="usePower('{{ $powerName }}', '{{ addslashes($powerDesc) }}')" @endif
-                                title="{{ $powerDesc }}" 
+                        <button type="button" class="power-btn {{ $isUsed ? 'used' : '' }}"
+                                @if(!$isUsed) data-power-name="{{ $powerName }}" data-power-desc="{{ e($powerDesc) }}" @endif
+                                title="{{ $powerDesc }} (Costs {{ $powerApCost }} AP)"
                                 {{ $isUsed ? 'disabled' : '' }}>
                             <span class="power-icon-small">
                                 @switch(strtolower($powerName))
@@ -158,6 +183,9 @@
                                 @endswitch
                             </span>
                             <span class="power-name">{{ $powerName }}</span>
+                            @if(!$isUsed)
+                                <span class="power-ap-tag">{{ $powerApCost }} AP</span>
+                            @endif
                             @if($isUsed)
                                 <span class="power-used-badge"><i class="fas fa-check"></i> Used</span>
                             @endif
@@ -194,17 +222,20 @@
                         : asset('images/' . $mapImage);
                 @endphp
                 <h4>World Progress</h4>
-                <div class="mini-map-visual" style="background-image: url('{{ $mapImageUrl }}'); background-size: cover; background-position: center;">
+                <div class="mini-map-visual">
+                    <img src="{{ $mapImageUrl }}" alt="" class="mini-map-bg-img" width="800" height="500" decoding="async">
                     <div class="map-particles">
                         <span class="particle p1"></span>
                         <span class="particle p2"></span>
                         <span class="particle p3"></span>
                     </div>
-                    <div class="current-node-pulse" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;"></div>
+                    <div class="current-node-pulse" data-left="{{ (int) $pos['left'] }}" data-top="{{ (int) $pos['top'] }}"></div>
                 </div>
                 <div class="progress-footer">
                     <div class="mini-progress-bar">
-                        <div class="mini-fill" style="width: {{ $progressPercent }}%;"></div>
+                        <svg class="mini-progress-svg" viewBox="0 0 100 6" preserveAspectRatio="none" width="100%" height="6" aria-hidden="true">
+                            <rect class="mini-fill" x="0" y="0" height="6" rx="3" width="{{ min(100, max(0, (int) round($progressPercent))) }}" />
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -635,14 +666,35 @@
         overflow: hidden;
     }
 
-    .stat-fill {
+    .stat-bar-svg {
+        display: block;
+        width: 100%;
         height: 100%;
-        border-radius: 4px;
+    }
+
+    rect.hp-fill,
+    rect.ap-fill {
         transition: width 0.3s ease;
     }
 
-    .hp-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
-    .ap-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .mini-map-bg-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .mini-progress-svg {
+        display: block;
+        width: 100%;
+        height: 6px;
+    }
+
+    rect.mini-fill {
+        fill: var(--accent);
+    }
 
     .stat-value {
         font-size: 0.8rem;
@@ -755,6 +807,23 @@
         font-size: 0.8rem;
         font-weight: 700;
         color: var(--primary);
+        flex: 1;
+        min-width: 0;
+    }
+
+    .power-ap-tag {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #b45309;
+        background: #fef3c7;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid #fcd34d;
+        flex-shrink: 0;
+    }
+
+    .power-btn.used .power-ap-tag {
+        display: none;
     }
 
     .no-powers {
@@ -864,7 +933,6 @@
     }
 
     .mini-progress-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
-    .mini-fill { height: 100%; background: var(--accent); }
 
     .hint-card {
         background: #f0f9ff;
@@ -1029,16 +1097,23 @@
 // Power usage tracking
 let activePower = null;
 let eliminatedOptions = [];
-let timeRemaining = {{ $quest->time_limit_minutes ? $quest->time_limit_minutes * 60 : 0 }};
+const questPlayCfg = document.getElementById('quest-play-config');
+const questPlay = questPlayCfg ? questPlayCfg.dataset : {};
+let timeRemaining = parseInt(questPlay.timeSeconds || '0', 10);
 let timerInterval = null;
 let extraTimeAdded = 0;
 
-// Initialize timer if time limit exists
-@if($quest->time_limit_minutes)
 document.addEventListener('DOMContentLoaded', function() {
-    startTimer();
+    document.querySelectorAll('.current-node-pulse').forEach(function (el) {
+        var L = el.getAttribute('data-left');
+        var T = el.getAttribute('data-top');
+        if (L != null && L !== '') el.style.left = L + '%';
+        if (T != null && T !== '') el.style.top = T + '%';
+    });
+    if (timeRemaining > 0) {
+        startTimer();
+    }
 });
-@endif
 
 function startTimer() {
     if (timeRemaining <= 0) return;
@@ -1075,11 +1150,11 @@ function handleTimeUp() {
     }
     
     // Call timeout endpoint to move to next question
-    fetch('{{ route("student.quest.timeout", [$quest->id, $question->id]) }}', {
+    fetch(questPlay.timeoutUrl || '', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': questPlay.csrf || ''
         }
     })
     .then(response => response.json())
@@ -1089,15 +1164,15 @@ function handleTimeUp() {
             if (result.new_hp !== undefined) {
                 updateHPDisplay(result.new_hp);
             }
-            showBattle('defeat', result.message, () => window.location.href = result.next_url);
+            showBattle('defeat', result.message, () => navigateAfterQuest(result.next_url));
         } else {
-            showBattle('defeat', 'Time\'s up!', () => window.location.href = result.next_url || '{{ route("student.quest.show", $quest->id) }}');
+            showBattle('defeat', 'Time\'s up!', () => navigateAfterQuest(result.next_url || questPlay.questShowUrl || ''));
         }
     })
     .catch(error => {
         console.error('Timeout error:', error);
         showBattle('defeat', 'Time\'s up!', () => {
-            window.location.href = '{{ route("student.quest.show", $quest->id) }}';
+            navigateAfterQuest(questPlay.questShowUrl || '');
         });
     });
 }
@@ -1119,98 +1194,127 @@ function addExtraTime() {
     }
 }
 
-function usePower(powerName, powerDesc) {
-    const hintBox = document.getElementById('active-power-hint');
-    const hintText = document.getElementById('hint-text');
-    
-    // Record power usage on server
-    recordPowerUsage(powerName);
-    
-    switch(powerName.toLowerCase()) {
-        case 'spell of insight':
-            // Mage: Show hint
-            hintText.innerHTML = '<strong>Spell of Insight:</strong> ' + getHintForQuestion();
-            hintBox.classList.add('show');
-            activePower = 'insight';
-            break;
-            
-        case 'arcane analysis':
-            // Mage: Eliminate one wrong answer
-            if (eliminateWrongAnswer()) {
-                hintText.innerHTML = '<strong>Arcane Analysis:</strong> One incorrect option has been eliminated!';
-                hintBox.classList.add('show');
-                activePower = 'analysis';
-            }
-            break;
-            
-        case 'time warp':
-            // Mage: Add extra time (if timer exists)
-            hintText.innerHTML = '<strong>Time Warp:</strong> Extra 30 seconds granted!';
-            hintBox.classList.add('show');
-            activePower = 'timewarp';
-            addExtraTime();
-            break;
-            
-        case 'power strike':
-            // Warrior: Double points for next correct answer
-            hintText.innerHTML = '<strong>Power Strike:</strong> Next correct answer worth double points!';
-            hintBox.classList.add('show');
-            activePower = 'powerstrike';
-            break;
-            
-        case 'shield guard':
-            // Warrior: Prevent point loss
-            hintText.innerHTML = '<strong>Shield Guard:</strong> Protected from HP loss on next wrong answer!';
-            hintBox.classList.add('show');
-            activePower = 'shield';
-            break;
-            
-            case 'revive':
-            // Healer: Allow retry
-            hintText.innerHTML = '<strong>Revive:</strong> You may retry this question if answered incorrectly!';
-            hintBox.classList.add('show');
-            activePower = 'revive';
-            break;
-            
-        case 'focus aura':
-            // Healer: Second attempt allowed
-            hintText.innerHTML = '<strong>Focus Aura:</strong> You have a second chance on this question!';
-            hintBox.classList.add('show');
-            activePower = 'focus';
-            break;
-            
-        default:
-            // Other powers - show description
-            hintText.innerHTML = '<strong>' + powerName + ':</strong> ' + powerDesc;
-            hintBox.classList.add('show');
-    }
-    
-    // Disable the power button after use
-    const btn = event.target.closest('.power-btn');
+function canEliminateWrongAnswer() {
+    const options = document.querySelectorAll('.option-item input[type="radio"]');
+    if (options.length === 0) return false;
+    const availableOptions = Array.from(options).filter(function (opt) {
+        return !opt.checked && !opt.closest('.option-item').classList.contains('eliminated');
+    });
+    return availableOptions.length > 1;
+}
+
+function finalizePowerButton(btn) {
     btn.disabled = true;
     btn.classList.add('used');
-    
-    // Add "Used" badge
+    const costEl = btn.querySelector('.power-ap-tag');
+    if (costEl) costEl.remove();
     const badge = document.createElement('span');
     badge.className = 'power-used-badge';
     badge.innerHTML = '<i class="fas fa-check"></i> Used';
     btn.appendChild(badge);
 }
 
-function recordPowerUsage(powerName) {
-    // Send AJAX request to record power usage
-    fetch('{{ route("student.quest.use-power", [$quest->id, $attempt->id]) }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            power_name: powerName,
-            level: {{ $question->level }}
-        })
-    }).catch(error => console.error('Error recording power usage:', error));
+async function usePower(e, powerName, powerDesc) {
+    const btn = e.currentTarget;
+    if (!btn || btn.classList.contains('used')) return;
+
+    const pLower = powerName.toLowerCase();
+    if (pLower === 'arcane analysis' && !canEliminateWrongAnswer()) {
+        alert('Arcane Analysis needs at least two non-eliminated wrong options on this question.');
+        return;
+    }
+
+    let data;
+    try {
+        const res = await fetch(questPlay.usePowerUrl || '', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': questPlay.csrf || ''
+            },
+            body: JSON.stringify({
+                power_name: powerName,
+                level: parseInt(questPlay.questionLevel || '0', 10)
+            })
+        });
+        data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+            if (data.insufficient_ap) {
+                alert('Not enough AP. This power costs ' + data.required + ' AP (you have ' + data.current + ').');
+            } else {
+                alert(data.error || 'Could not use power.');
+            }
+            return;
+        }
+    } catch (err) {
+        console.error('Power request failed:', err);
+        alert('Network error. Please try again.');
+        return;
+    }
+
+    if (data.new_ap !== undefined && data.new_ap !== null) {
+        updateAPDisplay(Number(data.new_ap));
+    }
+
+    const hintBox = document.getElementById('active-power-hint');
+    const hintText = document.getElementById('hint-text');
+
+    switch (pLower) {
+        case 'spell of insight':
+            hintText.innerHTML = '<strong>Spell of Insight:</strong> ' + getHintForQuestion();
+            hintBox.classList.add('show');
+            activePower = 'insight';
+            break;
+        case 'arcane analysis':
+            if (eliminateWrongAnswer()) {
+                hintText.innerHTML = '<strong>Arcane Analysis:</strong> One incorrect option has been eliminated!';
+                hintBox.classList.add('show');
+                activePower = 'analysis';
+            }
+            break;
+        case 'time warp':
+            hintText.innerHTML = '<strong>Time Warp:</strong> Extra 30 seconds granted!';
+            hintBox.classList.add('show');
+            activePower = 'timewarp';
+            addExtraTime();
+            break;
+        case 'power strike':
+            hintText.innerHTML = '<strong>Power Strike:</strong> Next correct answer worth double points!';
+            hintBox.classList.add('show');
+            activePower = 'powerstrike';
+            break;
+        case 'shield guard':
+            hintText.innerHTML = '<strong>Shield Guard:</strong> Protected from HP loss on next wrong answer!';
+            hintBox.classList.add('show');
+            activePower = 'shield';
+            break;
+        case 'revive':
+            hintText.innerHTML = '<strong>Revive:</strong> You may retry this question if answered incorrectly!';
+            hintBox.classList.add('show');
+            activePower = 'revive';
+            break;
+        case 'focus aura':
+            hintText.innerHTML = '<strong>Focus Aura:</strong> You have a second chance on this question!';
+            hintBox.classList.add('show');
+            activePower = 'focus';
+            break;
+        default:
+            hintText.innerHTML = '<strong>' + powerName + ':</strong> ' + powerDesc;
+            hintBox.classList.add('show');
+    }
+
+    finalizePowerButton(btn);
 }
+
+document.getElementById('quest-powers-list')?.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('.power-btn');
+    if (!btn || btn.disabled || btn.classList.contains('used')) return;
+    const name = btn.getAttribute('data-power-name');
+    if (!name) return;
+    const desc = btn.getAttribute('data-power-desc') || '';
+    usePower({ currentTarget: btn }, name, desc);
+});
 
 function getHintForQuestion() {
     // This would ideally come from the backend
@@ -1238,6 +1342,14 @@ function eliminateWrongAnswer() {
         return true;
     }
     return false;
+}
+
+function navigateAfterQuest(url) {
+    if (!url) return;
+    if (window.Turbolinks && typeof window.Turbolinks.clearCache === 'function') {
+        window.Turbolinks.clearCache();
+    }
+    window.location.href = url;
 }
 
 function showBattle(outcome, message, onContinue) {
@@ -1299,7 +1411,7 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
     const modalNextBtn = document.getElementById('modal-next-btn');
 
     try {
-        const response = await fetch("{{ route('student.quest.submit', [$quest->id, $question->id]) }}", {
+        const response = await fetch(questPlay.submitUrl || '', {
             method: 'POST',
             body: formData,
             headers: {
@@ -1323,7 +1435,7 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
             const wasProtected = activePower && (activePower === 'shield' || activePower === 'revive' || activePower === 'focus');
             const protectedMessage = wasProtected && !isCorrect ? ' (Power protected you from HP loss!)' : '';
             
-            showBattle(outcome, result.message + protectedMessage, () => window.location.href = result.next_url);
+            showBattle(outcome, result.message + protectedMessage, () => navigateAfterQuest(result.next_url));
         } else {
             // Update HP display if HP was deducted
             if (result.new_hp !== undefined) {
@@ -1345,11 +1457,20 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
 });
 
 function updateHPDisplay(newHP) {
-    const hpFill = document.querySelector('.hp-fill');
-    const hpValue = document.querySelector('.stat-value');
+    const hpFill = document.querySelector('rect.hp-fill');
+    const hpValue = document.querySelector('.js-hp-value');
     if (hpFill && hpValue) {
-        hpFill.style.width = Math.min((newHP / 100) * 100, 100) + '%';
+        hpFill.setAttribute('width', String(Math.min((newHP / 100) * 100, 100)));
         hpValue.textContent = newHP;
+    }
+}
+
+function updateAPDisplay(newAP) {
+    const apFill = document.querySelector('rect.ap-fill');
+    const apValue = document.querySelector('.js-ap-value');
+    if (apFill && apValue) {
+        apFill.setAttribute('width', String(Math.min((newAP / 100) * 100, 100)));
+        apValue.textContent = newAP;
     }
 }
 </script>

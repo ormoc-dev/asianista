@@ -900,6 +900,9 @@
                 <a href="{{ route('teacher.feedback') }}" class="nav-link {{ request()->routeIs('teacher.feedback*') ? 'active' : '' }}">
                     <i class="fas fa-comments"></i> Feedback
                 </a>
+                <a href="{{ route('teacher.messages') }}" class="nav-link {{ request()->routeIs('teacher.messages*') ? 'active' : '' }}">
+                    <i class="fas fa-comment-dots"></i> Messages
+                </a>
             </div>
         </nav>
 

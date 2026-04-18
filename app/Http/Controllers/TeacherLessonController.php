@@ -26,7 +26,8 @@ class TeacherLessonController extends Controller
      */
     public function create()
     {
-        $grades = Grade::with('sections')->get();
+        $grades = Grade::with('sections')->orderBy('name')->get();
+
         return view('teacher.lessons.create', compact('grades'));
     }
 
@@ -39,8 +40,17 @@ class TeacherLessonController extends Controller
             'title'   => 'required|string|max:255',
             'content' => 'nullable|string',
             'file'    => 'nullable|file|mimes:pdf,docx,pptx,zip,txt|max:20480',
-            'section' => 'nullable|string|max:100',
+            'grade_id' => 'required|exists:grades,id',
+            'section_id' => 'required|exists:sections,id',
         ]);
+
+        $section = Section::findOrFail($request->section_id);
+        if ((int) $section->grade_id !== (int) $request->grade_id) {
+            return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
+        }
+
+        $grade = Grade::findOrFail($request->grade_id);
+        $sectionLabel = $grade->name.' - '.$section->name;
 
         $filePath = null;
 
@@ -53,12 +63,14 @@ class TeacherLessonController extends Controller
         $teacherId = 1; // you can change this to match your dummy teacher
 
         Lesson::create([
-            'title'      => $request->title,
-            'content'    => $request->content,
-            'file_path'  => $filePath,
-            'teacher_id' => $teacherId,
-            'status'     => 'approved',
-            'section'    => $request->section,
+            'title'       => $request->title,
+            'content'     => $request->content,
+            'file_path'   => $filePath,
+            'teacher_id'  => $teacherId,
+            'status'      => 'approved',
+            'section'     => $sectionLabel,
+            'grade_id'    => $request->grade_id,
+            'section_id'  => $request->section_id,
         ]);
 
         return redirect()->route('teacher.lessons.index')->with('success', 'Lesson published successfully.');
@@ -84,7 +96,23 @@ class TeacherLessonController extends Controller
     public function edit($id)
     {
         $lesson = Lesson::findOrFail($id);
-        return view('teacher.lessons.edit', compact('lesson'));
+        $grades = Grade::with('sections')->orderBy('name')->get();
+
+        $initialGradeId = null;
+        $initialSectionId = null;
+        if ($lesson->section) {
+            foreach ($grades as $g) {
+                foreach ($g->sections as $sec) {
+                    if (($g->name.' - '.$sec->name) === $lesson->section) {
+                        $initialGradeId = $g->id;
+                        $initialSectionId = $sec->id;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return view('teacher.lessons.edit', compact('lesson', 'grades', 'initialGradeId', 'initialSectionId'));
     }
 
     /**
@@ -98,8 +126,17 @@ class TeacherLessonController extends Controller
             'title'   => 'required|string|max:255',
             'content' => 'nullable|string',
             'file'    => 'nullable|file|mimes:pdf,docx,pptx,zip,txt|max:20480',
-            'section' => 'nullable|string|max:100',
+            'grade_id' => 'required|exists:grades,id',
+            'section_id' => 'required|exists:sections,id',
         ]);
+
+        $section = Section::findOrFail($request->section_id);
+        if ((int) $section->grade_id !== (int) $request->grade_id) {
+            return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
+        }
+
+        $grade = Grade::findOrFail($request->grade_id);
+        $sectionLabel = $grade->name.' - '.$section->name;
 
         $filePath = $lesson->file_path;
 
@@ -111,11 +148,13 @@ class TeacherLessonController extends Controller
         }
 
         $lesson->update([
-            'title'     => $request->title,
-            'content'   => $request->content,
-            'file_path' => $filePath,
-            'section'   => $request->section,
-            'status'    => 'approved',
+            'title'       => $request->title,
+            'content'     => $request->content,
+            'file_path'   => $filePath,
+            'section'     => $sectionLabel,
+            'status'      => 'approved',
+            'grade_id'    => $request->grade_id,
+            'section_id'  => $request->section_id,
         ]);
 
         return redirect()->route('teacher.lessons.index')->with('success', 'Lesson updated successfully.');

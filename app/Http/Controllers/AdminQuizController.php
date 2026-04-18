@@ -12,7 +12,7 @@ class AdminQuizController extends Controller
      */
     public function index()
     {
-        $quizzes = Quiz::with('teacher')
+        $quizzes = Quiz::with(['teacher', 'grade', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();
 

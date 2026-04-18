@@ -5,6 +5,13 @@
         $currentAP = $user?->ap ?? 0;
         $maxHP = 100;
         $maxAP = 100;
+        $userXP = $user?->xp ?? 0;
+        $userLevel = floor($userXP / 100) + 1;
+        $xpForNextLevel = $userLevel * 100;
+        $xpProgress = $userXP % 100;
+        $hpBarPct = min(100, max(0, $maxHP > 0 ? ($currentHP / $maxHP) * 100 : 0));
+        $apBarPct = min(100, max(0, $maxAP > 0 ? ($currentAP / $maxAP) * 100 : 0));
+        $xpBarPct = min(100, max(0, $xpProgress));
         $characterData = $user?->getCharacterData();
         $powers = $characterData['abilities'] ?? [];
     @endphp
@@ -20,7 +27,7 @@
                 <div class="character-header">
                     <div class="character-avatar-ring">
                         <img src="{{ asset('images/' . ($user?->profile_pic ?? 'default-pp.png')) }}" alt="Avatar" class="character-avatar">
-                        <div class="character-level-badge">{{ $user?->level ?? 5 }}</div>
+                        <div class="character-level-badge">{{ $userLevel }}</div>
                     </div>
                     <div class="character-info">
                         <h2 class="character-name">{{ $user?->name ?? 'Adventurer' }}</h2>
@@ -40,7 +47,9 @@
                                 <span class="compact-stat-value">{{ $currentHP }}/{{ $maxHP }}</span>
                             </div>
                             <div class="compact-progress-bg">
-                                <div class="compact-progress-fill hp-fill" style="width: {{ ($currentHP / $maxHP) * 100 }}%"></div>
+                                <svg class="compact-progress-svg" viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" aria-hidden="true">
+                                    <rect class="compact-svg-fill hp-svg" x="0" y="0" height="8" rx="4" width="{{ min(100, max(0, $hpBarPct)) }}" />
+                                </svg>
                             </div>
                         </div>
 
@@ -51,7 +60,9 @@
                                 <span class="compact-stat-value">{{ $currentAP }}/{{ $maxAP }}</span>
                             </div>
                             <div class="compact-progress-bg">
-                                <div class="compact-progress-fill ap-fill" style="width: {{ ($currentAP / $maxAP) * 100 }}%"></div>
+                                <svg class="compact-progress-svg" viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" aria-hidden="true">
+                                    <rect class="compact-svg-fill ap-svg" x="0" y="0" height="8" rx="4" width="{{ min(100, max(0, $apBarPct)) }}" />
+                                </svg>
                             </div>
                         </div>
 
@@ -59,10 +70,12 @@
                         <div class="compact-stat xp-stat">
                             <div class="compact-stat-header">
                                 <span class="compact-stat-label"><i class="fas fa-star"></i> XP</span>
-                                <span class="compact-stat-value">68%</span>
+                                <span class="compact-stat-value">{{ $userXP }} / {{ $xpForNextLevel }}</span>
                             </div>
                             <div class="compact-progress-bg">
-                                <div class="compact-progress-fill xp-fill" style="width: 68%"></div>
+                                <svg class="compact-progress-svg" viewBox="0 0 100 8" preserveAspectRatio="none" width="100%" height="8" aria-hidden="true">
+                                    <rect class="compact-svg-fill xp-svg" x="0" y="0" height="8" rx="4" width="{{ min(100, max(0, $xpBarPct)) }}" />
+                                </svg>
                             </div>
                         </div>
                     </div>
@@ -106,7 +119,7 @@
                     <!-- ACTIVE QUEST SECTION -->
                     <div class="section-title"><i class="fas fa-scroll"></i> Active Quest</div>
                     @if(isset($activeQuest) && $activeQuest)
-                        <div class="compact-quest" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id) }}')">
+                        <div class="compact-quest" data-quest-url="{{ route('student.quest.show', $activeQuest->id) }}" onclick="openQuestDrawer(this.dataset.questUrl)">
                             <div class="compact-quest-header">
                                 <span class="compact-quest-title">{{ \Illuminate\Support\Str::limit($activeQuest->title, 30) }}</span>
                                 <span class="compact-quest-diff {{ strtolower($activeQuest->difficulty ?? 'medium') }}">{{ $activeQuest->difficulty ?? 'Medium' }}</span>

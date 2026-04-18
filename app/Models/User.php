@@ -179,6 +179,34 @@ class User extends Authenticatable
     }
 
     /**
+     * AP cost when a student uses a hero power during a quest (per use).
+     * Tune costs by impact: stronger / defensive powers cost more.
+     */
+    public static function apCostForPower(?string $powerName): int
+    {
+        $key = strtolower(trim((string) $powerName));
+        $costs = [
+            'spell of insight' => 8,
+            'mana boost' => 10,
+            'time warp' => 14,
+            'knowledge burst' => 12,
+            'arcane analysis' => 14,
+            'power strike' => 16,
+            'streak master' => 10,
+            'shield guard' => 14,
+            'battle rush' => 12,
+            'challenge duel' => 16,
+            'healing light' => 10,
+            'team blessing' => 8,
+            'revive' => 18,
+            'focus aura' => 14,
+            'wisdom share' => 8,
+        ];
+
+        return $costs[$key] ?? 12;
+    }
+
+    /**
      * Get full name of the user.
      *
      * @return string

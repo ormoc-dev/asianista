@@ -6,18 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\Quiz;
 use App\Models\Question;
 use App\Models\QuizAttempt;
+use App\Models\User;
 
 class StudentQuizController extends Controller
 {
     // Display available quizzes for student
     public function index()
     {
-        // Fetch active and open quizzes from database
-        $quizzes = Quiz::active()
-            ->where('due_date', '>=', now())
-            ->orWhereNull('due_date')
-            ->latest()
-            ->get();
+        $user = auth()->user();
+
+        $quizzes = Quiz::query()
+            ->with('questions')
+            ->active()
+            ->where(function ($q) {
+                $q->where('due_date', '>=', now())->orWhereNull('due_date');
+            })
+            ->get()
+            ->filter(fn (Quiz $quiz) => $quiz->isVisibleToStudent($user))
+            ->values();
 
         return view('student.quizzes.index', compact('quizzes'));
     }
@@ -30,6 +36,10 @@ class StudentQuizController extends Controller
         // Check if quiz is active
         if ($quiz->status !== 'active') {
             abort(403, 'This quiz is not currently available.');
+        }
+
+        if (! $quiz->isVisibleToStudent(auth()->user())) {
+            abort(403, 'This quiz is not assigned to your class.');
         }
 
         // Check if student already attempted this quiz
@@ -49,6 +59,14 @@ class StudentQuizController extends Controller
     public function submit(Request $request, $id)
     {
         $quiz = Quiz::findOrFail($id);
+
+        if ($quiz->status !== 'active') {
+            abort(403, 'This quiz is not currently available.');
+        }
+
+        if (! $quiz->isVisibleToStudent(auth()->user())) {
+            abort(403, 'This quiz is not assigned to your class.');
+        }
         
         // Check if student already attempted this quiz
         $existingAttempt = QuizAttempt::where('quiz_id', $id)
@@ -109,8 +127,8 @@ class StudentQuizController extends Controller
             $xpEarned = 25;
         }
 
-        // Update student XP
-        $user = auth()->user();
+        // Update student XP (User model — not Authenticatable interface)
+        $user = User::findOrFail(auth()->id());
         $user->xp += $xpEarned;
         $user->save();
 

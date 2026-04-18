@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Grade;
+use App\Models\Section;
 use App\Models\User;
 use App\Models\QuestAttempt;
-use App\Models\Quiz;
 use Illuminate\Support\Facades\DB;
 
 class TeacherReportsController extends Controller
@@ -13,10 +14,22 @@ class TeacherReportsController extends Controller
     /**
      * Display student scores/XP report
      */
-    public function scores()
+    public function scores(Request $request)
     {
+        $grades = Grade::orderBy('name')->get();
+        $gradeId = $request->query('grade_id');
+        $sectionId = $request->query('section_id');
+
+        $sections = collect();
+        if ($gradeId) {
+            $sections = Section::where('grade_id', $gradeId)->orderBy('name')->get();
+        }
+
         $students = User::where('role', 'student')
-            ->select('id', 'first_name', 'last_name', 'name', 'email', 'character', 'gender', 'hp', 'ap', 'xp', 'level', 'profile_pic')
+            ->when($gradeId, fn ($q) => $q->where('grade_id', $gradeId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
+            ->with(['grade', 'section'])
+            ->select('id', 'first_name', 'last_name', 'name', 'email', 'character', 'gender', 'hp', 'ap', 'xp', 'level', 'profile_pic', 'grade_id', 'section_id')
             ->orderBy('xp', 'desc')
             ->orderBy('level', 'desc')
             ->get();
@@ -40,7 +53,15 @@ class TeacherReportsController extends Controller
             'total_students' => $students->count(),
         ];
 
-        return view('teacher.reports.scores', compact('students', 'questStats', 'classAverage'));
+        return view('teacher.reports.scores', compact(
+            'students',
+            'questStats',
+            'classAverage',
+            'grades',
+            'sections',
+            'gradeId',
+            'sectionId'
+        ));
     }
 
     /**

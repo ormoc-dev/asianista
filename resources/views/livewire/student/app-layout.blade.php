@@ -248,6 +248,7 @@
         .sidebar-header {
             padding: 25px 20px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
         }
 
         .avatar-section {
@@ -347,17 +348,53 @@
             overflow: hidden;
         }
 
-        .xp-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #fbbf24, #f59e0b);
-            border-radius: 3px;
+        .xp-progress-svg {
+            display: block;
+            width: 100%;
+            height: 6px;
+        }
+
+        .xp-progress-rect {
             transition: width 0.5s ease;
         }
 
-        .sidebar-nav {
-            padding: 15px 12px;
+        /* Fills space under header; nav scrolls when items exceed viewport */
+        .sidebar-main {
             flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-nav {
+            padding: 15px 12px 20px;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.35) rgba(15, 23, 42, 0.35);
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.35);
+            border-radius: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.28);
+            border-radius: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
         }
 
         .nav-section {
@@ -489,7 +526,7 @@
 <body>
     <!-- SIDEBAR -->
     <aside id="sidebar">
-        <div>
+        <div class="sidebar-main">
             <div class="sidebar-header">
                 @php
                     $user = Auth::user();
@@ -520,7 +557,15 @@
                         <span class="xp-value">{{ $userXP }} / {{ $xpForNextLevel }}</span>
                     </div>
                     <div class="xp-progress-bar">
-                        <div class="xp-progress-fill" style="width: {{ $xpProgress }}%"></div>
+                        <svg class="xp-progress-svg" viewBox="0 0 100 6" preserveAspectRatio="none" width="100%" height="6" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="xpSidebarGold" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stop-color="#fbbf24" />
+                                    <stop offset="100%" stop-color="#f59e0b" />
+                                </linearGradient>
+                            </defs>
+                            <rect class="xp-progress-rect" x="0" y="0" height="6" rx="3" fill="url(#xpSidebarGold)" width="{{ min(100, max(0, (int) $xpProgress)) }}" />
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -547,6 +592,10 @@
                     <a href="{{ route('student.quizzes') }}" class="nav-item {{ request()->routeIs('student.quizzes') ? 'active' : '' }}">
                         <div class="nav-icon"><i class="fas fa-clipboard-check"></i></div>
                         <span>Quizzes</span>
+                    </a>
+                    <a href="{{ route('student.performance') }}" class="nav-item {{ request()->routeIs('student.performance') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+                        <span>Performance</span>
                     </a>
                 </div>
 
@@ -629,7 +678,7 @@
 
         <div class="chat-input-area">
             <input type="text" id="floating-chat-input" placeholder="Ask anything..." autocomplete="off">
-            <button onclick="sendFloatingMessage('{{ route('student.ai.chat') }}', '{{ csrf_token() }}')"><i class="fas fa-paper-plane"></i></button>
+            <button type="button" id="floating-chat-send-btn" data-chat-route="{{ route('student.ai.chat') }}" data-csrf="{{ csrf_token() }}"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
