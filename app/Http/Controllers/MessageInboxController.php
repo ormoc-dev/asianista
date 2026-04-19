@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ProvidesMessageInbox;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,7 @@ abstract class MessageInboxController extends Controller
 
         $convPlaceholder = 999999998;
 
-        return view($this->inboxView(), [
+        return view($this->inboxView(), array_merge([
             'user' => $user,
             'conversations' => $conversations,
             'contacts' => $contacts,
@@ -87,7 +88,28 @@ abstract class MessageInboxController extends Controller
             'conversationUrlTemplate' => str_replace((string) $convPlaceholder, '__CONV__', route($this->messageRouteGroup(), ['conversation' => $convPlaceholder])),
             'currentUserId' => $user->id,
             'pollSince' => time(),
-        ]);
+        ], $this->extraInboxViewData($user)));
+    }
+
+    /**
+     * Extra variables passed to the inbox Blade view (override in subclass).
+     *
+     * @return array<string, mixed>
+     */
+    protected function extraInboxViewData(User $user): array
+    {
+        return [];
+    }
+
+    /**
+     * Augment JSON for each conversation in poll responses (override in subclass).
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    protected function decorateConversationJson(array $payload, Conversation $conversation, User $viewer): array
+    {
+        return $payload;
     }
 
     public function start(Request $request)
@@ -133,6 +155,9 @@ abstract class MessageInboxController extends Controller
     public function send(Request $request, Conversation $conversation)
     {
         $user = Auth::user();
+        if (! $user instanceof User) {
+            abort(403);
+        }
 
         if (! $conversation->participants()->where('users.id', $user->id)->exists()) {
             abort(403);
@@ -150,9 +175,8 @@ abstract class MessageInboxController extends Controller
 
         $message->load('user');
 
-        $user->forceFill([
-            'last_seen_at' => now(),
-        ])->save();
+        $user->setAttribute('last_seen_at', now());
+        $user->save();
 
         $conversation->participants()
             ->updateExistingPivot($user->id, [

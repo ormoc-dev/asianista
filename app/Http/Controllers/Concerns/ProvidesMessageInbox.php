@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -28,7 +29,7 @@ trait ProvidesMessageInbox
         }
     }
 
-    protected function buildConversationsQuery(User $user, string $search): Builder
+    protected function buildConversationsQuery(User $user, string $search): BelongsToMany
     {
         $conversationsQuery = $user->conversations()
             ->with([
@@ -109,7 +110,7 @@ trait ProvidesMessageInbox
                 .\Illuminate\Support\Str::limit($last->body, 40))
             : 'No messages yet';
 
-        return [
+        $payload = [
             'id' => $conversation->id,
             'other' => [
                 'id' => $other->id,
@@ -123,6 +124,8 @@ trait ProvidesMessageInbox
             'last_time' => $lastTime,
             'last_ts' => $last?->created_at?->timestamp,
         ];
+
+        return $this->decorateConversationJson($payload, $conversation, $user);
     }
 
     protected function messageJson(Message $message, User $viewer): array

@@ -7,227 +7,206 @@
 @endphp
 
 <style>
-    /* ===== MESSAGES LAYOUT ===== */
-    .messages-wrapper {
-        display: grid;
-        grid-template-columns: 290px minmax(0, 1fr);
-        gap: 18px;
-        height: 540px; /* fits nicely in the shell, adjust if needed */
+    .student-party-chat-shell {
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
-    /* LEFT: CHAT LIST */
-    .messages-sidebar {
-        background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85));
-        border-radius: 16px;
-        padding: 16px 14px;
-        box-shadow: 0 8px 20px rgba(15,23,42,0.5);
+    .student-inbox-scope {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+    }
+
+    .student-inbox-scope .messages-wrapper {
+        display: grid;
+        grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+        gap: 0;
+        min-height: 560px;
+    }
+
+    .student-inbox-scope .messages-sidebar {
+        background: linear-gradient(180deg, var(--primary), var(--secondary));
+        color: #e0e7ff;
         display: flex;
         flex-direction: column;
-        color: #e5edff;
-        position: relative; /* for contacts dropdown panel */
+        padding: 18px 14px;
+        position: relative;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
     }
 
-    .messages-sidebar-header {
+    .student-inbox-scope .messages-sidebar-header {
+        margin-bottom: 14px;
+    }
+
+    .student-inbox-scope .messages-sidebar-header h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
+        gap: 8px;
+        color: #fff;
+        margin-bottom: 6px;
     }
 
-    .messages-sidebar-header h3 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .messages-sidebar-header h3 i {
+    .student-inbox-scope .messages-sidebar-header h3 i {
         color: var(--accent);
     }
 
-    .messages-sidebar-header span {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--text-muted);
+    .student-inbox-scope .inbox-sub {
+        font-size: 0.8rem;
+        color: rgba(224, 231, 255, 0.85);
+        line-height: 1.45;
     }
 
-    .messages-search {
+    .student-inbox-scope .messages-search {
         position: relative;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
-    .messages-search input {
+    .student-inbox-scope .messages-search input {
         width: 100%;
-        padding: 8px 30px 8px 30px;
+        padding: 9px 12px 9px 36px;
         border-radius: 999px;
-        border: none;
+        border: 1px solid rgba(255, 255, 255, 0.15);
         outline: none;
         font-size: 0.85rem;
-        background: rgba(15,23,42,0.9);
-        color: #e2e8f0;
-        box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4);
+        background: rgba(15, 23, 42, 0.35);
+        color: #f8fafc;
     }
 
-    .messages-search i {
+    .student-inbox-scope .messages-search input::placeholder {
+        color: rgba(203, 213, 225, 0.8);
+    }
+
+    .student-inbox-scope .messages-search i {
         position: absolute;
-        left: 10px;
+        left: 12px;
         top: 50%;
         transform: translateY(-50%);
+        color: var(--accent);
         font-size: 0.85rem;
-        color: #94a3b8;
     }
 
-    .messages-search input::placeholder {
-        color: #64748b;
-    }
-
-    .party-filter {
+    .student-inbox-scope .party-filter {
         display: flex;
+        flex-wrap: wrap;
         gap: 6px;
         margin-bottom: 10px;
     }
 
-    .party-filter button {
+    .student-inbox-scope .party-filter button {
         flex: 1;
+        min-width: 0;
         border-radius: 999px;
-        border: none;
-        padding: 6px 8px;
-        font-size: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 7px 8px;
+        font-size: 0.72rem;
+        font-weight: 600;
         cursor: pointer;
-        background: rgba(15,23,42,0.8);
-        color: #e2e8f0;
+        background: rgba(15, 23, 42, 0.25);
+        color: #e0e7ff;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 4px;
+        transition: background 0.15s, border-color 0.15s;
     }
 
-    .party-filter button.active {
+    .student-inbox-scope .party-filter button.active {
         background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: #0b1020;
+        color: var(--text-dark);
+        border-color: transparent;
     }
 
-    .party-filter button i {
-        font-size: 0.8rem;
-    }
-
-    .messages-list {
+    .student-inbox-scope .messages-list {
         flex: 1;
-        margin-top: 6px;
         overflow-y: auto;
         padding-right: 4px;
+        min-height: 100px;
     }
 
-    .messages-list::-webkit-scrollbar {
-        width: 4px;
+    .student-inbox-scope .messages-list::-webkit-scrollbar {
+        width: 5px;
     }
-    .messages-list::-webkit-scrollbar-thumb {
-        background: rgba(148,163,184,0.7);
+
+    .student-inbox-scope .messages-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.25);
         border-radius: 999px;
     }
 
-    .chat-item {
+    .student-inbox-scope .chat-item {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 8px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: background 0.15s ease, transform 0.15s ease;
-        position: relative;
+        padding: 9px 8px;
+        border-radius: 12px;
         text-decoration: none;
         color: inherit;
+        position: relative;
+        transition: background 0.15s;
+        border: 1px solid transparent;
     }
 
-    .chat-item:hover {
-        background: rgba(15,23,42,0.9);
-        transform: translateY(-1px);
+    .student-inbox-scope .chat-item:hover {
+        background: rgba(15, 23, 42, 0.25);
     }
 
-    .chat-item.active {
-        background: linear-gradient(90deg, rgba(37,99,235,0.9), rgba(30,64,175,0.9));
-        box-shadow: 0 0 0 1px rgba(191,219,254,0.7);
+    .student-inbox-scope .chat-item.active {
+        background: rgba(255, 212, 59, 0.2);
+        border-color: rgba(255, 212, 59, 0.45);
     }
 
-    .chat-item.active .chat-name,
-    .chat-item.active .chat-last {
-        color: #e5edff;
+    .student-inbox-scope .chat-item.active .chat-name,
+    .student-inbox-scope .chat-item.active .chat-last {
+        color: #fff;
     }
 
-    .chat-avatar {
-        width: 36px;
-        height: 36px;
+    .student-inbox-scope .chat-avatar,
+    .student-inbox-scope .thread-avatar {
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 20%, #f1f5f9, #cbd5f5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        box-shadow: 0 0 10px rgba(15,23,42,0.7);
+        position: relative;
         flex-shrink: 0;
-        position: relative;
+        overflow: visible;
     }
 
-    .chat-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* Avatar container */
-    .chat-avatar,
-    .thread-avatar {
-        position: relative;
-        width: 48px;     /* your existing size */
-        height: 48px;
-        border-radius: 50%;
-        overflow: visible; /* allow dot OUTSIDE */
-    }
-
-    /* The profile image */
-    .chat-avatar img,
-    .thread-avatar img {
+    .student-inbox-scope .chat-avatar img,
+    .student-inbox-scope .thread-avatar img {
         width: 100%;
         height: 100%;
         border-radius: 50%;
         object-fit: cover;
+        border: 2px solid rgba(255, 212, 59, 0.5);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
-    /* Status Dot (online/offline) */
-    .chat-status-dot,
-    .thread-status-dot {
+    .student-inbox-scope .chat-status-dot {
         position: absolute;
-        bottom: -3px;        /* OUTSIDE the circle */
-        right: -3px;         /* OUTSIDE the circle */
-        width: 14px;
-        height: 14px;
+        bottom: -2px;
+        right: -2px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        border: 2px solid #0f172a; /* DARK BLUE BORDER (matches sidebar) */
+        border: 2px solid var(--secondary);
     }
 
-    /* ONLINE (green) */
-    .chat-status-dot.online,
-    .thread-status-dot.online {
-        background: #22c55e; /* GREEN */
+    .student-inbox-scope .chat-status-dot.online {
+        background: #4ade80;
     }
 
-    /* OFFLINE (gray) */
-    .chat-status-dot.offline,
-    .thread-status-dot.offline {
-        background: #9ca3af;
+    .student-inbox-scope .chat-status-dot.offline {
+        background: #94a3b8;
     }
 
-    .chat-text {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .chat-name {
-        font-size: 0.85rem;
+    .student-inbox-scope .chat-name {
+        font-size: 0.88rem;
         font-weight: 600;
-        color: #e5edff;
+        color: #fff;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -236,669 +215,584 @@
         gap: 6px;
     }
 
-    .role-tag {
-        font-size: 0.65rem;
+    .student-inbox-scope .role-tag {
+        font-size: 0.62rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.06em;
         padding: 2px 6px;
         border-radius: 999px;
-        background: rgba(15,23,42,0.7);
-        color: #facc15;
+        background: rgba(255, 212, 59, 0.25);
+        color: var(--accent);
+        font-weight: 700;
     }
 
-    .chat-meta-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .chat-last {
+    .student-inbox-scope .chat-last {
         font-size: 0.75rem;
-        color: #94a3b8;
+        color: rgba(224, 231, 255, 0.75);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .chat-time {
-        font-size: 0.7rem;
-        color: #64748b;
+    .student-inbox-scope .chat-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
     }
 
-    .chat-unread-badge {
+    .student-inbox-scope .chat-time {
+        font-size: 0.68rem;
+        color: rgba(203, 213, 225, 0.7);
+        flex-shrink: 0;
+    }
+
+    .student-inbox-scope .chat-unread-badge {
         position: absolute;
-        right: 8px;
+        right: 6px;
         top: 6px;
-        background: #f97316;
-        color: #0b1020;
-        font-size: 0.7rem;
+        background: var(--accent);
+        color: var(--text-dark);
+        font-size: 0.65rem;
+        font-weight: 700;
         min-width: 18px;
         height: 18px;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
         padding: 0 4px;
     }
 
-    .contacts-label {
-        font-size: 0.75rem;
-        color: #cbd5e1;
-        margin: 6px 2px 4px;
+    .student-inbox-scope .contacts-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin: 4px 2px 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
-    .contact-start-form button {
-        border-radius: 999px;
+    .student-inbox-scope .contact-start-form button {
         border: none;
-        padding: 4px 10px;
-        font-size: 0.7rem;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
         cursor: pointer;
         background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: #0b1020;
-        box-shadow: 0 3px 8px rgba(15,23,42,0.5);
+        color: var(--text-dark);
         white-space: nowrap;
     }
 
-    /* CONTACTS DROPDOWN PANEL (only when search is active) */
-    .contacts-search-panel {
+    .student-inbox-scope .contacts-search-panel {
+        display: none;
         position: absolute;
         left: 14px;
         right: 14px;
-        top: 96px; /* under header + search */
-        background: rgba(15,23,42,0.98);
-        border-radius: 14px;
-        padding: 8px 6px 6px;
-        box-shadow: 0 16px 40px rgba(15,23,42,0.9);
-        max-height: 260px;
+        top: 128px;
+        z-index: 25;
+        max-height: 280px;
         overflow-y: auto;
-        display: none;
-        z-index: 30;
+        background: rgba(15, 23, 42, 0.97);
+        border-radius: 14px;
+        padding: 10px 8px;
+        border: 1px solid rgba(255, 212, 59, 0.25);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
     }
 
-    .contacts-search-panel::-webkit-scrollbar {
-        width: 4px;
-    }
-    .contacts-search-panel::-webkit-scrollbar-thumb {
-        background: rgba(148,163,184,0.7);
-        border-radius: 999px;
+    .student-inbox-scope .contacts-search-panel .chat-item:hover {
+        background: rgba(255, 255, 255, 0.06);
     }
 
-    /* RIGHT: ACTIVE CHAT */
-    .messages-main {
-        background: rgba(241,241,224,0.96);
-        border-radius: 16px;
+    .student-inbox-scope .messages-main {
+        background: var(--card-bg);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .student-inbox-scope .messages-main-inner {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 560px;
         padding: 16px 18px 14px;
-        box-shadow: 0 8px 24px rgba(15,23,42,0.35);
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        overflow: hidden;
     }
 
-    .messages-main::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top left, rgba(255,212,59,0.35), transparent 55%),
-                    radial-gradient(circle at bottom right, rgba(56,189,248,0.25), transparent 60%);
-        opacity: 0.9;
-        pointer-events: none;
-    }
-
-    .messages-main-inner {
-        position: relative;
-        z-index: 1;
+    .student-inbox-scope .messages-main-header {
         display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .messages-main-header {
-        display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: 14px;
+        gap: 12px;
+        padding-bottom: 12px;
         margin-bottom: 10px;
+        border-bottom: 2px solid rgba(48, 6, 117, 0.12);
     }
 
-    .thread-user {
+    .student-inbox-scope .thread-user {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
 
-    .thread-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        overflow: hidden;
-        box-shadow: 0 0 0 3px rgba(37,99,235,0.3);
-        background: #0b1020;
-        flex-shrink: 0;
-        position: relative;
-    }
-
-    .thread-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .thread-info h3 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--primary);
+    .student-inbox-scope .thread-info h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 6px;
     }
 
-    .badge-role {
-        font-size: 0.7rem;
+    .student-inbox-scope .badge-role {
+        font-size: 0.68rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 2px 6px;
+        letter-spacing: 0.05em;
+        padding: 3px 8px;
         border-radius: 999px;
-        background: rgba(15,23,42,0.07);
-        color: #0b1020;
+        background: rgba(48, 6, 117, 0.12);
+        color: var(--primary);
+        font-weight: 700;
     }
 
-    .thread-info .status-row {
+    .student-inbox-scope .status-row {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         color: var(--text-muted);
+        margin-top: 4px;
     }
 
-    .status-dot {
+    .student-inbox-scope .status-dot {
         width: 8px;
         height: 8px;
-        border-radius: 999px;
-        background: #22c55e;
-        box-shadow: 0 0 0 4px rgba(34,197,94,0.35);
+        border-radius: 50%;
+        background: #4ade80;
+        box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.35);
     }
 
-    .thread-actions {
+    .student-inbox-scope .thread-actions {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
-    .thread-actions button {
-        border-radius: 999px;
-        border: none;
-        padding: 6px 9px;
-        font-size: 0.8rem;
+    .student-inbox-scope .thread-actions button {
+        border-radius: 10px;
+        border: 1px solid rgba(48, 6, 117, 0.15);
+        padding: 6px 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(15,23,42,0.05);
+        background: #fff;
         color: var(--primary);
     }
 
-    .thread-actions button i {
-        font-size: 0.85rem;
-    }
-
-    .thread-actions button.pin {
-        background: rgba(37,99,235,0.08);
-    }
-
-    .thread-actions button.mute {
-        background: rgba(148,163,184,0.2);
-    }
-
-    .thread-actions button.danger {
-        background: rgba(239,68,68,0.12);
+    .student-inbox-scope .thread-actions button.danger {
+        background: #fef2f2;
+        border-color: #fecaca;
         color: #b91c1c;
     }
 
-    /* XP banner style */
-    .thread-xp-pill {
-        margin-top: 4px;
-        padding: 4px 9px;
-        border-radius: 999px;
-        background: rgba(0,35,102,0.06);
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.7rem;
-        color: var(--primary);
-    }
-
-    .thread-xp-pill i {
-        color: var(--accent-dark);
-    }
-
-    .thread-xp-track {
-        position: relative;
+    .student-inbox-scope .messages-thread {
         flex: 1;
-        height: 5px;
-        border-radius: 999px;
-        background: rgba(148,163,184,0.4);
-        overflow: hidden;
-    }
-
-    .thread-xp-fill {
-        position: absolute;
-        inset: 0;
-        width: 55%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-    }
-
-    /* MESSAGES SCROLL AREA */
-    .messages-thread {
-        flex: 1;
-        margin-top: 4px;
-        padding: 10px 6px 10px;
         overflow-y: auto;
+        padding: 12px 10px;
+        background: rgba(255, 255, 255, 0.65);
+        border-radius: 14px;
+        border: 1px solid rgba(48, 6, 117, 0.1);
+        min-height: 260px;
     }
 
-    .messages-thread::-webkit-scrollbar {
+    .student-inbox-scope .messages-thread::-webkit-scrollbar {
         width: 6px;
     }
-    .messages-thread::-webkit-scrollbar-thumb {
-        background: rgba(148,163,184,0.9);
+
+    .student-inbox-scope .messages-thread::-webkit-scrollbar-thumb {
+        background: rgba(48, 6, 117, 0.2);
         border-radius: 999px;
     }
 
-    .msg-row {
+    .student-inbox-scope .msg-row {
         display: flex;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
-    .msg-row.me {
+    .student-inbox-scope .msg-row.me {
         justify-content: flex-end;
     }
 
-    .msg-bubble {
-        max-width: 70%;
-        padding: 8px 10px;
-        border-radius: 14px;
-        font-size: 0.82rem;
-        box-shadow: 0 3px 8px rgba(15,23,42,0.25);
-        position: relative;
+    .student-inbox-scope .msg-bubble {
+        max-width: 75%;
+        padding: 10px 14px;
+        border-radius: 16px;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
 
-    .msg-row.me .msg-bubble {
-        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: #0b1020;
+    .student-inbox-scope .msg-row.me .msg-bubble {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #f8fafc;
         border-bottom-right-radius: 4px;
     }
 
-    .msg-row.them .msg-bubble {
-        background: #ffffff;
-        color: #0b1020;
+    .student-inbox-scope .msg-row.them .msg-bubble {
+        background: #fff;
+        color: var(--text-dark);
+        border: 1px solid rgba(48, 6, 117, 0.1);
         border-bottom-left-radius: 4px;
     }
 
-    .msg-meta {
+    .student-inbox-scope .msg-meta {
         font-size: 0.7rem;
-        color: #64748b;
-        margin-top: 2px;
+        margin-top: 4px;
         text-align: right;
+        opacity: 0.9;
     }
 
-    .msg-row.me .msg-meta {
-        color: #334155;
+    .student-inbox-scope .msg-row.them .msg-meta {
+        color: var(--text-muted);
     }
 
-    .empty-thread {
-        font-size: 0.85rem;
-        color: #6b7280;
+    .student-inbox-scope .empty-thread {
         text-align: center;
-        padding: 40px 0;
+        padding: 48px 16px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 
-    /* INPUT AREA */
-    .messages-input-bar {
-        margin-top: 8px;
+    .student-inbox-scope .messages-input-bar {
+        margin-top: 12px;
         display: flex;
         align-items: center;
         gap: 10px;
-        padding-top: 6px;
-        border-top: 1px solid rgba(148,163,184,0.5);
+        padding-top: 12px;
+        border-top: 1px solid rgba(48, 6, 117, 0.12);
     }
 
-    .messages-tools {
+    .student-inbox-scope .messages-tools button {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid rgba(48, 6, 117, 0.15);
+        background: #fff;
+        color: var(--primary);
+        cursor: pointer;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .student-inbox-scope .messages-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .student-inbox-scope .messages-input-wrapper input {
+        width: 100%;
+        border-radius: 999px;
+        border: 1px solid rgba(48, 6, 117, 0.2);
+        padding: 10px 100px 10px 16px;
+        font-size: 0.88rem;
+        outline: none;
+        background: #fff;
+        color: var(--text-dark);
+    }
+
+    .student-inbox-scope .messages-input-wrapper input:focus {
+        border-color: var(--accent-dark);
+        box-shadow: 0 0 0 3px rgba(255, 212, 59, 0.25);
+    }
+
+    .student-inbox-scope .messages-send-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: var(--text-dark);
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
-    .messages-tools button {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        background: rgba(148,163,184,0.25);
-        color: var(--primary);
-        font-size: 0.85rem;
-    }
-
-    .messages-input-wrapper {
-        flex: 1;
-        position: relative;
-    }
-
-    .messages-input-wrapper input {
-        width: 100%;
-        border-radius: 999px;
-        border: none;
-        padding: 9px 90px 9px 14px;
-        font-size: 0.85rem;
-        outline: none;
-        background: rgba(248,250,252,0.9);
-        box-shadow: inset 0 0 0 1px rgba(148,163,184,0.5);
-    }
-
-    .messages-send-btn {
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        border-radius: 999px;
-        border: none;
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: #0b1020;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        box-shadow: 0 4px 10px rgba(15,23,42,0.35);
-    }
-
-    .messages-send-btn i {
-        font-size: 0.85rem;
-    }
-
-    @media (max-width: 992px) {
-        .messages-wrapper {
-            grid-template-columns: 1.1fr 2fr;
-            height: 520px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .messages-wrapper {
+    @media (max-width: 900px) {
+        .student-inbox-scope .messages-wrapper {
             grid-template-columns: 1fr;
-            height: auto;
         }
-        .messages-main {
-            margin-top: 14px;
+
+        .student-inbox-scope .messages-sidebar {
+            border-right: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
-        /* dropdown behaves like a normal block on mobile */
-        .contacts-search-panel {
+
+        .student-inbox-scope .contacts-search-panel {
             position: static;
-            margin-top: 4px;
-            box-shadow: none;
+            margin-top: 8px;
+        }
+
+        .student-inbox-scope .messages-main-inner {
+            min-height: 420px;
         }
     }
 </style>
 
-<div class="messages-wrapper">
+<div class="dashboard-shell student-party-chat-shell student-inbox-scope">
+    <div class="messages-wrapper">
 
-    {{-- LEFT: Party / chat list + contacts --}}
-    <div class="messages-sidebar">
-        <div class="messages-sidebar-header">
-            <h3>
-                <i class="fas fa-comments"></i>
-                Party Chat
-            </h3>
-            <span>Messages</span>
-        </div>
+        <div class="messages-sidebar">
+            <div class="messages-sidebar-header">
+                <h3>
+                    <i class="fas fa-comments"></i>
+                    Party Chat
+                </h3>
+                <p class="inbox-sub">Team up with teachers and classmates — same inbox on every device.</p>
+            </div>
 
-        {{-- search (server-side) --}}
-        <form class="messages-search" method="GET" action="{{ route($routeGroup) }}">
-            <i class="fas fa-search"></i>
-            <input
-                type="text"
-                name="q"
-                id="messages-search-input"
-                placeholder="Search party members…"
-                autocomplete="off"
-                value="{{ $search ?? '' }}"
-            >
-        </form>
+            <form class="messages-search" method="GET" action="{{ route($routeGroup) }}">
+                <i class="fas fa-search"></i>
+                <input
+                    type="text"
+                    name="q"
+                    id="messages-search-input"
+                    placeholder="Search party members…"
+                    autocomplete="off"
+                    value="{{ $search ?? '' }}"
+                >
+            </form>
 
-        {{-- ⭐ CONTACTS DROPDOWN (shows when search is focused) --}}
-        <div id="contacts-search-panel" class="contacts-search-panel">
-            <div class="contacts-label">⭐ Your contacts</div>
+            <div id="contacts-search-panel" class="contacts-search-panel">
+                <div class="contacts-label">Party contacts</div>
 
-            @foreach($contacts as $contact)
-                @php
-                    $online = $contact->isOnline();
-                @endphp
-                <div class="chat-item chat-filter-item" data-role="{{ $contact->role }}">
-                    <div class="chat-avatar">
-                        <img src="{{ asset('images/' . ($contact->profile_pic ?? 'default-pp.png')) }}"
-                             alt="{{ $contact->name }}">
-                        <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
-                    </div>
-                    <div class="chat-text">
-                        <div class="chat-name">
-                            {{ $contact->name }}
-                            @if($contact->role === 'teacher')
-                                <span class="role-tag">Teacher</span>
-                            @endif
+                @forelse($contacts as $contact)
+                    @php $online = $contact->isOnline(); @endphp
+                    <div class="chat-item chat-filter-item" data-role="{{ $contact->role }}">
+                        <div class="chat-avatar">
+                            <img src="{{ asset('images/' . ($contact->profile_pic ?? 'default-pp.png')) }}"
+                                 alt="{{ $contact->name }}">
+                            <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
                         </div>
-                        <div class="chat-meta-row">
-                            <div class="chat-last">
-                                {{ $contact->role === 'teacher' ? 'Teacher' : 'Student' }}
+                        <div class="chat-text">
+                            <div class="chat-name">
+                                {{ $contact->name }}
+                                @if($contact->role === 'teacher')
+                                    <span class="role-tag">Teacher</span>
+                                @endif
                             </div>
-                        </div>
-                    </div>
-
-                    {{-- start conversation --}}
-                    <form method="POST"
-                          action="{{ route($routeGroup.'.start') }}"
-                          class="contact-start-form">
-                        @csrf
-                        <input type="hidden" name="user_id" value="{{ $contact->id }}">
-                        <button type="submit">Start</button>
-                    </form>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- filters: All / Teachers / Classmates --}}
-        <div class="party-filter">
-            <button type="button" class="active filter-btn" data-filter="all">
-                <i class="fas fa-users"></i> All
-            </button>
-            <button type="button" class="filter-btn" data-filter="teacher">
-                <i class="fas fa-graduation-cap"></i> Teachers
-            </button>
-            <button type="button" class="filter-btn" data-filter="student">
-                <i class="fas fa-user-friends"></i> Classmates
-            </button>
-        </div>
-
-        <div class="messages-list" id="messages-list">
-            {{-- Existing conversations --}}
-            @forelse($conversations as $conversation)
-                @php
-                    $other = $conversation->participants
-                        ->firstWhere('id', '!=', $user->id) ?? $user;
-
-                    $unread   = $conversation->unreadCountFor($user);
-                    $isActive = optional($activeConversation)->id === $conversation->id;
-                    $online   = $other->isOnline();
-                    $last     = $conversation->lastMessage;
-                    $lastTime = $last?->created_at?->diffForHumans(null, true) ?? '';
-                    $preview  = $last
-                        ? (($last->user_id === $user->id ? 'You: ' : $last->user->name . ': ')
-                           . Str::limit($last->body, 40))
-                        : 'No messages yet';
-                @endphp
-
-                <a href="{{ route($routeGroup, ['conversation' => $conversation->id]) }}"
-                   class="chat-item chat-filter-item {{ $isActive ? 'active' : '' }}"
-                   data-role="{{ $other->role }}">
-                    <div class="chat-avatar">
-                        <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
-                             alt="{{ $other->name }}">
-                        <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
-                    </div>
-
-                    <div class="chat-text">
-                        <div class="chat-name">
-                            {{ $other->name }}
-                            @if($other->role === 'teacher')
-                                <span class="role-tag">Teacher</span>
-                            @endif
-                        </div>
-                        <div class="chat-meta-row">
-                            <div class="chat-last">{{ $preview }}</div>
-                            <div class="chat-time">{{ $lastTime }}</div>
-                        </div>
-                    </div>
-
-                    @if($unread > 0)
-                        <span class="chat-unread-badge">
-                            {{ $unread > 9 ? '9+' : $unread }}
-                        </span>
-                    @endif
-                </a>
-            @empty
-                <div style="font-size:0.8rem; color:#cbd5e1; padding:6px 4px;">
-                    No party chats yet. Start a new conversation from your contacts.
-                </div>
-            @endforelse
-
-            {{-- NOTE: contacts removed from here. They now appear only in the search dropdown. --}}
-        </div>
-    </div>
-
-    {{-- RIGHT: Active conversation --}}
-    <div class="messages-main">
-        <div class="messages-main-inner">
-            @if($activeConversation)
-                @php
-                    $other  = $activeConversation->participants
-                        ->firstWhere('id', '!=', $user->id) ?? $user;
-                    $online = $other->isOnline();
-                @endphp
-
-                <div class="messages-main-header">
-                    <div class="thread-user">
-                        <div class="thread-avatar">
-                            <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
-                                 alt="{{ $other->name }}">
-                        </div>
-                        <div class="thread-info">
-                            <h3>
-                                {{ $other->name }}
-                                <span class="badge-role">
-                                    {{ $other->role === 'teacher' ? 'Teacher' : 'Classmate' }}
-                                </span>
-                            </h3>
-                            <div class="status-row">
-                                <span class="status-dot"></span>
-                                <span>
-                                    {{ $other->role === 'teacher'
-                                        ? 'Online • Responds quickly'
-                                        : 'Party member' }}
-                                </span>
-                            </div>
-                            <div class="thread-xp-pill">
-                                <i class="fas fa-bolt"></i>
-                                Chat XP
-                                <div class="thread-xp-track">
-                                    <div class="thread-xp-fill"></div>
+                            <div class="chat-meta-row">
+                                <div class="chat-last">
+                                    {{ $contact->role === 'teacher' ? 'Mentor' : 'Classmate' }}
                                 </div>
-                                <span>320 / 500</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="thread-actions">
-                        <button type="button" class="pin">
-                            <i class="fas fa-thumbtack"></i> Pin
-                        </button>
-                        <button type="button" class="mute">
-                            <i class="fas fa-bell-slash"></i> Mute
-                        </button>
                         <form method="POST"
-                              action="{{ route($routeGroup.'.destroy', $activeConversation) }}"
-                              onsubmit="return confirm('Delete this conversation?');">
+                              action="{{ route($routeGroup.'.start') }}"
+                              class="contact-start-form">
                             @csrf
-                            @method('DELETE')
-                            <button type="submit" class="danger">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            <input type="hidden" name="user_id" value="{{ $contact->id }}">
+                            <button type="submit">Start</button>
                         </form>
                     </div>
-                </div>
+                @empty
+                    <div style="font-size:0.8rem; color:#cbd5e1; padding:8px 6px;">
+                        No contacts yet. Your teacher and classmates appear here when they have accounts.
+                    </div>
+                @endforelse
+            </div>
 
-                <div class="messages-thread" id="messages-thread">
-                    @forelse($messages as $message)
-                        @php $isMe = $message->user_id === $user->id; @endphp
-                        <div class="msg-row {{ $isMe ? 'me' : 'them' }}" data-message-id="{{ $message->id }}">
-                            <div class="msg-bubble">
-                                {{ $message->body }}
-                                <div class="msg-meta">
-                                    {{ $isMe ? 'You' : $message->user->name }}
-                                    • {{ $message->created_at->format('M d, h:i a') }}
+            <div class="party-filter">
+                <button type="button" class="active filter-btn" data-filter="all">
+                    <i class="fas fa-users"></i> All
+                </button>
+                <button type="button" class="filter-btn" data-filter="teacher">
+                    <i class="fas fa-graduation-cap"></i> Teachers
+                </button>
+                <button type="button" class="filter-btn" data-filter="student">
+                    <i class="fas fa-user-friends"></i> Classmates
+                </button>
+            </div>
+
+            <div class="messages-list" id="messages-list">
+                @forelse($conversations as $conversation)
+                    @php
+                        $other = $conversation->participants
+                            ->firstWhere('id', '!=', $user->id) ?? $user;
+
+                        $unread   = $conversation->unreadCountFor($user);
+                        $isActive = optional($activeConversation)->id === $conversation->id;
+                        $online   = $other->isOnline();
+                        $last     = $conversation->lastMessage;
+                        $lastTime = $last?->created_at?->diffForHumans(null, true) ?? '';
+                        $preview  = $last
+                            ? (($last->user_id === $user->id ? 'You: ' : $last->user->name . ': ')
+                               . Str::limit($last->body, 40))
+                            : 'No messages yet';
+                    @endphp
+
+                    <a href="{{ route($routeGroup, ['conversation' => $conversation->id]) }}"
+                       class="chat-item chat-filter-item {{ $isActive ? 'active' : '' }}"
+                       data-role="{{ $other->role }}">
+                        <div class="chat-avatar">
+                            <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
+                                 alt="{{ $other->name }}">
+                            <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
+                        </div>
+
+                        <div class="chat-text">
+                            <div class="chat-name">
+                                {{ $other->name }}
+                                @if($other->role === 'teacher')
+                                    <span class="role-tag">Teacher</span>
+                                @endif
+                            </div>
+                            <div class="chat-meta-row">
+                                <div class="chat-last">{{ $preview }}</div>
+                                <div class="chat-time">{{ $lastTime }}</div>
+                            </div>
+                        </div>
+
+                        @if($unread > 0)
+                            <span class="chat-unread-badge">
+                                {{ $unread > 9 ? '9+' : $unread }}
+                            </span>
+                        @endif
+                    </a>
+                @empty
+                    <div style="font-size:0.82rem; color:rgba(224,231,255,0.8); padding:8px 4px; line-height:1.45;">
+                        No party chats yet. Focus the search box above to open contacts.
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="messages-main">
+            <div class="messages-main-inner">
+                @if($activeConversation)
+                    @php
+                        $other  = $activeConversation->participants
+                            ->firstWhere('id', '!=', $user->id) ?? $user;
+                        $online = $other->isOnline();
+                    @endphp
+
+                    <div class="messages-main-header">
+                        <div class="thread-user">
+                            <div class="thread-avatar">
+                                <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
+                                     alt="{{ $other->name }}">
+                            </div>
+                            <div class="thread-info">
+                                <h3>
+                                    {{ $other->name }}
+                                    <span class="badge-role">
+                                        {{ $other->role === 'teacher' ? 'Teacher' : 'Classmate' }}
+                                    </span>
+                                </h3>
+                                <div class="status-row">
+                                    <span class="status-dot"></span>
+                                    <span>
+                                        {{ $other->role === 'teacher'
+                                            ? 'Your mentor'
+                                            : 'Party member' }}
+                                        @if($online)
+                                            · Online
+                                        @endif
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                    @empty
-                        <div class="empty-thread">
-                            Start the conversation and earn XP for positive communication!
+
+                        <div class="thread-actions">
+                            <button type="button" class="pin" title="Coming soon" disabled style="opacity:0.5;cursor:not-allowed;">
+                                <i class="fas fa-thumbtack"></i>
+                            </button>
+                            <form method="POST"
+                                  action="{{ route($routeGroup.'.destroy', $activeConversation) }}"
+                                  onsubmit="return confirm('Clear this chat from your inbox?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="danger" title="Clear chat">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
                         </div>
-                    @endforelse
-                </div>
-
-                <form method="POST"
-                      id="message-send-form"
-                      action="{{ route($routeGroup.'.send', $activeConversation) }}"
-                      class="messages-input-bar">
-                    @csrf
-                    <div class="messages-tools">
-                        <button type="button" title="Attach file">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                        <button type="button" title="Send emoji">
-                            <i class="fas fa-smile"></i>
-                        </button>
-                        <button type="button" title="Send sticker">
-                            <i class="fas fa-star"></i>
-                        </button>
                     </div>
 
-                    <div class="messages-input-wrapper">
-                        <input type="text"
-                               name="body"
-                               placeholder="Type your message and earn XP for positive communication…"
-                               autocomplete="off"
-                               required>
-                        <button class="messages-send-btn" type="submit">
-                            <i class="fas fa-paper-plane"></i>
-                            Send
-                        </button>
+                    <div class="messages-thread" id="messages-thread">
+                        @forelse($messages as $message)
+                            @php $isMe = $message->user_id === $user->id; @endphp
+                            <div class="msg-row {{ $isMe ? 'me' : 'them' }}" data-message-id="{{ $message->id }}">
+                                <div class="msg-bubble">
+                                    {{ $message->body }}
+                                    <div class="msg-meta">
+                                        {{ $isMe ? 'You' : $message->user->name }}
+                                        · {{ $message->created_at->format('M d, h:i a') }}
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="empty-thread">
+                                Send a message to start the quest log.
+                            </div>
+                        @endforelse
                     </div>
-                </form>
-            @else
-                <div class="empty-thread">
-                    Select a conversation on the left to begin chatting with your party.
-                </div>
-            @endif
+
+                    <form method="POST"
+                          id="message-send-form"
+                          action="{{ route($routeGroup.'.send', $activeConversation) }}"
+                          class="messages-input-bar">
+                        @csrf
+                        <div class="messages-tools">
+                            <button type="button" title="Coming soon"><i class="fas fa-paperclip"></i></button>
+                        </div>
+                        <div class="messages-input-wrapper">
+                            <input type="text"
+                                   name="body"
+                                   placeholder="Type a message to your party…"
+                                   autocomplete="off"
+                                   required>
+                            <button class="messages-send-btn" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                                Send
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    <div class="empty-thread" style="flex:1;display:flex;align-items:center;justify-content:center;">
+                        <div>
+                            <p style="font-weight:700;color:var(--text-dark);margin-bottom:8px;">Select a conversation</p>
+                            <p>Pick someone on the left or search to message your party.</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
 
+    </div>
 </div>
 
+@php
+    $__studentMessagesBoot = [
+        'pollUrl' => $pollUrl,
+        'sendTpl' => $sendUrlTemplate,
+        'convUrlTpl' => $conversationUrlTemplate,
+        'csrf' => csrf_token(),
+        'imagesBase' => asset('images/'),
+        'conversationId' => optional($activeConversation)->id,
+        'lastMessageId' => (int) ($messages->max('id') ?? 0),
+        'pollSince' => (int) ($pollSince ?? 0),
+    ];
+@endphp
+<script type="application/json" id="student-messages-boot">{!! json_encode($__studentMessagesBoot) !!}</script>
 <script>
 (function () {
     const searchInput   = document.getElementById('messages-search-input');
@@ -928,14 +822,16 @@
         window.__messagesApplyFilter();
     });
 
-    const pollUrl = @json($pollUrl);
-    const sendTpl = @json($sendUrlTemplate);
-    const convUrlTpl = @json($conversationUrlTemplate);
-    const csrf = @json(csrf_token());
-    const imagesBase = @json(asset('images/'));
-    let conversationId = @json(optional($activeConversation)->id);
-    let lastMessageId = @json((int) ($messages->max('id') ?? 0));
-    let threadSince = (conversationId && lastMessageId === 0) ? @json($pollSince ?? 0) : 0;
+    const bootEl = document.getElementById('student-messages-boot');
+    const boot = bootEl ? JSON.parse(bootEl.textContent) : {};
+    const pollUrl = boot.pollUrl || '';
+    const sendTpl = boot.sendTpl || '';
+    const convUrlTpl = boot.convUrlTpl || '';
+    const csrf = boot.csrf || '';
+    const imagesBase = boot.imagesBase || '';
+    let conversationId = boot.conversationId;
+    let lastMessageId = boot.lastMessageId || 0;
+    let threadSince = (conversationId && lastMessageId === 0) ? (boot.pollSince || 0) : 0;
 
     function buildConvUrl(id) {
         return convUrlTpl.replace('__CONV__', String(id));
@@ -951,11 +847,12 @@
         const empty = thread.querySelector('.empty-thread');
         if (empty) empty.remove();
         const row = document.createElement('div');
-        row.className = 'msg-row ' + (m.is_me ? 'me' : 'them');
-        row.dataset.messageId = m.id;
-        const who = m.is_me ? 'You' : (m.user_name || '');
+        const isMe = m.is_me === true || m.is_me === 1 || m.is_me === '1';
+        row.className = 'msg-row ' + (isMe ? 'me' : 'them');
+        row.setAttribute('data-message-id', String(m.id));
+        const who = isMe ? 'You' : (m.user_name || '');
         row.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.body) +
-            '<div class="msg-meta">' + escapeHtml(who) + ' • ' + escapeHtml(m.created_label) + '</div></div>';
+            '<div class="msg-meta">' + escapeHtml(who) + ' · ' + escapeHtml(m.created_label) + '</div></div>';
         thread.appendChild(row);
         thread.scrollTop = thread.scrollHeight;
     }
@@ -987,7 +884,7 @@
                 '<div class="chat-time">' + escapeHtml(c.last_time || '') + '</div></div></div>' + unread + '</a>';
         });
         if (!conversations.length) {
-            html = '<div style="font-size:0.8rem; color:#cbd5e1; padding:6px 4px;">No party chats yet. Start a new conversation from your contacts.</div>';
+            html = '<div style="font-size:0.82rem;color:rgba(224,231,255,0.8);padding:8px 4px;">No party chats yet.</div>';
         }
         list.innerHTML = html;
         if (typeof window.__messagesApplyFilter === 'function') {
