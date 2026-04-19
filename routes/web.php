@@ -65,6 +65,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/messages', [StudentMessagesController::class, 'index'])->name('messages');
         Route::get('/messages/poll', [StudentMessagesController::class, 'poll'])->name('messages.poll');
+        Route::get('/messages/thread/{conversation}', [StudentMessagesController::class, 'thread'])->name('messages.thread');
         Route::post('/messages/start', [StudentMessagesController::class, 'start'])->name('messages.start');
         Route::post('/messages/{conversation}/send', [StudentMessagesController::class, 'send'])->name('messages.send');
         Route::delete('/messages/{conversation}', [StudentMessagesController::class, 'destroy'])->name('messages.destroy');
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/messages', [TeacherMessagesController::class, 'index'])->name('messages');
         Route::get('/messages/poll', [TeacherMessagesController::class, 'poll'])->name('messages.poll');
+        Route::get('/messages/thread/{conversation}', [TeacherMessagesController::class, 'thread'])->name('messages.thread');
         Route::post('/messages/start', [TeacherMessagesController::class, 'start'])->name('messages.start');
         Route::post('/messages/{conversation}/send', [TeacherMessagesController::class, 'send'])->name('messages.send');
         Route::delete('/messages/{conversation}', [TeacherMessagesController::class, 'destroy'])->name('messages.destroy');
@@ -148,8 +150,8 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/lessons/{id}/edit', [TeacherLessonController::class, 'edit'])->name('lessons.edit');
     Route::post('/lessons/{id}/update', [TeacherLessonController::class, 'update'])->name('lessons.update');
     Route::delete('/lessons/{id}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
+    Route::get('/lessons/{lesson}/download', [TeacherLessonController::class, 'download'])->name('lessons.download');
 });
-Route::get('/download/{id}', [TeacherLessonController::class, 'download'])->name('teacher.lessons.download');
 
 // STUDENT LESSON ROUTES
 Route::prefix('student')->name('student.')->group(function () {
@@ -185,11 +187,18 @@ Route::prefix('teacher')->name('teacher.')->group(function () {
 Route::prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/registration', [TeacherRegistrationController::class, 'index'])->name('registration');
     Route::get('/registration/generate-code', [TeacherRegistrationController::class, 'generateCode'])->name('registration.generate-code');
+    // Opening /upload in the browser is a GET; uploads must use the form (POST). Avoid a blank error page.
+    Route::get('/registration/upload', function () {
+        return redirect()
+            ->route('teacher.registration')
+            ->with('info', 'Upload only works when you pick a file on the Registration page and click Upload. This address cannot be opened directly in the address bar.');
+    })->name('registration.upload.get');
     Route::post('/registration/upload', [TeacherRegistrationController::class, 'uploadExcel'])->name('registration.upload');
     Route::get('/registration/template', [TeacherRegistrationController::class, 'downloadTemplate'])->name('registration.template');
     Route::post('/registration/{id}/regenerate', [TeacherRegistrationController::class, 'regenerateCredentials'])->name('registration.regenerate');
     Route::post('/students/{id}/approve', [TeacherRegistrationController::class, 'approveStudent'])->name('students.approve');
     Route::post('/students/approve/bulk', [TeacherRegistrationController::class, 'bulkApproveStudents'])->name('students.approve.bulk');
+    Route::get('/students/approved', [TeacherRegistrationController::class, 'approvedStudents'])->name('students.approved');
     Route::delete('/registration/pending/{id}', [TeacherRegistrationController::class, 'destroyPending'])->name('registration.destroy-pending');
     // Students management
     Route::get('/students/{student}/edit', [TeacherRegistrationController::class, 'edit'])->name('student.edit');
@@ -287,6 +296,8 @@ Route::post('/register/validate-code', [AuthController::class, 'validateStudentC
 // Route::get('/profile', [UserController::class, 'showProfile'])->name('profile'); // TODO: Create UserController
 
 Route::prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('/quest/clone-library', [TeacherQuestController::class, 'cloneLibrary'])->name('quest.clone-library');
+    Route::post('/quest/{quest}/clone', [TeacherQuestController::class, 'cloneQuest'])->name('quest.clone');
     Route::get('/quest', [TeacherQuestController::class, 'index'])->name('quest');
     Route::get('/quest/create', [TeacherQuestController::class, 'create'])->name('quest.create');
     Route::post('/quest', [TeacherQuestController::class, 'store'])->name('quest.store');

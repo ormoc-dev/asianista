@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Lesson;
 use App\View\Concerns\LivewireViewMacros;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -26,7 +27,7 @@ class Edit extends Component
 
     public function mount($id)
     {
-        $lesson = Lesson::findOrFail($id);
+        $lesson = Lesson::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
         $this->lessonId = $lesson->id;
         $this->title = $lesson->title;
         $this->section = $lesson->section;
@@ -36,7 +37,7 @@ class Edit extends Component
     {
         $this->validate();
 
-        $lesson = Lesson::findOrFail($this->lessonId);
+        $lesson = Lesson::query()->ownedByTeacher((int) Auth::id())->findOrFail($this->lessonId);
 
         $filePath = $lesson->file_path;
 

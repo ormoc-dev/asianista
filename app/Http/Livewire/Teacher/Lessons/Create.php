@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Lesson;
 use App\View\Concerns\LivewireViewMacros;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class Create extends Component
@@ -33,15 +34,12 @@ class Create extends Component
             $filePath = $this->file->store('lessons', 'public');
         }
 
-        // Faking teacher ID as in the original controller
-        $teacherId = 1;
-
         Lesson::create([
             'title' => $this->title,
             'section' => $this->section,
             'content' => $this->content,
             'file_path' => $filePath,
-            'teacher_id' => $teacherId,
+            'teacher_id' => Auth::id(),
             'status' => 'approved',
         ]);
 

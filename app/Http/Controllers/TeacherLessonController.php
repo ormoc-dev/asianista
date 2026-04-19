@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Lesson;
 use App\Models\Grade;
 use App\Models\Section;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class TeacherLessonController extends Controller
@@ -15,8 +16,10 @@ class TeacherLessonController extends Controller
      */
     public function index()
     {
-        // For now, no authentication — show all lessons
-        $lessons = Lesson::orderBy('created_at', 'desc')->get();
+        $lessons = Lesson::query()
+            ->ownedByTeacher((int) Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('teacher.lessons.index', compact('lessons'));
     }
@@ -59,14 +62,11 @@ class TeacherLessonController extends Controller
             $filePath = $request->file('file')->store('lessons', 'public');
         }
 
-        // ✅ Temporarily fake teacher ID (since Auth isn't set up yet)
-        $teacherId = 1; // you can change this to match your dummy teacher
-
         Lesson::create([
             'title'       => $request->title,
             'content'     => $request->content,
             'file_path'   => $filePath,
-            'teacher_id'  => $teacherId,
+            'teacher_id'  => Auth::id(),
             'status'      => 'approved',
             'section'     => $sectionLabel,
             'grade_id'    => $request->grade_id,
@@ -77,17 +77,17 @@ class TeacherLessonController extends Controller
     }
 
     /**
-     * Download the uploaded lesson file.
+     * Download the uploaded lesson file (scoped to the owning teacher).
      */
-    public function download($filename)
+    public function download(Lesson $lesson)
     {
-        $path = 'lessons/' . $filename;
+        abort_unless((int) $lesson->teacher_id === (int) Auth::id(), 403);
 
-        if (Storage::disk('public')->exists($path)) {
-            return response()->download(storage_path('app/public/' . $path));
+        if (! $lesson->file_path || ! Storage::disk('public')->exists($lesson->file_path)) {
+            return back()->with('error', 'File not found.');
         }
 
-        return back()->with('error', 'File not found.');
+        return Storage::disk('public')->download($lesson->file_path);
     }
 
     /**
@@ -95,7 +95,7 @@ class TeacherLessonController extends Controller
      */
     public function edit($id)
     {
-        $lesson = Lesson::findOrFail($id);
+        $lesson = Lesson::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
         $grades = Grade::with('sections')->orderBy('name')->get();
 
         $initialGradeId = null;
@@ -120,7 +120,7 @@ class TeacherLessonController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $lesson = Lesson::findOrFail($id);
+        $lesson = Lesson::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
 
         $request->validate([
             'title'   => 'required|string|max:255',
@@ -165,7 +165,7 @@ class TeacherLessonController extends Controller
      */
     public function destroy($id)
     {
-        $lesson = Lesson::findOrFail($id);
+        $lesson = Lesson::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
 
         if ($lesson->file_path && Storage::disk('public')->exists($lesson->file_path)) {
             Storage::disk('public')->delete($lesson->file_path);

@@ -28,6 +28,8 @@
             --text-dark: #0b1020;
             --text-muted: #94a3b8;
             --header-bg: rgba(255, 255, 255, 1);
+            --sidebar-bg: #ffffff;
+            --sidebar-border: rgba(0, 0, 0, 0.05);
         }
 
         /* ... existing base styles ... */
@@ -45,17 +47,21 @@
 
       
 
-        /* SIDEBAR */
+        /* SIDEBAR — plain white, matches main header */
         aside {
             width: 270px;
-            background: linear-gradient(180deg, var(--primary), var(--secondary));
-            color: #e0e7ff;
+            background: var(--sidebar-bg);
+            color: var(--text-dark);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             position: fixed;
             top: 0; left: 0; bottom: 0;
-            box-shadow: 12px 0 24px rgba(0, 0, 0, 0.35);
+            max-height: 100vh;
+            max-height: 100dvh;
+            overflow: hidden;
+            border-right: 1px solid var(--sidebar-border);
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.04);
             z-index: 20;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
         }
@@ -64,123 +70,55 @@
             width: 90px;
         }
 
-        /* SIDEBAR HEADER - RPG STYLE */
-        .sidebar-header {
-            padding: 25px 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        /* Avatar Section */
-        .avatar-section {
+        .sidebar-main {
+            flex: 1;
+            min-height: 0;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        .avatar-ring {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            padding: 3px;
-            background: linear-gradient(135deg, var(--accent), #f59e0b);
+        .sidebar-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
             flex-shrink: 0;
         }
 
-        .avatar-img {
+        .sidebar-brand-link {
+            display: block;
+            text-align: center;
+            line-height: 0;
+        }
+
+        .sidebar-brand-logo {
             width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #1e293b;
+            max-width: 220px;
+            height: auto;
+            vertical-align: middle;
         }
 
-        .level-badge {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 24px;
-            height: 24px;
-            background: var(--accent);
-            color: #1e293b;
-            border-radius: 50%;
-            font-size: 0.7rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #1e293b;
-        }
-
-        .player-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .player-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .player-class {
-            font-size: 0.75rem;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
-        /* XP Section */
-        .xp-section {
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 10px;
-            padding: 12px 15px;
-        }
-
-        .xp-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .xp-label {
-            font-size: 0.7rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .xp-value {
-            font-size: 0.75rem;
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .xp-progress-bar {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .xp-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), #fbbf24);
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        /* SIDEBAR NAVIGATION */
         .sidebar-nav {
-            padding: 15px 12px;
+            padding: 15px 12px 20px;
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
         }
 
         .nav-section {
@@ -190,7 +128,7 @@
         .nav-label {
             display: block;
             font-size: 0.65rem;
-            color: #64748b;
+            color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 0 10px;
@@ -206,7 +144,7 @@
             text-decoration: none;
             font-size: 0.88rem;
             font-weight: 500;
-            color: #cbd5e1;
+            color: #334155;
             border-radius: 10px;
             transition: all 0.2s ease;
             white-space: nowrap;
@@ -216,7 +154,7 @@
         .nav-icon {
             width: 32px;
             height: 32px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #f1f5f9;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -227,64 +165,51 @@
 
         .nav-icon i {
             font-size: 0.95rem;
-            color: #94a3b8;
+            color: #64748b;
             transition: color 0.2s ease;
         }
 
         .nav-item:hover,
         .nav-item.active {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
+            background: rgba(0, 0, 0, 0.04);
+            color: #0b1020;
         }
 
         .nav-item:hover .nav-icon,
         .nav-item.active .nav-icon {
-            background: rgba(251, 191, 36, 0.15);
+            background: rgba(251, 191, 36, 0.2);
         }
 
         .nav-item:hover .nav-icon i,
         .nav-item.active .nav-icon i {
-            color: var(--accent);
+            color: #d97706;
         }
 
-        /* Logout Item */
         .nav-item.logout {
-            color: #f87171;
+            color: #dc2626;
         }
 
         .nav-item.logout .nav-icon i {
-            color: #f87171;
+            color: #dc2626;
         }
 
         .nav-item.logout:hover {
             background: rgba(248, 113, 113, 0.1);
-            color: #ef4444;
+            color: #b91c1c;
         }
 
         .nav-item.logout:hover .nav-icon {
-            background: rgba(248, 113, 113, 0.15);
+            background: rgba(248, 113, 113, 0.12);
         }
 
-        /* Collapsed Sidebar Styles */
-        aside.collapsed .avatar-section {
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
+        aside.collapsed .sidebar-header {
+            padding: 16px 8px;
         }
 
-        aside.collapsed .avatar-ring {
-            width: 45px;
-            height: 45px;
+        aside.collapsed .sidebar-brand-logo {
+            max-width: 56px;
         }
 
-        aside.collapsed .level-badge {
-            width: 18px;
-            height: 18px;
-            font-size: 0.6rem;
-        }
-
-        aside.collapsed .player-info,
-        aside.collapsed .xp-section,
         aside.collapsed .nav-label,
         aside.collapsed .nav-item span {
             display: none;
@@ -309,8 +234,10 @@
             font-size: 0.65rem;
             text-align: center;
             color: #64748b;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--sidebar-bg);
+            border-top: 1px solid var(--sidebar-border);
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         aside.collapsed .sidebar-footer {
@@ -1522,40 +1449,11 @@
 
     <!-- SIDEBAR -->
     <aside id="sidebar">
-        <div>
+        <div class="sidebar-main">
             <div class="sidebar-header">
-                @php
-                    $user = Auth::user();
-                    $profilePic = $user?->profile_pic ?? 'default-pp.png';
-                    $userName = $user?->name ?? 'Student';
-                    $userXP = $user?->xp ?? 0;
-                    $userLevel = floor($userXP / 100) + 1;
-                    $xpForNextLevel = $userLevel * 100;
-                    $xpProgress = ($userXP % 100);
-                @endphp
-                
-                <!-- Avatar Section -->
-                <div class="avatar-section">
-                    <div class="avatar-ring">
-                        <img src="{{ asset('images/' . $profilePic) }}" alt="Avatar" class="avatar-img">
-                        <div class="level-badge">{{ $userLevel }}</div>
-                    </div>
-                    <div class="player-info">
-                        <div class="player-name">{{ $userName }}</div>
-                        <div class="player-class">{{ ucfirst($user?->character ?? 'Adventurer') }}</div>
-                    </div>
-                </div>
-
-                <!-- XP Progress -->
-                <div class="xp-section">
-                    <div class="xp-info">
-                        <span class="xp-label">XP</span>
-                        <span class="xp-value">{{ $userXP }} / {{ $xpForNextLevel }}</span>
-                    </div>
-                    <div class="xp-progress-bar">
-                        <div class="xp-progress-fill" style="width: {{ $xpProgress }}%"></div>
-                    </div>
-                </div>
+                <a href="{{ route('student.dashboard') }}" class="sidebar-brand-link" title="Level Up ASIANISTA">
+                    <img src="{{ asset('images/logo.png') }}" alt="Level Up ASIANISTA" class="sidebar-brand-logo">
+                </a>
             </div>
 
             <nav class="sidebar-nav">

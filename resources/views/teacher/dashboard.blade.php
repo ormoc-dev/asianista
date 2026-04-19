@@ -11,16 +11,18 @@
         </div>
         <div class="stat-content">
             <h3>{{ $stats['pending_students'] }}</h3>
-            <p>Pending Student Approvals</p>
+            <p>Pending student approvals</p>
+            <p class="stat-hint">Students you registered</p>
         </div>
     </a>
-    <a href="{{ route('teacher.quest') }}" class="stat-card">
+    <a href="{{ route('teacher.students.approved') }}" class="stat-card">
         <div class="stat-icon green">
             <i class="fas fa-user-check"></i>
         </div>
         <div class="stat-content">
             <h3>{{ $stats['approved_students'] }}</h3>
-            <p>Approved Students</p>
+            <p>Approved students</p>
+            <p class="stat-hint">Your roster</p>
         </div>
     </a>
     <a href="{{ route('teacher.quest') }}" class="stat-card">
@@ -29,7 +31,8 @@
         </div>
         <div class="stat-content">
             <h3>{{ $stats['quests_created'] }}</h3>
-            <p>Quests Created</p>
+            <p>Quests created</p>
+            <p class="stat-hint">Your quests</p>
         </div>
     </a>
     <a href="{{ route('teacher.lessons.index') }}" class="stat-card">
@@ -38,7 +41,8 @@
         </div>
         <div class="stat-content">
             <h3>{{ $stats['lessons_created'] }}</h3>
-            <p>Lessons Created</p>
+            <p>Lessons created</p>
+            <p class="stat-hint">Your uploads</p>
         </div>
     </a>
     <a href="{{ route('teacher.quizzes') }}" class="stat-card">
@@ -47,7 +51,18 @@
         </div>
         <div class="stat-content">
             <h3>{{ $stats['quizzes_created'] }}</h3>
-            <p>Quizzes Created</p>
+            <p>Quizzes created</p>
+            <p class="stat-hint">Your library</p>
+        </div>
+    </a>
+    <a href="{{ route('teacher.quizzes') }}" class="stat-card">
+        <div class="stat-icon orange">
+            <i class="fas fa-hourglass-half"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ $stats['pending_quizzes'] }}</h3>
+            <p>Quizzes pending review</p>
+            <p class="stat-hint">Awaiting admin</p>
         </div>
     </a>
     <a href="{{ route('teacher.quizzes') }}" class="stat-card">
@@ -56,10 +71,27 @@
         </div>
         <div class="stat-content">
             <h3>{{ $stats['active_quizzes'] }}</h3>
-            <p>Active Quizzes</p>
+            <p>Active quizzes</p>
+            <p class="stat-hint">Live for students</p>
         </div>
     </a>
 </div>
+
+@push('styles')
+<style>
+    .stat-hint {
+        margin: 6px 0 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 400;
+        line-height: 1.3;
+    }
+    .stat-icon.orange {
+        background: rgba(234, 88, 12, 0.12);
+        color: #ea580c;
+    }
+</style>
+@endpush
 
 <div class="card">
     <div class="card-header">
@@ -67,17 +99,26 @@
     </div>
     <div class="card-body">
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{{ route('teacher.registration') }}" class="btn btn-secondary">
+                <i class="fas fa-user-plus"></i> Registration
+            </a>
+            <a href="{{ route('teacher.students.approved') }}" class="btn btn-secondary">
+                <i class="fas fa-user-check"></i> Approved students
+            </a>
             <a href="{{ route('teacher.quest.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create Quest
+                <i class="fas fa-plus"></i> Create quest
+            </a>
+            <a href="{{ route('teacher.quest.clone-library') }}" class="btn btn-secondary">
+                <i class="fas fa-copy"></i> Clone quest
             </a>
             <a href="{{ route('teacher.lessons.create') }}" class="btn btn-secondary">
-                <i class="fas fa-book"></i> Add Lesson
+                <i class="fas fa-book"></i> Add lesson
             </a>
             <a href="{{ route('teacher.quizzes.create') }}" class="btn btn-secondary">
-                <i class="fas fa-clipboard"></i> Create Quiz
+                <i class="fas fa-clipboard"></i> Create quiz
             </a>
             <a href="{{ route('teacher.gamification.create') }}" class="btn btn-secondary">
-                <i class="fas fa-star"></i> New Challenge
+                <i class="fas fa-star"></i> New challenge
             </a>
         </div>
     </div>

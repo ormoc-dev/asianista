@@ -24,6 +24,62 @@ abstract class MessageInboxController extends Controller
 
     abstract protected function sendUrlJsTemplate(): string;
 
+    /**
+     * Full thread JSON for AJAX inbox (no page reload).
+     */
+    public function thread(Request $request, Conversation $conversation)
+    {
+        $user = Auth::user();
+        $this->touchUserSeen($user);
+
+        $visible = $this->filterConversationsForUser(
+            $this->buildConversationsQuery($user, '')
+                ->where('conversations.id', $conversation->id)
+                ->get(),
+            $user
+        );
+
+        if ($visible->isEmpty()) {
+            abort(403);
+        }
+
+        $activeConversation = Conversation::with([
+            'participants',
+            'lastMessage.user',
+        ])->find($conversation->id);
+
+        if (! $activeConversation) {
+            abort(404);
+        }
+
+        $pivot = $activeConversation->participants
+            ->firstWhere('id', $user->id)
+            ?->pivot;
+
+        $deletedAt = $pivot?->deleted_at;
+
+        $messagesQuery = $activeConversation->messages()
+            ->with('user')
+            ->orderBy('created_at');
+
+        if ($deletedAt) {
+            $messagesQuery->where('created_at', '>', $deletedAt);
+        }
+
+        $messages = $messagesQuery->get();
+
+        $activeConversation->participants()
+            ->updateExistingPivot($user->id, [
+                'last_read_at' => now(),
+            ]);
+
+        return response()->json([
+            'ok' => true,
+            'conversation' => $this->conversationJson($activeConversation, $user),
+            'messages' => $messages->map(fn (Message $m) => $this->messageJson($m, $user))->values(),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -74,6 +130,8 @@ abstract class MessageInboxController extends Controller
         }
 
         $convPlaceholder = 999999998;
+        $threadPlaceholder = 999999997;
+        $destroyPlaceholder = 999999996;
 
         return view($this->inboxView(), array_merge([
             'user' => $user,
@@ -86,6 +144,9 @@ abstract class MessageInboxController extends Controller
             'pollUrl' => $this->pollUrl(),
             'sendUrlTemplate' => $this->sendUrlJsTemplate(),
             'conversationUrlTemplate' => str_replace((string) $convPlaceholder, '__CONV__', route($this->messageRouteGroup(), ['conversation' => $convPlaceholder])),
+            'threadUrlTemplate' => str_replace((string) $threadPlaceholder, '__CONV__', route($this->messageRouteGroup().'.thread', ['conversation' => $threadPlaceholder])),
+            'destroyUrlTemplate' => str_replace((string) $destroyPlaceholder, '__CONV__', route($this->messageRouteGroup().'.destroy', ['conversation' => $destroyPlaceholder])),
+            'messagesIndexUrl' => route($this->messageRouteGroup()),
             'currentUserId' => $user->id,
             'pollSince' => time(),
         ], $this->extraInboxViewData($user)));
@@ -147,6 +208,13 @@ abstract class MessageInboxController extends Controller
             });
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'conversation_id' => $conversation->id,
+            ]);
+        }
+
         return redirect()->to($this->indexRoute([
             'conversation' => $conversation->id,
         ]));
@@ -195,7 +263,7 @@ abstract class MessageInboxController extends Controller
         ]));
     }
 
-    public function destroy(Conversation $conversation)
+    public function destroy(Request $request, Conversation $conversation)
     {
         $user = Auth::user();
 
@@ -208,6 +276,10 @@ abstract class MessageInboxController extends Controller
                 'deleted_at' => now(),
                 'last_read_at' => now(),
             ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'cleared_conversation' => true]);
+        }
 
         return redirect()->to($this->indexRoute([]))
             ->with('status', 'Conversation cleared for you.');

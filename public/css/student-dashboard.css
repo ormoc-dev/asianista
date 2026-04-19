@@ -8,6 +8,8 @@
     --text-dark: #0b1020;
     --text-muted: #94a3b8;
     --header-bg: rgba(255, 255, 255, 1);
+    --sidebar-bg: #ffffff;
+    --sidebar-border: rgba(0, 0, 0, 0.05);
 }
 
 /* ... existing base styles ... */
@@ -29,11 +31,11 @@ body {
     overflow-x: hidden;
 }
 
-/* SIDEBAR */
+/* SIDEBAR — plain white, aligned with main header */
 aside {
     width: 270px;
-    background: linear-gradient(180deg, var(--primary), var(--secondary));
-    color: #e0e7ff;
+    background: var(--sidebar-bg);
+    color: var(--text-dark);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -44,7 +46,8 @@ aside {
     max-height: 100vh;
     max-height: 100dvh;
     overflow: hidden;
-    box-shadow: 12px 0 24px rgba(0, 0, 0, 0.35);
+    border-right: 1px solid var(--sidebar-border);
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.04);
     z-index: 20;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
@@ -152,7 +155,7 @@ nav a {
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #e2e8f0;
+    color: #334155;
     border-radius: 12px;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -183,8 +186,8 @@ aside.collapsed nav a span {
 
 nav a:hover,
 nav a.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--accent);
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-dark);
 }
 
 aside.collapsed nav a:hover,
@@ -206,8 +209,9 @@ aside.collapsed nav a.active {
     padding: 15px;
     font-size: 0.7rem;
     text-align: center;
-    color: #94a3b8;
-    background: rgba(15, 23, 42, 0.4);
+    color: #64748b;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--sidebar-border);
     white-space: nowrap;
     flex-shrink: 0;
 }

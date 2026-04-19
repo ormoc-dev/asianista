@@ -7,6 +7,7 @@ use App\Models\Quest;
 use App\Models\QuestQuestion;
 use App\Models\Grade;
 use App\Models\Section;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Create extends Component
@@ -306,7 +307,7 @@ class Create extends Component
                 'due_date' => $this->due_date,
                 'grade_id' => $this->grade_id,
                 'section_id' => $this->section_id,
-                // 'teacher_id' => auth()->id(), // Uncomment when auth is ready
+                'teacher_id' => Auth::id(),
             ]);
 
             foreach ($this->questions as $q) {

@@ -23,7 +23,7 @@
                     <header class="recipient-panel__header">
                     <span class="recipient-panel__kicker">Audience</span>
                     <h3 id="recipient-panel-title" class="recipient-panel__title">Who should see this event?</h3>
-                    <p class="recipient-panel__lead">Only students in the groups below will get the notification on their dashboard.</p>
+                    <p class="recipient-panel__lead">Only students you registered will get the notification on their dashboard.</p>
                     </header>
 
                     <div class="recipient-panel__options">
@@ -35,8 +35,8 @@
                                     <i class="fas fa-users"></i>
                                 </span>
                                 <span class="recipient-choice__body">
-                                    <span class="recipient-choice__label">All approved students</span>
-                                    <span class="recipient-choice__hint">Everyone who can log in as a student</span>
+                                    <span class="recipient-choice__label">All your registered students</span>
+                                    <span class="recipient-choice__hint">Approved students you added through your registration list</span>
                                 </span>
                                 <span class="recipient-choice__check" aria-hidden="true"><i class="fas fa-check"></i></span>
                             </span>
@@ -65,7 +65,7 @@
                                         <input type="number" id="randomCount" class="recipient-field__input" min="1" max="500" value="1" inputmode="numeric">
                                     </span>
                                 </label>
-                                <p class="recipient-detail__note">If you ask for more than the class size, every approved student may be included.</p>
+                                <p class="recipient-detail__note">If you ask for more than your pool size, every approved student you registered may be included.</p>
                             </div>
                         </div>
                     </div>

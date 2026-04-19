@@ -102,4 +102,13 @@ class Lesson extends Model
             }
         });
     }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeOwnedByTeacher($query, int $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
 }

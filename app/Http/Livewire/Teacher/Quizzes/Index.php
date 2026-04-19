@@ -11,7 +11,7 @@ class Index extends Component
 {
     public function delete($id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
 
         if ($quiz->file_path && Storage::disk('public')->exists($quiz->file_path)) {
             Storage::disk('public')->delete($quiz->file_path);

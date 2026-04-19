@@ -9,7 +9,12 @@ class Challenge extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'points', 'description', 'grade_id', 'section_id'];
+    protected $fillable = ['title', 'points', 'description', 'grade_id', 'section_id', 'teacher_id'];
+
+    public function teacher()
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
 
     public function grade()
     {
@@ -37,5 +42,14 @@ class Challenge extends Model
 
         return (int) $this->grade_id === (int) $user->grade_id
             && (int) $this->section_id === (int) $user->section_id;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeOwnedByTeacher($query, int $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
     }
 }

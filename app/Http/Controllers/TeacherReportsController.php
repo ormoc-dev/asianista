@@ -7,6 +7,7 @@ use App\Models\Grade;
 use App\Models\Section;
 use App\Models\User;
 use App\Models\QuestAttempt;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TeacherReportsController extends Controller
@@ -16,6 +17,8 @@ class TeacherReportsController extends Controller
      */
     public function scores(Request $request)
     {
+        $teacherId = (int) Auth::id();
+
         $grades = Grade::orderBy('name')->get();
         $gradeId = $request->query('grade_id');
         $sectionId = $request->query('section_id');
@@ -26,6 +29,7 @@ class TeacherReportsController extends Controller
         }
 
         $students = User::where('role', 'student')
+            ->registeredByTeacher($teacherId)
             ->when($gradeId, fn ($q) => $q->where('grade_id', $gradeId))
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->with(['grade', 'section'])
@@ -34,15 +38,22 @@ class TeacherReportsController extends Controller
             ->orderBy('level', 'desc')
             ->get();
 
-        // Get quest completion stats for each student
-        $questStats = QuestAttempt::select('user_id', 
-                DB::raw('COUNT(*) as total_attempts'),
-                DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_quests'),
-                DB::raw('SUM(score) as total_quest_score')
-            )
-            ->groupBy('user_id')
-            ->get()
-            ->keyBy('user_id');
+        $studentIds = $students->pluck('id');
+
+        $questStats = $studentIds->isEmpty()
+            ? collect()
+            : QuestAttempt::query()
+                ->whereIn('user_id', $studentIds)
+                ->whereHas('quest', fn ($q) => $q->where('teacher_id', $teacherId))
+                ->select(
+                    'user_id',
+                    DB::raw('COUNT(*) as total_attempts'),
+                    DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_quests'),
+                    DB::raw('SUM(score) as total_quest_score')
+                )
+                ->groupBy('user_id')
+                ->get()
+                ->keyBy('user_id');
 
         // Calculate class averages
         $classAverage = [
@@ -73,15 +84,20 @@ class TeacherReportsController extends Controller
             abort(404);
         }
 
-        // Get quest attempts
-        $questAttempts = QuestAttempt::where('user_id', $student->id)
+        $teacherId = (int) Auth::id();
+
+        abort_unless((int) $student->registered_by_teacher_id === $teacherId, 403);
+
+        $questAttempts = QuestAttempt::query()
+            ->where('user_id', $student->id)
+            ->whereHas('quest', fn ($q) => $q->where('teacher_id', $teacherId))
             ->with('quest')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get XP breakdown from random events (if tracked)
         $xpHistory = DB::table('active_events')
-            ->whereJsonContains('affected_students', $student->id)
+            ->where('active_events.teacher_id', $teacherId)
+            ->whereJsonContains('affected_students', (int) $student->id)
             ->join('random_events', 'active_events.random_event_id', '=', 'random_events.id')
             ->select('random_events.title', 'random_events.xp_reward', 'random_events.xp_penalty', 'active_events.started_at')
             ->orderBy('active_events.started_at', 'desc')
@@ -98,6 +114,8 @@ class TeacherReportsController extends Controller
         if ($student->role !== 'student') {
             abort(404);
         }
+
+        abort_unless((int) $student->registered_by_teacher_id === (int) Auth::id(), 403);
 
         $validated = $request->validate([
             'xp' => 'required|integer|min:0',

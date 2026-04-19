@@ -35,6 +35,20 @@ class Quest extends Model
         return $this->hasMany(QuestAttempt::class);
     }
 
+    public function teacher()
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeOwnedByTeacher($query, int $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
+
     /**
      * Same rules as Quiz::isVisibleToStudent: untargeted quests (no grade/section) are visible
      * to all students; targeted quests require the student's roster grade and section to match.

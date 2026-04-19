@@ -7,6 +7,7 @@ use App\Models\RandomEvent;
 use App\Models\ActiveEvent;
 use App\Models\EventDrawHistory;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class TeacherRandomEventController extends Controller
@@ -16,12 +17,15 @@ class TeacherRandomEventController extends Controller
      */
     public function index()
     {
+        $teacherId = Auth::id();
+
         $drawHistory = EventDrawHistory::with('randomEvent')
-            ->where('teacher_id', auth()->id())
+            ->where('teacher_id', $teacherId)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         $students = User::where('role', 'student')
+            ->registeredByTeacher($teacherId)
             ->where('status', 'approved')
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -49,8 +53,11 @@ class TeacherRandomEventController extends Controller
             return response()->json(['error' => 'No active events found'], 404);
         }
 
+        $teacherId = Auth::id();
+
         $mode = $validated['recipient_mode'];
         $pool = User::where('role', 'student')
+            ->registeredByTeacher($teacherId)
             ->where('status', 'approved')
             ->pluck('id')
             ->all();
@@ -80,6 +87,7 @@ class TeacherRandomEventController extends Controller
             }
 
             $recipientStudentIds = User::where('role', 'student')
+                ->registeredByTeacher($teacherId)
                 ->where('status', 'approved')
                 ->whereIn('id', $requested)
                 ->pluck('id')

@@ -708,7 +708,7 @@
 
                                 <form method="POST"
                                       action="{{ route($routeGroup.'.start') }}"
-                                      class="contact-start-form">
+                                      class="contact-start-form js-contact-start">
                                     @csrf
                                     <input type="hidden" name="user_id" value="{{ $contact->id }}">
                                     <button type="submit">Chat</button>
@@ -753,6 +753,7 @@
 
                             <a href="{{ route($routeGroup, ['conversation' => $conversation->id]) }}"
                                class="chat-item chat-filter-item {{ $isActive ? 'active' : '' }}"
+                               data-conv-id="{{ $conversation->id }}"
                                data-role="{{ $other->role }}"
                                data-my-class="{{ $isMyClass ? '1' : '0' }}">
                                 <div class="chat-avatar">
@@ -792,6 +793,7 @@
 
                 <div class="messages-main">
                     <div class="messages-main-inner">
+                        <div id="messages-main-panel">
                         @if($activeConversation)
                             @php
                                 $other  = $activeConversation->participants
@@ -900,6 +902,7 @@
                                 </div>
                             </div>
                         @endif
+                        </div>
                     </div>
                 </div>
 
@@ -912,6 +915,9 @@
         'pollUrl' => $pollUrl,
         'sendTpl' => $sendUrlTemplate,
         'convUrlTpl' => $conversationUrlTemplate,
+        'threadTpl' => $threadUrlTemplate,
+        'destroyTpl' => $destroyUrlTemplate,
+        'indexUrl' => $messagesIndexUrl,
         'csrf' => csrf_token(),
         'imagesBase' => asset('images/'),
         'conversationId' => optional($activeConversation)->id,
@@ -922,7 +928,9 @@
 <script type="application/json" id="teacher-messages-boot">{!! json_encode($__teacherMessagesBoot) !!}</script>
 <script>
 (function () {
+    const inboxScope    = '.teacher-inbox-page';
     const searchInput   = document.getElementById('messages-search-input');
+    const searchForm    = document.querySelector('.teacher-inbox-page .messages-search');
     const contactsPanel = document.getElementById('contacts-search-panel');
     let activeFilter    = 'all';
 
@@ -946,7 +954,7 @@
 
     document.addEventListener('click', function (e) {
         const wrap = e.target.closest('.messages-wrapper');
-        if (!wrap) return;
+        if (!wrap || !wrap.closest(inboxScope)) return;
         const btn = e.target.closest('.filter-btn');
         if (!btn) return;
         wrap.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -960,6 +968,9 @@
     const pollUrl = boot.pollUrl || '';
     const sendTpl = boot.sendTpl || '';
     const convUrlTpl = boot.convUrlTpl || '';
+    const threadTpl = boot.threadTpl || '';
+    const destroyTpl = boot.destroyTpl || '';
+    const indexUrl = boot.indexUrl || '';
     const csrf = boot.csrf || '';
     const imagesBase = boot.imagesBase || '';
     let conversationId = boot.conversationId;
@@ -972,6 +983,127 @@
     function buildSendUrl(id) {
         return sendTpl.replace('__CONV__', String(id));
     }
+    function buildThreadUrl(id) {
+        return threadTpl.replace('__CONV__', String(id));
+    }
+    function buildDestroyUrl(id) {
+        return destroyTpl.replace('__CONV__', String(id));
+    }
+
+    function pushConversationUrl(id) {
+        try {
+            const u = new URL(indexUrl || window.location.pathname, window.location.origin);
+            if (id) {
+                u.searchParams.set('conversation', String(id));
+            } else {
+                u.searchParams.delete('conversation');
+            }
+            history.pushState({ teacherConv: id || null }, '', u.pathname + u.search);
+        } catch (err) {
+            console.warn('pushState', err);
+        }
+    }
+
+    function setSidebarActive(id) {
+        document.querySelectorAll('#messages-list .chat-item').forEach(function (a) {
+            const cid = a.dataset.convId;
+            a.classList.toggle('active', id != null && String(cid) === String(id));
+        });
+    }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function buildTeacherThreadHtml(conv, messages) {
+        const o = conv.other;
+        const myClass = conv.is_my_class_student === true || conv.is_my_class_student === 1;
+        const pic = imagesBase + (o.pic || 'default-pp.png');
+        let roleBadges = '<span class="badge-role">' + (o.role === 'teacher' ? 'Teacher' : 'Student') + '</span>';
+        if (myClass && o.role !== 'teacher') {
+            roleBadges += '<span class="badge-role" style="background:#fef3c7;color:#92400e;">My class</span>';
+        }
+        const statusText = o.role === 'teacher' ? 'Colleague' : (myClass ? 'Student in your roster' : 'Student (outside current roster)');
+        const onlineExtra = o.online ? ' · Online' : '';
+        const sendUrl = buildSendUrl(conv.id);
+        let msgs = '';
+        messages.forEach(function (m) {
+            const isMe = m.is_me === true || m.is_me === 1 || m.is_me === '1';
+            msgs += '<div class="msg-row ' + (isMe ? 'me' : 'them') + '" data-message-id="' + m.id + '"><div class="msg-bubble">' +
+                escapeHtml(m.body) + '<div class="msg-meta">' + escapeHtml(isMe ? 'You' : (m.user_name || '')) +
+                ' · ' + escapeHtml(m.created_label) + '</div></div></div>';
+        });
+        if (!messages.length) {
+            msgs = '<div class="empty-thread">Say hello — keep communication clear and supportive.</div>';
+        }
+        return (
+            '<div class="messages-main-header">' +
+            '<div class="thread-user">' +
+            '<div class="thread-avatar"><img src="' + escapeHtml(pic) + '" alt=""></div>' +
+            '<div class="thread-info"><h3>' + escapeHtml(o.name) + ' ' + roleBadges + '</h3>' +
+            '<div class="status-row"><span class="status-dot"></span><span>' + escapeHtml(statusText) + onlineExtra + '</span></div></div></div>' +
+            '<div class="thread-actions">' +
+            '<button type="button" class="pin" title="Coming soon"><i class="fas fa-thumbtack"></i> Pin</button>' +
+            '<button type="button" class="danger js-clear-thread" title="Clear conversation"><i class="fas fa-trash-alt"></i></button></div></div>' +
+            '<div class="messages-thread" id="messages-thread">' + msgs + '</div>' +
+            '<form method="POST" id="message-send-form" class="messages-input-bar" action="' + escapeHtml(sendUrl) + '">' +
+            '<input type="hidden" name="_token" value="' + escapeHtml(csrf) + '">' +
+            '<div class="messages-tools"><button type="button" title="Attach (coming soon)" disabled style="opacity:0.45;cursor:not-allowed;"><i class="fas fa-paperclip"></i></button></div>' +
+            '<div class="messages-input-wrapper">' +
+            '<input type="text" name="body" placeholder="Write a message…" autocomplete="off" required>' +
+            '<button class="messages-send-btn" type="submit"><i class="fas fa-paper-plane"></i> Send</button></div></form>'
+        );
+    }
+
+    function showEmptyPanel(opts) {
+        opts = opts || {};
+        const panel = document.getElementById('messages-main-panel');
+        if (!panel) return;
+        panel.innerHTML =
+            '<div class="empty-thread" style="flex:1;display:flex;align-items:center;justify-content:center;">' +
+            '<div><p style="font-weight:600;color:var(--text-primary);margin-bottom:8px;">Select a conversation</p>' +
+            '<p>Choose someone on the left, or search to start a new chat with your class or a colleague.</p></div></div>';
+        conversationId = null;
+        lastMessageId = 0;
+        threadSince = 0;
+        setSidebarActive(null);
+        if (!opts.skipHistory) {
+            pushConversationUrl(null);
+        }
+    }
+
+    async function loadConversation(convId, opts) {
+        opts = opts || {};
+        const id = parseInt(convId, 10);
+        if (!id) return;
+        const panel = document.getElementById('messages-main-panel');
+        if (!panel || !threadTpl) return;
+        try {
+            const r = await fetch(buildThreadUrl(id), {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!r.ok) return;
+            const data = await r.json();
+            if (!data.ok) return;
+            const conv = data.conversation;
+            const messages = data.messages || [];
+            panel.innerHTML = buildTeacherThreadHtml(conv, messages);
+            conversationId = conv.id;
+            lastMessageId = messages.reduce(function (acc, m) { return Math.max(acc, m.id); }, 0);
+            threadSince = (conversationId && lastMessageId === 0) ? Math.floor(Date.now() / 1000) : 0;
+            const thread = document.getElementById('messages-thread');
+            if (thread) thread.scrollTop = thread.scrollHeight;
+            if (!opts.skipHistory) {
+                pushConversationUrl(conversationId);
+            }
+            setSidebarActive(conversationId);
+        } catch (e) {
+            console.error('loadConversation', e);
+        }
+    }
 
     function appendMessage(m) {
         const thread = document.getElementById('messages-thread');
@@ -980,20 +1112,14 @@
         const empty = thread.querySelector('.empty-thread');
         if (empty) empty.remove();
         const row = document.createElement('div');
-        row.className = 'msg-row ' + (m.is_me ? 'me' : 'them');
-        row.dataset.messageId = m.id;
-        const who = m.is_me ? 'You' : (m.user_name || '');
+        const isMe = m.is_me === true || m.is_me === 1 || m.is_me === '1';
+        row.className = 'msg-row ' + (isMe ? 'me' : 'them');
+        row.setAttribute('data-message-id', String(m.id));
+        const who = isMe ? 'You' : (m.user_name || '');
         row.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.body) +
             '<div class="msg-meta">' + escapeHtml(who) + ' · ' + escapeHtml(m.created_label) + '</div></div>';
         thread.appendChild(row);
         thread.scrollTop = thread.scrollHeight;
-    }
-
-    function escapeHtml(s) {
-        if (!s) return '';
-        const d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
     }
 
     function renderSidebarList(conversations) {
@@ -1064,7 +1190,8 @@
                 threadSince = 0;
             }
             if (data.cleared_conversation) {
-                window.location.reload();
+                showEmptyPanel({ skipHistory: true });
+                pushConversationUrl(null);
             }
         } catch (e) {
             console.warn('messages poll', e);
@@ -1073,7 +1200,7 @@
 
     function startPolling() {
         if (pollTimer) clearInterval(pollTimer);
-        pollTimer = setInterval(poll, 3000);
+        pollTimer = setInterval(poll, 2500);
         window.__msgPollTimer = pollTimer;
         poll();
     }
@@ -1089,8 +1216,99 @@
         }
     });
 
+    document.addEventListener('click', function (e) {
+        const scope = e.target.closest(inboxScope);
+        if (!scope) return;
+        const link = e.target.closest('#messages-list a.chat-item');
+        if (link) {
+            e.preventDefault();
+            const cid = link.dataset.convId;
+            if (cid) loadConversation(cid, {});
+            return;
+        }
+        if (e.target.closest('.js-clear-thread')) {
+            e.preventDefault();
+            if (!conversationId || !confirm('Clear this conversation from your inbox?')) return;
+            const fd = new FormData();
+            fd.append('_token', csrf);
+            fd.append('_method', 'DELETE');
+            fetch(buildDestroyUrl(conversationId), {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data && data.ok) {
+                    showEmptyPanel({});
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+        }
+    });
+
+    document.addEventListener('submit', function (e) {
+        const scope = e.target.closest(inboxScope);
+        if (!scope) return;
+        const form = e.target;
+        if (form.classList && form.classList.contains('js-contact-start')) {
+            e.preventDefault();
+            const fd = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data && data.ok && data.conversation_id) {
+                    if (contactsPanel) contactsPanel.style.display = 'none';
+                    loadConversation(data.conversation_id, {});
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+            return;
+        }
+        if (form.id === 'message-send-form') {
+            e.preventDefault();
+            if (!conversationId) return;
+            const input = form.querySelector('input[name="body"]');
+            const body = (input && input.value || '').trim();
+            if (!body) return;
+            const fd = new FormData();
+            fd.append('body', body);
+            fd.append('_token', csrf);
+            fetch(buildSendUrl(conversationId), {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) { return res.json(); }).then(function (data) {
+                if (data.ok && data.message) {
+                    input.value = '';
+                    appendMessage(data.message);
+                    lastMessageId = Math.max(lastMessageId, data.message.id);
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+        }
+    });
+
+    window.addEventListener('popstate', function () {
+        const params = new URLSearchParams(window.location.search);
+        const c = params.get('conversation');
+        if (c) {
+            loadConversation(c, { skipHistory: true });
+        } else {
+            showEmptyPanel({ skipHistory: true });
+        }
+    });
+
     function bootMessagesInbox() {
         window.__messagesApplyFilter();
+
+        if (searchForm && !searchForm.dataset.ajaxSearch) {
+            searchForm.dataset.ajaxSearch = '1';
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                poll();
+            });
+        }
 
         if (searchInput && contactsPanel && !searchInput.dataset.panelBound) {
             searchInput.dataset.panelBound = '1';
@@ -1109,38 +1327,6 @@
             });
         }
 
-        const sendForm = document.getElementById('message-send-form');
-        if (sendForm && conversationId && !sendForm.dataset.ajaxBound) {
-            sendForm.dataset.ajaxBound = '1';
-            sendForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const input = sendForm.querySelector('input[name="body"]');
-                const body = (input && input.value || '').trim();
-                if (!body) return;
-                const fd = new FormData();
-                fd.append('body', body);
-                fd.append('_token', csrf);
-                try {
-                    const res = await fetch(buildSendUrl(conversationId), {
-                        method: 'POST',
-                        body: fd,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    const data = await res.json();
-                    if (data.ok && data.message) {
-                        input.value = '';
-                        appendMessage(data.message);
-                        lastMessageId = Math.max(lastMessageId, data.message.id);
-                        poll();
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-            });
-        }
         startPolling();
     }
 

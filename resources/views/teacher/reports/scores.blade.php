@@ -4,6 +4,9 @@
 @section('page-title', 'Student Scores')
 
 @section('content')
+<p style="margin: 0 0 16px; color: var(--text-muted); font-size: 0.95rem;">
+    Students listed are <strong>those you registered</strong>. Quest activity columns include only attempts on <strong>your</strong> quests.
+</p>
 <!-- Simple Stats -->
 <div class="card" style="margin-bottom: 20px;">
     <div class="card-body">

@@ -6,29 +6,41 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\Challenge;
 use App\Models\QuestAttempt;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
     public function deleteChallenge($id)
     {
-        Challenge::destroy($id);
+        $challenge = Challenge::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
+        $challenge->delete();
         session()->flash('success', '🗑 Challenge deleted successfully!');
     }
 
     public function render()
     {
-        // Calculate leaderboard based on student XP (sum of QuestAttempt scores)
+        $teacherId = (int) Auth::id();
+
         $students = User::where('role', 'student')
-            ->withSum('questAttempts as points_sum_value', 'score')
-            ->orderBy('points_sum_value', 'desc')
+            ->registeredByTeacher($teacherId)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
             ->get();
 
-        // Calculate Level (simple logic: 1 level per 200 XP)
         foreach ($students as $student) {
+            $student->points_sum_value = (int) QuestAttempt::query()
+                ->where('user_id', $student->id)
+                ->whereHas('quest', fn ($q) => $q->where('teacher_id', $teacherId))
+                ->sum('score');
             $student->level = floor(($student->points_sum_value ?? 0) / 200) + 1;
         }
 
-        $challenges = Challenge::orderBy('created_at', 'desc')->get();
+        $students = $students->sortByDesc('points_sum_value')->values();
+
+        $challenges = Challenge::query()
+            ->ownedByTeacher($teacherId)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('livewire.teacher.gamification.index', [
             'students' => $students,

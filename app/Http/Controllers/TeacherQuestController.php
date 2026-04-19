@@ -7,6 +7,8 @@ use App\Models\Grade;
 use App\Models\Quest;
 use App\Models\QuestAttempt;
 use App\Models\QuestQuestion;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,16 +16,103 @@ class TeacherQuestController extends Controller
 {
     public function index()
     {
-        $quests = Quest::with(['grade', 'section'])->latest()->get();
+        $quests = Quest::query()
+            ->ownedByTeacher((int) Auth::id())
+            ->with(['grade', 'section'])
+            ->latest()
+            ->get();
+
         return view('teacher.quest.index', compact('quests'));
+    }
+
+    /**
+     * Quests from other teachers (or legacy with no owner) available to copy into your account.
+     */
+    public function cloneLibrary()
+    {
+        $teacherId = (int) Auth::id();
+
+        $quests = Quest::query()
+            ->with(['grade', 'section', 'teacher'])
+            ->where(function ($q) use ($teacherId) {
+                $q->whereNull('teacher_id')
+                    ->orWhere('teacher_id', '!=', $teacherId);
+            })
+            ->latest()
+            ->get();
+
+        return view('teacher.quest.clone-library', compact('quests'));
+    }
+
+    /**
+     * Duplicate a quest (any source) into the current teacher's library.
+     */
+    public function cloneQuest(Quest $quest)
+    {
+        $teacherId = (int) Auth::id();
+
+        try {
+            $newQuest = DB::transaction(function () use ($quest, $teacherId) {
+                $quest->load('questions');
+
+                $mapPath = $this->replicateQuestMapImage($quest->map_image);
+
+                $copy = Quest::create([
+                    'title' => $this->uniqueCloneTitle($quest->title, $teacherId),
+                    'description' => $quest->description,
+                    'difficulty' => $quest->difficulty,
+                    'map_image' => $mapPath,
+                    'level' => $quest->level,
+                    'xp_reward' => $quest->xp_reward,
+                    'ab_reward' => $quest->ab_reward,
+                    'gp_reward' => $quest->gp_reward,
+                    'time_limit_minutes' => $quest->time_limit_minutes,
+                    'hp_penalty' => $quest->hp_penalty ?? 10,
+                    'assign_date' => $quest->assign_date,
+                    'due_date' => $quest->due_date,
+                    'grade_id' => $quest->grade_id,
+                    'section_id' => $quest->section_id,
+                    'teacher_id' => $teacherId,
+                ]);
+
+                foreach ($quest->questions as $q) {
+                    QuestQuestion::create([
+                        'quest_id' => $copy->id,
+                        'question' => $q->question,
+                        'type' => $q->type,
+                        'points' => $q->points,
+                        'level' => $q->level,
+                        'options' => $q->options,
+                        'answer' => $q->answer,
+                    ]);
+                }
+
+                return $copy;
+            });
+
+            return redirect()
+                ->route('teacher.quest.edit', $newQuest)
+                ->with('success', 'Quest copied to your library. Review dates and details, then save.');
+        } catch (\Throwable $e) {
+            Log::error('Quest clone failed: '.$e->getMessage(), ['quest_id' => $quest->id]);
+
+            return redirect()
+                ->route('teacher.quest.clone-library')
+                ->with('error', 'Could not clone this quest. Please try again.');
+        }
     }
 
     public function show(Quest $quest)
     {
+        $teacherId = (int) Auth::id();
+
+        abort_unless((int) $quest->teacher_id === $teacherId, 403);
+
         $quest->load(['questions', 'grade', 'section']);
 
         $attempts = QuestAttempt::with(['user', 'currentQuestion'])
             ->where('quest_id', $quest->id)
+            ->whereHas('user', fn ($q) => $q->where('registered_by_teacher_id', $teacherId))
             ->get();
 
         $isExpired = $quest->due_date ? now()->gt($quest->due_date) : false;
@@ -94,6 +183,7 @@ class TeacherQuestController extends Controller
 
         return view('teacher.quest.show', compact('quest', 'studentsByQuestion'));
     }
+
     public function create()
     {
         $grades = Grade::with('sections')->get();
@@ -102,6 +192,8 @@ class TeacherQuestController extends Controller
 
     public function edit(Quest $quest)
     {
+        abort_unless((int) $quest->teacher_id === (int) Auth::id(), 403);
+
         $quest->load(['questions', 'grade', 'section']);
         $grades = Grade::with('sections')->get();
 
@@ -161,7 +253,7 @@ class TeacherQuestController extends Controller
                 'due_date' => $request->due_date,
                 'grade_id' => $request->grade_id,
                 'section_id' => $request->section_id,
-                // Uncomment when teacher auth is fully ready: 'teacher_id' => auth()->id(),
+                'teacher_id' => Auth::id(),
             ]);
 
             foreach ($request->questions as $q) {
@@ -189,6 +281,8 @@ class TeacherQuestController extends Controller
 
     public function update(Request $request, Quest $quest)
     {
+        abort_unless((int) $quest->teacher_id === (int) Auth::id(), 403);
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -307,5 +401,33 @@ class TeacherQuestController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to update the quest. Please try again.');
         }
+    }
+
+    protected function replicateQuestMapImage(?string $mapImage): ?string
+    {
+        if (! $mapImage || $mapImage === 'quest_map_bg.png' || ! str_starts_with($mapImage, 'quest_maps/')) {
+            return $mapImage;
+        }
+
+        if (! Storage::disk('public')->exists($mapImage)) {
+            return $mapImage;
+        }
+
+        $newName = 'quest_maps/'.uniqid('copy_', true).'_'.basename($mapImage);
+        Storage::disk('public')->copy($mapImage, $newName);
+
+        return $newName;
+    }
+
+    protected function uniqueCloneTitle(string $baseTitle, int $teacherId): string
+    {
+        $title = $baseTitle.' (Copy)';
+        $n = 2;
+        while (Quest::query()->ownedByTeacher($teacherId)->where('title', $title)->exists()) {
+            $title = $baseTitle.' (Copy '.$n.')';
+            $n++;
+        }
+
+        return $title;
     }
 }

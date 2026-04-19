@@ -35,6 +35,7 @@ class User extends Authenticatable
         'middle_name',
         'grade_id',
         'section_id',
+        'registered_by_teacher_id',
     ];
 
     /**
@@ -70,6 +71,18 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Message::class);
     }
 
+    /** Feedback entries this student received from teachers */
+    public function feedbackFromTeachers()
+    {
+        return $this->hasMany(StudentFeedback::class, 'student_id');
+    }
+
+    /** Feedback this teacher sent to students */
+    public function feedbackSentToStudents()
+    {
+        return $this->hasMany(StudentFeedback::class, 'teacher_id');
+    }
+
     public function questAttempts()
     {
         return $this->hasMany(\App\Models\QuestAttempt::class);
@@ -88,6 +101,19 @@ class User extends Authenticatable
     public function section()
     {
         return $this->belongsTo(Section::class, 'section_id');
+    }
+
+    public function registeredByTeacher()
+    {
+        return $this->belongsTo(User::class, 'registered_by_teacher_id');
+    }
+
+    /**
+     * Students created from registration codes issued by this teacher.
+     */
+    public function scopeRegisteredByTeacher($query, int $teacherId)
+    {
+        return $query->where('registered_by_teacher_id', $teacherId);
     }
 
     public function isOnline(): bool

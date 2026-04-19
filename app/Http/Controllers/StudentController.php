@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\QuestAttempt;
 use App\Models\QuizAttempt;
+use App\Models\RegistrationCode;
+use App\Models\StudentFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,8 +24,14 @@ class StudentController extends Controller
         return view('student.dashboard', compact('activeQuest', 'activeAttempt'));
     }
 
-    public function registration() {
-        return view('student.sections.registration');
+    public function registration()
+    {
+        $registrationRecord = RegistrationCode::query()
+            ->where('user_id', Auth::id())
+            ->with(['teacher:id,name,profile_pic,email', 'grade', 'section'])
+            ->first();
+
+        return view('student.sections.registration', compact('registrationRecord'));
     }
 
     public function gamification() {
@@ -94,8 +102,22 @@ class StudentController extends Controller
         ));
     }
 
-    public function feedback() {
-        return view('student.sections.feedback');
+    public function feedback()
+    {
+        $studentId = (int) Auth::id();
+
+        StudentFeedback::query()
+            ->where('student_id', $studentId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        $feedbacks = StudentFeedback::query()
+            ->where('student_id', $studentId)
+            ->with('teacher:id,name,profile_pic')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('student.sections.feedback', compact('feedbacks'));
     }
 
     public function motivation() {

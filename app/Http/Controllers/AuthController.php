@@ -337,6 +337,7 @@ class AuthController extends Controller
                 'ap'          => 0,
                 'xp'          => 0,
                 'level'       => 1,
+                'registered_by_teacher_id' => $registrationCode->teacher_id,
             ]);
 
             // Mark the code as used and link to user

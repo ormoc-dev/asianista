@@ -5,11 +5,16 @@
 
 @section('content')
 <div class="card" style="margin-bottom: 24px;">
-    <div class="card-header">
+    <div class="card-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
         <h2 class="card-title">Quest Board</h2>
-        <a href="{{ route('teacher.quest.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create Quest
-        </a>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <a href="{{ route('teacher.quest.clone-library') }}" class="btn btn-secondary">
+                <i class="fas fa-copy"></i> Clone from library
+            </a>
+            <a href="{{ route('teacher.quest.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Quest
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <div class="form-group" style="margin-bottom: 0;">

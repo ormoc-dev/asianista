@@ -103,7 +103,7 @@ class TeacherQuizController extends Controller
      */
     public function edit($id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
         $grades = Grade::orderBy('name')->get();
 
         return view('teacher.quizzes.edit', compact('quiz', 'grades'));
@@ -114,7 +114,7 @@ class TeacherQuizController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -181,7 +181,7 @@ class TeacherQuizController extends Controller
      */
     public function destroy($id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
 
         if ($quiz->file_path && Storage::disk('public')->exists($quiz->file_path)) {
             Storage::disk('public')->delete($quiz->file_path);
@@ -202,6 +202,7 @@ class TeacherQuizController extends Controller
         
         $attempts = QuizAttempt::with('student')
             ->where('quiz_id', $id)
+            ->whereHas('student', fn ($q) => $q->where('registered_by_teacher_id', Auth::id()))
             ->orderBy('score', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();

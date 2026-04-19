@@ -10,7 +10,12 @@
 </style>
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
-        <h2 class="card-title">Class Leaderboard</h2>
+        <div>
+            <h2 class="card-title">Class Leaderboard</h2>
+            <p style="margin: 8px 0 0; color: var(--text-muted); font-size: 0.9rem; max-width: 720px;">
+                Students shown are <strong>yours</strong> (registered under your account). Quest points in the ranking count only from <strong>your</strong> quests. Challenges below are <strong>challenges you created</strong>.
+            </p>
+        </div>
         <a href="{{ route('teacher.gamification.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Create Challenge
         </a>

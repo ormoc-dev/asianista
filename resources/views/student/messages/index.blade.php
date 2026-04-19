@@ -13,12 +13,10 @@
     }
 
     .student-inbox-scope {
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.85);
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(10px);
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
     }
 
     .student-inbox-scope .messages-wrapper {
@@ -26,15 +24,18 @@
         grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
         gap: 0;
         min-height: 560px;
+        border: 1px solid var(--border, #e2e8f0);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
     }
 
     .student-inbox-scope .messages-sidebar {
-        background: linear-gradient(180deg, var(--primary), var(--secondary));
+        background: #312e81;
         color: #e0e7ff;
         display: flex;
         flex-direction: column;
-        padding: 18px 14px;
-        position: relative;
+        padding: 18px 14px 16px;
         border-right: 1px solid rgba(255, 255, 255, 0.12);
     }
 
@@ -45,88 +46,93 @@
     .student-inbox-scope .messages-sidebar-header h3 {
         font-size: 1.05rem;
         font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 8px;
         color: #fff;
-        margin-bottom: 6px;
-    }
-
-    .student-inbox-scope .messages-sidebar-header h3 i {
-        color: var(--accent);
+        margin: 0 0 4px;
     }
 
     .student-inbox-scope .inbox-sub {
         font-size: 0.8rem;
-        color: rgba(224, 231, 255, 0.85);
+        color: rgba(224, 231, 255, 0.78);
         line-height: 1.45;
+        margin: 0;
     }
 
     .student-inbox-scope .messages-search {
         position: relative;
+        z-index: 5;
         margin-bottom: 10px;
     }
 
     .student-inbox-scope .messages-search input {
         width: 100%;
-        padding: 9px 12px 9px 36px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 9px 12px 9px 34px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         outline: none;
         font-size: 0.85rem;
-        background: rgba(15, 23, 42, 0.35);
+        background: rgba(0, 0, 0, 0.2);
         color: #f8fafc;
     }
 
+    .student-inbox-scope .messages-search input:focus {
+        border-color: rgba(255, 255, 255, 0.35);
+    }
+
     .student-inbox-scope .messages-search input::placeholder {
-        color: rgba(203, 213, 225, 0.8);
+        color: rgba(203, 213, 225, 0.7);
     }
 
     .student-inbox-scope .messages-search i {
         position: absolute;
-        left: 12px;
+        left: 11px;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--accent);
-        font-size: 0.85rem;
+        color: rgba(253, 230, 138, 0.85);
+        font-size: 0.82rem;
     }
 
     .student-inbox-scope .party-filter {
         display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
+        gap: 4px;
         margin-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .student-inbox-scope .party-filter button {
         flex: 1;
         min-width: 0;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 7px 8px;
-        font-size: 0.72rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        padding: 8px 4px;
+        font-size: 0.7rem;
         font-weight: 600;
         cursor: pointer;
-        background: rgba(15, 23, 42, 0.25);
-        color: #e0e7ff;
+        background: none;
+        color: rgba(224, 231, 255, 0.65);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 4px;
-        transition: background 0.15s, border-color 0.15s;
+    }
+
+    .student-inbox-scope .party-filter button i {
+        font-size: 0.7rem;
+        opacity: 0.85;
     }
 
     .student-inbox-scope .party-filter button.active {
-        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        color: var(--text-dark);
-        border-color: transparent;
+        color: #fde68a;
+        border-bottom-color: #fde68a;
     }
 
     .student-inbox-scope .messages-list {
+        position: relative;
+        z-index: 1;
         flex: 1;
         overflow-y: auto;
         padding-right: 4px;
-        min-height: 100px;
+        min-height: 120px;
     }
 
     .student-inbox-scope .messages-list::-webkit-scrollbar {
@@ -142,22 +148,23 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 9px 8px;
-        border-radius: 12px;
+        padding: 8px 6px;
+        border-radius: 0;
         text-decoration: none;
         color: inherit;
         position: relative;
         transition: background 0.15s;
-        border: 1px solid transparent;
+        border: none;
+        border-left: 3px solid transparent;
     }
 
     .student-inbox-scope .chat-item:hover {
-        background: rgba(15, 23, 42, 0.25);
+        background: rgba(255, 255, 255, 0.06);
     }
 
     .student-inbox-scope .chat-item.active {
-        background: rgba(255, 212, 59, 0.2);
-        border-color: rgba(255, 212, 59, 0.45);
+        background: rgba(255, 255, 255, 0.1);
+        border-left-color: #fde68a;
     }
 
     .student-inbox-scope .chat-item.active .chat-name,
@@ -175,14 +182,20 @@
         overflow: visible;
     }
 
-    .student-inbox-scope .chat-avatar img,
+    .student-inbox-scope .chat-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
     .student-inbox-scope .thread-avatar img {
         width: 100%;
         height: 100%;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid rgba(255, 212, 59, 0.5);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border, #e2e8f0);
     }
 
     .student-inbox-scope .chat-status-dot {
@@ -290,15 +303,15 @@
         position: absolute;
         left: 14px;
         right: 14px;
-        top: 128px;
-        z-index: 25;
+        top: 158px;
+        z-index: 30;
         max-height: 280px;
         overflow-y: auto;
-        background: rgba(15, 23, 42, 0.97);
-        border-radius: 14px;
+        background: #1e1b4b;
+        border-radius: 8px;
         padding: 10px 8px;
-        border: 1px solid rgba(255, 212, 59, 0.25);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
     }
 
     .student-inbox-scope .contacts-search-panel .chat-item:hover {
@@ -306,7 +319,7 @@
     }
 
     .student-inbox-scope .messages-main {
-        background: var(--card-bg);
+        background: #fff;
         display: flex;
         flex-direction: column;
     }
@@ -316,7 +329,53 @@
         flex-direction: column;
         height: 100%;
         min-height: 560px;
-        padding: 16px 18px 14px;
+        padding: 20px 22px 18px;
+    }
+
+    .student-inbox-scope .messages-main-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px 16px;
+        min-height: 320px;
+        max-width: 360px;
+        margin: 0 auto;
+    }
+
+    .student-inbox-scope .messages-main-empty-title {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .student-inbox-scope .messages-main-empty-text {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.55;
+        color: var(--text-muted);
+    }
+
+    .student-inbox-scope .sidebar-list-empty {
+        padding: 12px 6px;
+        color: rgba(224, 231, 255, 0.75);
+        font-size: 0.82rem;
+        line-height: 1.45;
+        text-align: center;
+    }
+
+    .student-inbox-scope .sidebar-list-empty--compact {
+        padding: 10px 4px;
+    }
+
+    .student-inbox-scope .contacts-empty-hint {
+        font-size: 0.78rem;
+        color: rgba(203, 213, 225, 0.85);
+        padding: 8px 4px;
+        line-height: 1.45;
     }
 
     .student-inbox-scope .messages-main-header {
@@ -326,7 +385,7 @@
         gap: 12px;
         padding-bottom: 12px;
         margin-bottom: 10px;
-        border-bottom: 2px solid rgba(48, 6, 117, 0.12);
+        border-bottom: 1px solid var(--border, #e2e8f0);
     }
 
     .student-inbox-scope .thread-user {
@@ -381,8 +440,8 @@
     }
 
     .student-inbox-scope .thread-actions button {
-        border-radius: 10px;
-        border: 1px solid rgba(48, 6, 117, 0.15);
+        border-radius: 8px;
+        border: 1px solid var(--border, #e2e8f0);
         padding: 6px 10px;
         font-size: 0.78rem;
         font-weight: 600;
@@ -392,7 +451,7 @@
     }
 
     .student-inbox-scope .thread-actions button.danger {
-        background: #fef2f2;
+        background: #fff;
         border-color: #fecaca;
         color: #b91c1c;
     }
@@ -400,10 +459,10 @@
     .student-inbox-scope .messages-thread {
         flex: 1;
         overflow-y: auto;
-        padding: 12px 10px;
-        background: rgba(255, 255, 255, 0.65);
-        border-radius: 14px;
-        border: 1px solid rgba(48, 6, 117, 0.1);
+        padding: 8px 4px 12px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
         min-height: 260px;
     }
 
@@ -428,10 +487,9 @@
     .student-inbox-scope .msg-bubble {
         max-width: 75%;
         padding: 10px 14px;
-        border-radius: 16px;
+        border-radius: 14px;
         font-size: 0.88rem;
         line-height: 1.45;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
 
     .student-inbox-scope .msg-row.me .msg-bubble {
@@ -441,9 +499,9 @@
     }
 
     .student-inbox-scope .msg-row.them .msg-bubble {
-        background: #fff;
+        background: #f1f5f9;
         color: var(--text-dark);
-        border: 1px solid rgba(48, 6, 117, 0.1);
+        border: none;
         border-bottom-left-radius: 4px;
     }
 
@@ -466,13 +524,19 @@
         line-height: 1.5;
     }
 
+    .student-inbox-scope .empty-thread--thread {
+        padding: 24px 12px;
+        background: transparent;
+        border: none;
+    }
+
     .student-inbox-scope .messages-input-bar {
-        margin-top: 12px;
+        margin-top: 8px;
         display: flex;
         align-items: center;
         gap: 10px;
         padding-top: 12px;
-        border-top: 1px solid rgba(48, 6, 117, 0.12);
+        border-top: 1px solid var(--border, #e2e8f0);
     }
 
     .student-inbox-scope .messages-tools button {
@@ -504,8 +568,8 @@
     }
 
     .student-inbox-scope .messages-input-wrapper input:focus {
-        border-color: var(--accent-dark);
-        box-shadow: 0 0 0 3px rgba(255, 212, 59, 0.25);
+        border-color: var(--primary, #4f46e5);
+        outline: none;
     }
 
     .student-inbox-scope .messages-send-btn {
@@ -533,16 +597,23 @@
 
         .student-inbox-scope .messages-sidebar {
             border-right: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .student-inbox-scope .contacts-search-panel {
             position: static;
             margin-top: 8px;
+            left: auto;
+            right: auto;
+            top: auto;
         }
 
         .student-inbox-scope .messages-main-inner {
             min-height: 420px;
+        }
+
+        .student-inbox-scope .party-filter {
+            flex-wrap: wrap;
         }
     }
 </style>
@@ -552,11 +623,8 @@
 
         <div class="messages-sidebar">
             <div class="messages-sidebar-header">
-                <h3>
-                    <i class="fas fa-comments"></i>
-                    Party Chat
-                </h3>
-                <p class="inbox-sub">Team up with teachers and classmates — same inbox on every device.</p>
+                <h3>Party Chat</h3>
+                <p class="inbox-sub">Teachers and classmates in one inbox.</p>
             </div>
 
             <form class="messages-search" method="GET" action="{{ route($routeGroup) }}">
@@ -597,15 +665,15 @@
                         </div>
                         <form method="POST"
                               action="{{ route($routeGroup.'.start') }}"
-                              class="contact-start-form">
+                              class="contact-start-form js-contact-start">
                             @csrf
                             <input type="hidden" name="user_id" value="{{ $contact->id }}">
                             <button type="submit">Start</button>
                         </form>
                     </div>
                 @empty
-                    <div style="font-size:0.8rem; color:#cbd5e1; padding:8px 6px;">
-                        No contacts yet. Your teacher and classmates appear here when they have accounts.
+                    <div class="contacts-empty-hint">
+                        No contacts yet. When your teacher and classmates are on the roster, they show up here.
                     </div>
                 @endforelse
             </div>
@@ -641,6 +709,7 @@
 
                     <a href="{{ route($routeGroup, ['conversation' => $conversation->id]) }}"
                        class="chat-item chat-filter-item {{ $isActive ? 'active' : '' }}"
+                       data-conv-id="{{ $conversation->id }}"
                        data-role="{{ $other->role }}">
                         <div class="chat-avatar">
                             <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
@@ -668,8 +737,8 @@
                         @endif
                     </a>
                 @empty
-                    <div style="font-size:0.82rem; color:rgba(224,231,255,0.8); padding:8px 4px; line-height:1.45;">
-                        No party chats yet. Focus the search box above to open contacts.
+                    <div class="sidebar-list-empty sidebar-list-empty--compact">
+                        No conversations yet. Use search to find someone and start a chat.
                     </div>
                 @endforelse
             </div>
@@ -677,6 +746,7 @@
 
         <div class="messages-main">
             <div class="messages-main-inner">
+                <div id="messages-main-panel">
                 @if($activeConversation)
                     @php
                         $other  = $activeConversation->participants
@@ -740,8 +810,8 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="empty-thread">
-                                Send a message to start the quest log.
+                            <div class="empty-thread empty-thread--thread">
+                                Send a message to start the conversation.
                             </div>
                         @endforelse
                     </div>
@@ -767,13 +837,12 @@
                         </div>
                     </form>
                 @else
-                    <div class="empty-thread" style="flex:1;display:flex;align-items:center;justify-content:center;">
-                        <div>
-                            <p style="font-weight:700;color:var(--text-dark);margin-bottom:8px;">Select a conversation</p>
-                            <p>Pick someone on the left or search to message your party.</p>
-                        </div>
+                    <div class="messages-main-empty">
+                        <h2 class="messages-main-empty-title">Select a conversation</h2>
+                        <p class="messages-main-empty-text">Pick a thread on the left, or search for a teacher or classmate to start a new chat.</p>
                     </div>
                 @endif
+                </div>
             </div>
         </div>
 
@@ -785,6 +854,9 @@
         'pollUrl' => $pollUrl,
         'sendTpl' => $sendUrlTemplate,
         'convUrlTpl' => $conversationUrlTemplate,
+        'threadTpl' => $threadUrlTemplate,
+        'destroyTpl' => $destroyUrlTemplate,
+        'indexUrl' => $messagesIndexUrl,
         'csrf' => csrf_token(),
         'imagesBase' => asset('images/'),
         'conversationId' => optional($activeConversation)->id,
@@ -796,6 +868,7 @@
 <script>
 (function () {
     const searchInput   = document.getElementById('messages-search-input');
+    const searchForm    = document.querySelector('.student-inbox-scope .messages-search');
     const contactsPanel = document.getElementById('contacts-search-panel');
     let activeFilter    = 'all';
 
@@ -813,7 +886,7 @@
 
     document.addEventListener('click', function (e) {
         const wrap = e.target.closest('.messages-wrapper');
-        if (!wrap) return;
+        if (!wrap || !wrap.closest('.student-inbox-scope')) return;
         const btn = e.target.closest('.filter-btn');
         if (!btn) return;
         wrap.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -827,6 +900,9 @@
     const pollUrl = boot.pollUrl || '';
     const sendTpl = boot.sendTpl || '';
     const convUrlTpl = boot.convUrlTpl || '';
+    const threadTpl = boot.threadTpl || '';
+    const destroyTpl = boot.destroyTpl || '';
+    const indexUrl = boot.indexUrl || '';
     const csrf = boot.csrf || '';
     const imagesBase = boot.imagesBase || '';
     let conversationId = boot.conversationId;
@@ -838,6 +914,123 @@
     }
     function buildSendUrl(id) {
         return sendTpl.replace('__CONV__', String(id));
+    }
+    function buildThreadUrl(id) {
+        return threadTpl.replace('__CONV__', String(id));
+    }
+    function buildDestroyUrl(id) {
+        return destroyTpl.replace('__CONV__', String(id));
+    }
+
+    function pushConversationUrl(id) {
+        try {
+            const u = new URL(indexUrl || window.location.pathname, window.location.origin);
+            if (id) {
+                u.searchParams.set('conversation', String(id));
+            } else {
+                u.searchParams.delete('conversation');
+            }
+            history.pushState({ studentConv: id || null }, '', u.pathname + u.search);
+        } catch (err) {
+            console.warn('pushState', err);
+        }
+    }
+
+    function setSidebarActive(id) {
+        document.querySelectorAll('#messages-list .chat-item').forEach(function (a) {
+            const cid = a.dataset.convId;
+            a.classList.toggle('active', id != null && String(cid) === String(id));
+        });
+    }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function buildStudentThreadHtml(conv, messages) {
+        const o = conv.other;
+        const pic = imagesBase + (o.pic || 'default-pp.png');
+        const roleLabel = o.role === 'teacher' ? 'Teacher' : 'Classmate';
+        const statusLine = o.role === 'teacher' ? 'Your mentor' : 'Party member';
+        const onlineExtra = o.online ? ' · Online' : '';
+        const sendUrl = buildSendUrl(conv.id);
+        let msgs = '';
+        messages.forEach(function (m) {
+            const isMe = m.is_me === true || m.is_me === 1 || m.is_me === '1';
+            msgs += '<div class="msg-row ' + (isMe ? 'me' : 'them') + '" data-message-id="' + m.id + '"><div class="msg-bubble">' +
+                escapeHtml(m.body) + '<div class="msg-meta">' + escapeHtml(isMe ? 'You' : (m.user_name || '')) +
+                ' · ' + escapeHtml(m.created_label) + '</div></div></div>';
+        });
+        if (!messages.length) {
+            msgs = '<div class="empty-thread empty-thread--thread">Send a message to start the conversation.</div>';
+        }
+        return (
+            '<div class="messages-main-header">' +
+            '<div class="thread-user">' +
+            '<div class="thread-avatar"><img src="' + escapeHtml(pic) + '" alt=""></div>' +
+            '<div class="thread-info"><h3>' + escapeHtml(o.name) + ' <span class="badge-role">' + escapeHtml(roleLabel) + '</span></h3>' +
+            '<div class="status-row"><span class="status-dot"></span><span>' + escapeHtml(statusLine) + onlineExtra + '</span></div></div></div>' +
+            '<div class="thread-actions">' +
+            '<button type="button" class="pin" disabled style="opacity:0.5;cursor:not-allowed" title="Coming soon"><i class="fas fa-thumbtack"></i></button>' +
+            '<button type="button" class="danger js-clear-thread" title="Clear chat"><i class="fas fa-trash-alt"></i></button></div></div>' +
+            '<div class="messages-thread" id="messages-thread">' + msgs + '</div>' +
+            '<form method="POST" id="message-send-form" class="messages-input-bar" action="' + escapeHtml(sendUrl) + '">' +
+            '<input type="hidden" name="_token" value="' + escapeHtml(csrf) + '">' +
+            '<div class="messages-tools"><button type="button" title="Coming soon"><i class="fas fa-paperclip"></i></button></div>' +
+            '<div class="messages-input-wrapper">' +
+            '<input type="text" name="body" placeholder="Type a message to your party…" autocomplete="off" required>' +
+            '<button class="messages-send-btn" type="submit"><i class="fas fa-paper-plane"></i> Send</button></div></form>'
+        );
+    }
+
+    function showEmptyPanel(opts) {
+        opts = opts || {};
+        const panel = document.getElementById('messages-main-panel');
+        if (!panel) return;
+        panel.innerHTML =
+            '<div class="messages-main-empty">' +
+            '<h2 class="messages-main-empty-title">Select a conversation</h2>' +
+            '<p class="messages-main-empty-text">Pick a thread on the left, or search for a teacher or classmate to start a new chat.</p></div>';
+        conversationId = null;
+        lastMessageId = 0;
+        threadSince = 0;
+        setSidebarActive(null);
+        if (!opts.skipHistory) {
+            pushConversationUrl(null);
+        }
+    }
+
+    async function loadConversation(convId, opts) {
+        opts = opts || {};
+        const id = parseInt(convId, 10);
+        if (!id) return;
+        const panel = document.getElementById('messages-main-panel');
+        if (!panel || !threadTpl) return;
+        try {
+            const r = await fetch(buildThreadUrl(id), {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!r.ok) return;
+            const data = await r.json();
+            if (!data.ok) return;
+            const conv = data.conversation;
+            const messages = data.messages || [];
+            panel.innerHTML = buildStudentThreadHtml(conv, messages);
+            conversationId = conv.id;
+            lastMessageId = messages.reduce(function (acc, m) { return Math.max(acc, m.id); }, 0);
+            threadSince = (conversationId && lastMessageId === 0) ? Math.floor(Date.now() / 1000) : 0;
+            const thread = document.getElementById('messages-thread');
+            if (thread) thread.scrollTop = thread.scrollHeight;
+            if (!opts.skipHistory) {
+                pushConversationUrl(conversationId);
+            }
+            setSidebarActive(conversationId);
+        } catch (e) {
+            console.error('loadConversation', e);
+        }
     }
 
     function appendMessage(m) {
@@ -855,13 +1048,6 @@
             '<div class="msg-meta">' + escapeHtml(who) + ' · ' + escapeHtml(m.created_label) + '</div></div>';
         thread.appendChild(row);
         thread.scrollTop = thread.scrollHeight;
-    }
-
-    function escapeHtml(s) {
-        if (!s) return '';
-        const d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
     }
 
     function renderSidebarList(conversations) {
@@ -884,7 +1070,7 @@
                 '<div class="chat-time">' + escapeHtml(c.last_time || '') + '</div></div></div>' + unread + '</a>';
         });
         if (!conversations.length) {
-            html = '<div style="font-size:0.82rem;color:rgba(224,231,255,0.8);padding:8px 4px;">No party chats yet.</div>';
+            html = '<div class="sidebar-list-empty sidebar-list-empty--compact">No conversations yet. Use search to find someone and start a chat.</div>';
         }
         list.innerHTML = html;
         if (typeof window.__messagesApplyFilter === 'function') {
@@ -926,7 +1112,8 @@
                 threadSince = 0;
             }
             if (data.cleared_conversation) {
-                window.location.reload();
+                showEmptyPanel({ skipHistory: true });
+                pushConversationUrl(null);
             }
         } catch (e) {
             console.warn('messages poll', e);
@@ -935,7 +1122,7 @@
 
     function startPolling() {
         if (pollTimer) clearInterval(pollTimer);
-        pollTimer = setInterval(poll, 3000);
+        pollTimer = setInterval(poll, 2500);
         window.__msgPollTimer = pollTimer;
         poll();
     }
@@ -951,8 +1138,99 @@
         }
     });
 
+    document.addEventListener('click', function (e) {
+        const scope = e.target.closest('.student-inbox-scope');
+        if (!scope) return;
+        const link = e.target.closest('#messages-list a.chat-item');
+        if (link) {
+            e.preventDefault();
+            const cid = link.dataset.convId;
+            if (cid) loadConversation(cid, {});
+            return;
+        }
+        if (e.target.closest('.js-clear-thread')) {
+            e.preventDefault();
+            if (!conversationId || !confirm('Clear this chat from your inbox?')) return;
+            const fd = new FormData();
+            fd.append('_token', csrf);
+            fd.append('_method', 'DELETE');
+            fetch(buildDestroyUrl(conversationId), {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data && data.ok) {
+                    showEmptyPanel({});
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+        }
+    });
+
+    document.addEventListener('submit', function (e) {
+        const scope = e.target.closest('.student-inbox-scope');
+        if (!scope) return;
+        const form = e.target;
+        if (form.classList && form.classList.contains('js-contact-start')) {
+            e.preventDefault();
+            const fd = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data && data.ok && data.conversation_id) {
+                    if (contactsPanel) contactsPanel.style.display = 'none';
+                    loadConversation(data.conversation_id, {});
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+            return;
+        }
+        if (form.id === 'message-send-form') {
+            e.preventDefault();
+            if (!conversationId) return;
+            const input = form.querySelector('input[name="body"]');
+            const body = (input && input.value || '').trim();
+            if (!body) return;
+            const fd = new FormData();
+            fd.append('body', body);
+            fd.append('_token', csrf);
+            fetch(buildSendUrl(conversationId), {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (res) { return res.json(); }).then(function (data) {
+                if (data.ok && data.message) {
+                    input.value = '';
+                    appendMessage(data.message);
+                    lastMessageId = Math.max(lastMessageId, data.message.id);
+                    poll();
+                }
+            }).catch(function (err) { console.error(err); });
+        }
+    });
+
+    window.addEventListener('popstate', function () {
+        const params = new URLSearchParams(window.location.search);
+        const c = params.get('conversation');
+        if (c) {
+            loadConversation(c, { skipHistory: true });
+        } else {
+            showEmptyPanel({ skipHistory: true });
+        }
+    });
+
     function bootMessagesInbox() {
         window.__messagesApplyFilter();
+
+        if (searchForm && !searchForm.dataset.ajaxSearch) {
+            searchForm.dataset.ajaxSearch = '1';
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                poll();
+            });
+        }
 
         if (searchInput && contactsPanel && !searchInput.dataset.panelBound) {
             searchInput.dataset.panelBound = '1';
@@ -971,38 +1249,6 @@
             });
         }
 
-        const sendForm = document.getElementById('message-send-form');
-        if (sendForm && conversationId && !sendForm.dataset.ajaxBound) {
-            sendForm.dataset.ajaxBound = '1';
-            sendForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const input = sendForm.querySelector('input[name="body"]');
-                const body = (input && input.value || '').trim();
-                if (!body) return;
-                const fd = new FormData();
-                fd.append('body', body);
-                fd.append('_token', csrf);
-                try {
-                    const res = await fetch(buildSendUrl(conversationId), {
-                        method: 'POST',
-                        body: fd,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    const data = await res.json();
-                    if (data.ok && data.message) {
-                        input.value = '';
-                        appendMessage(data.message);
-                        lastMessageId = Math.max(lastMessageId, data.message.id);
-                        poll();
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-            });
-        }
         startPolling();
     }
 

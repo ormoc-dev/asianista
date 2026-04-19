@@ -52,7 +52,7 @@
                 <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.ppt,.pptx">
                 @if($lesson->file_path)
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
-                    Current file: <a href="{{ route('teacher.lessons.download', basename($lesson->file_path)) }}" style="color: var(--primary);">{{ basename($lesson->file_path) }}</a>
+                    Current file: <a href="{{ route('teacher.lessons.download', $lesson) }}" style="color: var(--primary);">{{ basename($lesson->file_path) }}</a>
                 </p>
                 @endif
             </div>

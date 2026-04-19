@@ -861,8 +861,11 @@
                 <a href="{{ route('teacher.dashboard') }}" class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
-                <a href="{{ route('teacher.quest') }}" class="nav-link {{ request()->routeIs('teacher.quest*') ? 'active' : '' }}">
+                <a href="{{ route('teacher.quest') }}" class="nav-link {{ request()->routeIs('teacher.quest', 'teacher.quest.create', 'teacher.quest.edit', 'teacher.quest.update', 'teacher.quest.show') ? 'active' : '' }}">
                     <i class="fas fa-map-signs"></i> Quests
+                </a>
+                <a href="{{ route('teacher.quest.clone-library') }}" class="nav-link {{ request()->routeIs('teacher.quest.clone-library') ? 'active' : '' }}">
+                    <i class="fas fa-copy"></i> Clone quests
                 </a>
             </div>
 
@@ -878,8 +881,11 @@
 
             <div class="nav-section">
                 <div class="nav-section-title">Management</div>
-                <a href="{{ route('teacher.registration') }}" class="nav-link {{ request()->routeIs('teacher.registration*') ? 'active' : '' }}">
+                <a href="{{ route('teacher.registration') }}" class="nav-link {{ request()->routeIs('teacher.registration') || request()->routeIs('teacher.registration.*') ? 'active' : '' }}">
                     <i class="fas fa-user-plus"></i> Registration
+                </a>
+                <a href="{{ route('teacher.students.approved') }}" class="nav-link {{ request()->routeIs('teacher.students.approved') ? 'active' : '' }}">
+                    <i class="fas fa-user-check"></i> Students
                 </a>
                 <a href="{{ route('teacher.gamification.index') }}" class="nav-link {{ request()->routeIs('teacher.gamification*') ? 'active' : '' }}">
                     <i class="fas fa-trophy"></i> Gamification
@@ -963,6 +969,13 @@
                 <div class="alert alert-danger teacher-flash-auto" data-teacher-flash role="alert" aria-live="assertive">
                     <i class="fas fa-exclamation-circle"></i>
                     {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('info'))
+                <div class="alert alert-info teacher-flash-auto" data-teacher-flash role="status" aria-live="polite">
+                    <i class="fas fa-info-circle"></i>
+                    {{ session('info') }}
                 </div>
             @endif
 

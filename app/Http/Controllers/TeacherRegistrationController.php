@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\RegistrationCode;
 use App\Imports\StudentsImport;
@@ -27,12 +27,16 @@ class TeacherRegistrationController extends Controller
      */
     public function index()
     {
+        $teacherId = Auth::id();
+
         $students = User::where('role', 'student')
+            ->registeredByTeacher($teacherId)
             ->where('status', 'pending')
             ->with(['grade', 'section'])
             ->orderBy('created_at', 'desc')
             ->get();
         $pendingRegistrations = RegistrationCode::where('used', false)
+            ->where('teacher_id', $teacherId)
             ->whereNotNull('student_code')
             ->with(['grade', 'section'])
             ->orderBy('created_at', 'desc')
@@ -42,12 +46,34 @@ class TeacherRegistrationController extends Controller
     }
 
     /**
+     * Students this teacher registered who are already approved.
+     */
+    public function approvedStudents()
+    {
+        abort_unless(Auth::check(), 403);
+
+        $students = User::where('role', 'student')
+            ->registeredByTeacher(Auth::id())
+            ->where('status', 'approved')
+            ->with(['grade', 'section'])
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->orderBy('name')
+            ->get();
+
+        return view('teacher.registration.approved-students', compact('students'));
+    }
+
+    /**
      * Generate a single registration code (legacy method)
      */
     public function generateCode()
     {
         $code = strtoupper(bin2hex(random_bytes(3))); // e.g., 6 chars
-        RegistrationCode::create(['code' => $code]);
+        RegistrationCode::create([
+            'code' => $code,
+            'teacher_id' => Auth::id(),
+        ]);
         return back()->with('success', "New code generated: $code");
     }
 
@@ -56,12 +82,14 @@ class TeacherRegistrationController extends Controller
      */
     public function uploadExcel(Request $request)
     {
+        abort_unless(Auth::check() && Auth::id(), 403);
+
         $request->validate([
             'student_file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
         ]);
 
         try {
-            $import = new StudentsImport();
+            $import = new StudentsImport((int) Auth::id());
             Excel::import($import, $request->file('student_file'));
 
             $count = $import->getImportCount();
@@ -93,7 +121,7 @@ class TeacherRegistrationController extends Controller
      */
     public function regenerateCredentials($id)
     {
-        $registrationCode = RegistrationCode::findOrFail($id);
+        $registrationCode = RegistrationCode::where('teacher_id', Auth::id())->findOrFail($id);
 
         if ($registrationCode->used) {
             return back()->with('error', 'Cannot regenerate credentials for already registered student.');
@@ -109,7 +137,7 @@ class TeacherRegistrationController extends Controller
      */
     public function destroyPending($id)
     {
-        $registrationCode = RegistrationCode::findOrFail($id);
+        $registrationCode = RegistrationCode::where('teacher_id', Auth::id())->findOrFail($id);
 
         if ($registrationCode->used) {
             return back()->with('error', 'Cannot delete already registered student.');
@@ -122,7 +150,7 @@ class TeacherRegistrationController extends Controller
 
     public function approveStudent($id)
     {
-        $student = User::where('role', 'student')->findOrFail($id);
+        $student = User::where('role', 'student')->registeredByTeacher(Auth::id())->findOrFail($id);
 
         if ($student->status !== 'pending') {
             return back()->with('warning', "{$student->name} is already {$student->status}.");
@@ -142,6 +170,7 @@ class TeacherRegistrationController extends Controller
 
         $updated = User::whereIn('id', $validated['student_ids'])
             ->where('role', 'student')
+            ->registeredByTeacher(Auth::id())
             ->where('status', 'pending')
             ->update(['status' => 'approved']);
 

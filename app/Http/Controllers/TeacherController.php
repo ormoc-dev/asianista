@@ -3,25 +3,28 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\User;
 use App\Models\QuizAttempt;
 use App\Models\Quiz;
 use App\Models\Lesson;
 use App\Models\Quest;
+use App\Models\StudentFeedback;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TeacherController extends Controller
 {
     public function dashboard() {
-        $teacherId = Auth::id();
+        $teacherId = (int) Auth::id();
 
         $stats = [
-            'pending_students' => User::where('role', 'student')->where('status', 'pending')->count(),
-            'approved_students' => User::where('role', 'student')->where('status', 'approved')->count(),
-            'quests_created' => Quest::where('teacher_id', $teacherId)->count(),
-            'lessons_created' => Lesson::where('teacher_id', $teacherId)->count(),
+            'pending_students' => User::where('role', 'student')->registeredByTeacher($teacherId)->where('status', 'pending')->count(),
+            'approved_students' => User::where('role', 'student')->registeredByTeacher($teacherId)->where('status', 'approved')->count(),
+            'quests_created' => Quest::ownedByTeacher($teacherId)->count(),
+            'lessons_created' => Lesson::ownedByTeacher($teacherId)->count(),
             'quizzes_created' => Quiz::where('teacher_id', $teacherId)->count(),
+            'pending_quizzes' => Quiz::where('teacher_id', $teacherId)->where('status', 'pending')->count(),
             'active_quizzes' => Quiz::where('teacher_id', $teacherId)->where('status', 'active')->count(),
         ];
 
@@ -30,8 +33,7 @@ class TeacherController extends Controller
 
     public function registration()
 {
-    // Get all students assigned to this teacher
-    $students = User::where('role', 'student')->get();
+    $students = User::where('role', 'student')->registeredByTeacher(Auth::id())->get();
     return view('teacher.index', compact('students')); // Using index.blade.php
 }
 
@@ -52,46 +54,60 @@ class TeacherController extends Controller
     }
 
     public function performance() {
-        // Get all students
-        $students = User::where('role', 'student')->get();
-        
-        // Get quiz statistics
+        $teacherId = Auth::id();
+
+        $students = User::where('role', 'student')->registeredByTeacher($teacherId)->get();
+
         $quizStats = QuizAttempt::select(
             'quiz_id',
             DB::raw('AVG(score) as average_score'),
             DB::raw('COUNT(*) as total_attempts'),
             DB::raw('MAX(score) as highest_score'),
             DB::raw('MIN(score) as lowest_score')
-        )->groupBy('quiz_id')->with('quiz')->get();
-        
-        // Get student performance rankings
+        )
+            ->whereHas('quiz', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->groupBy('quiz_id')
+            ->with('quiz')
+            ->get();
+
         $studentRankings = QuizAttempt::select(
             'student_id',
             DB::raw('AVG(score) as average_score'),
             DB::raw('COUNT(*) as quizzes_taken'),
             DB::raw('SUM(xp_earned) as total_xp')
-        )->groupBy('student_id')->with('student')->orderBy('average_score', 'desc')->get();
-        
-        // Get recent quiz attempts
-        $recentAttempts = QuizAttempt::with(['student', 'quiz'])->latest()->take(10)->get();
-        
-        // Overall statistics
+        )
+            ->whereHas('student', fn ($q) => $q->where('registered_by_teacher_id', $teacherId))
+            ->groupBy('student_id')
+            ->with('student')
+            ->orderBy('average_score', 'desc')
+            ->get();
+
+        $recentAttempts = QuizAttempt::with(['student', 'quiz'])
+            ->whereHas('student', fn ($q) => $q->where('registered_by_teacher_id', $teacherId))
+            ->latest()
+            ->take(10)
+            ->get();
+
         $overallStats = [
-            'total_students' => User::where('role', 'student')->count(),
-            'total_quizzes' => Quiz::count(),
-            'total_lessons' => Lesson::where('status', 'approved')->count(),
-            'total_attempts' => QuizAttempt::count(),
-            'class_average' => QuizAttempt::avg('score') ?? 0,
+            'total_students' => User::where('role', 'student')->registeredByTeacher($teacherId)->count(),
+            'total_quizzes' => Quiz::where('teacher_id', $teacherId)->count(),
+            'total_lessons' => Lesson::where('status', 'approved')->where('teacher_id', $teacherId)->count(),
+            'total_attempts' => QuizAttempt::whereHas('quiz', fn ($q) => $q->where('teacher_id', $teacherId))->count(),
+            'class_average' => QuizAttempt::whereHas('quiz', fn ($q) => $q->where('teacher_id', $teacherId))->avg('score') ?? 0,
         ];
-        
+
         return view('teacher.performance', compact('students', 'quizStats', 'studentRankings', 'recentAttempts', 'overallStats'));
     }
 
     public function feedback() {
-        // Get students with their performance data for feedback
+        $teacherId = (int) Auth::id();
+
         $students = User::where('role', 'student')
-            ->with(['quizAttempts' => function($query) {
-                $query->latest();
+            ->registeredByTeacher($teacherId)
+            ->with(['quizAttempts' => function ($query) use ($teacherId) {
+                $query->whereHas('quiz', fn ($q) => $q->where('teacher_id', $teacherId))
+                    ->with('quiz')
+                    ->latest();
             }])
             ->get()
             ->map(function($student) {
@@ -109,16 +125,25 @@ class TeacherController extends Controller
 
     public function sendFeedback(Request $request) {
         $request->validate([
-            'student_id' => 'required|exists:users,id',
+            'student_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($q) {
+                    $q->where('role', 'student')->where('registered_by_teacher_id', Auth::id());
+                }),
+            ],
             'type' => 'required|in:praise,improvement,concern',
             'message' => 'required|string|min:10|max:1000',
         ]);
 
-        // Here you would typically save the feedback to a database
-        // For now, we'll just return with success message
-        
+        StudentFeedback::create([
+            'teacher_id' => (int) Auth::id(),
+            'student_id' => (int) $request->input('student_id'),
+            'type' => $request->input('type'),
+            'message' => $request->input('message'),
+        ]);
+
         return redirect()->route('teacher.feedback')
-            ->with('success', 'Feedback sent successfully to student!');
+            ->with('success', 'Feedback sent successfully to the student. They can read it under Feedback in their account.');
     }
 
     public function reports() {

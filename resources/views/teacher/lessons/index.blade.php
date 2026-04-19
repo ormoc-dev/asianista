@@ -46,7 +46,7 @@
                         <td>
                             <div style="display: flex; gap: 8px;">
                                 @if($lesson->file_path)
-                                <a href="{{ route('teacher.lessons.download', basename($lesson->file_path)) }}" class="btn btn-sm btn-secondary" title="Download">
+                                <a href="{{ route('teacher.lessons.download', $lesson) }}" class="btn btn-sm btn-secondary" title="Download">
                                     <i class="fas fa-download"></i>
                                 </a>
                                 @endif

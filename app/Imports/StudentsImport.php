@@ -24,7 +24,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
      */
     protected $importCount = 0;
 
-    public function __construct()
+    public function __construct(protected int $teacherId)
     {
         $this->registrationService = new StudentRegistrationService();
     }
@@ -51,6 +51,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
         return new RegistrationCode([
             'code' => $credentials['code'],
+            'teacher_id' => $this->teacherId,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'middle_name' => $middleName !== '' ? $middleName : null,

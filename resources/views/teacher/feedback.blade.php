@@ -17,40 +17,84 @@
         <div>
             <h1><i class="fas fa-comments"></i> Student Feedback</h1>
             <p>Review student performance and provide feedback</p>
+            <p style="margin: 8px 0 0; color: var(--text-muted); font-size: 0.95rem;">
+                Only <strong>students you registered</strong> appear here. Quiz stats use attempts on <strong>your</strong> quizzes only.
+            </p>
         </div>
     </div>
 
-    <!-- Performance Overview Cards -->
-    <div class="stats-grid">
-        <div class="stat-card excellent">
-            <div class="stat-icon"><i class="fas fa-star"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{ $students->where('average_score', '>=', 90)->count() }}</span>
-                <span class="stat-label">Excellent (90%+)</span>
+    @php
+        $fbExcellent = $students->where('average_score', '>=', 90)->count();
+        $fbGood = $students->where('average_score', '>=', 75)->where('average_score', '<', 90)->count();
+        $fbAverage = $students->where('average_score', '>=', 60)->where('average_score', '<', 75)->count();
+        $fbNeeds = $students->where('average_score', '<', 60)->count();
+        $fbTotal = $students->count();
+        $fbWithQuizzes = $students->where('quizzes_taken', '>', 0)->count();
+        $fbBarTotal = max(1, $fbExcellent + $fbGood + $fbAverage + $fbNeeds);
+        $fbPct = fn ($n) => round(($n / $fbBarTotal) * 100, 1);
+    @endphp
+
+    <!-- Performance overview (redesigned) -->
+    <section class="feedback-performance-overview" aria-label="Class performance by average quiz score">
+        <div class="feedback-performance-overview__head">
+            <div>
+                <h2 class="feedback-performance-overview__title">How your class is doing</h2>
+                <p class="feedback-performance-overview__lede">Counts are based on each student’s <strong>average score</strong> across <strong>your</strong> quizzes. Students with no attempts yet fall in the lowest band (0%).</p>
+            </div>
+            <div class="feedback-performance-overview__meta">
+                <div class="feedback-meta-pill">
+                    <span class="feedback-meta-pill__value">{{ $fbTotal }}</span>
+                    <span class="feedback-meta-pill__label">Students listed</span>
+                </div>
+                <div class="feedback-meta-pill feedback-meta-pill--accent">
+                    <span class="feedback-meta-pill__value">{{ $fbWithQuizzes }}</span>
+                    <span class="feedback-meta-pill__label">Took ≥1 quiz</span>
+                </div>
             </div>
         </div>
-        <div class="stat-card good">
-            <div class="stat-icon"><i class="fas fa-thumbs-up"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{ $students->where('average_score', '>=', 75)->where('average_score', '<', 90)->count() }}</span>
-                <span class="stat-label">Good (75-89%)</span>
+
+        <div class="feedback-tier-bar" role="img" aria-label="Distribution of students across performance bands">
+            <div class="feedback-tier-bar__track">
+                @if($fbExcellent > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--excellent" style="width: {{ $fbPct($fbExcellent) }}%"></span>@endif
+                @if($fbGood > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--good" style="width: {{ $fbPct($fbGood) }}%"></span>@endif
+                @if($fbAverage > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--average" style="width: {{ $fbPct($fbAverage) }}%"></span>@endif
+                @if($fbNeeds > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--needs" style="width: {{ $fbPct($fbNeeds) }}%"></span>@endif
+            </div>
+            <div class="feedback-tier-bar__legend">
+                <span><i class="fas fa-square" style="color:#10b981"></i> Excellent</span>
+                <span><i class="fas fa-square" style="color:#3b82f6"></i> Good</span>
+                <span><i class="fas fa-square" style="color:#f59e0b"></i> Average</span>
+                <span><i class="fas fa-square" style="color:#ef4444"></i> Needs help</span>
             </div>
         </div>
-        <div class="stat-card average">
-            <div class="stat-icon"><i class="fas fa-minus-circle"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{ $students->where('average_score', '>=', 60)->where('average_score', '<', 75)->count() }}</span>
-                <span class="stat-label">Average (60-74%)</span>
-            </div>
+
+        <div class="feedback-tier-grid">
+            <article class="feedback-tier feedback-tier--excellent">
+                <div class="feedback-tier__icon" aria-hidden="true"><i class="fas fa-star"></i></div>
+                <span class="feedback-tier__count">{{ $fbExcellent }}</span>
+                <span class="feedback-tier__name">Excellent</span>
+                <span class="feedback-tier__range">90% and above</span>
+            </article>
+            <article class="feedback-tier feedback-tier--good">
+                <div class="feedback-tier__icon" aria-hidden="true"><i class="fas fa-thumbs-up"></i></div>
+                <span class="feedback-tier__count">{{ $fbGood }}</span>
+                <span class="feedback-tier__name">Good</span>
+                <span class="feedback-tier__range">75% – 89%</span>
+            </article>
+            <article class="feedback-tier feedback-tier--average">
+                <div class="feedback-tier__icon" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
+                <span class="feedback-tier__count">{{ $fbAverage }}</span>
+                <span class="feedback-tier__name">Average</span>
+                <span class="feedback-tier__range">60% – 74%</span>
+            </article>
+            <article class="feedback-tier feedback-tier--needs">
+                <div class="feedback-tier__icon" aria-hidden="true"><i class="fas fa-life-ring"></i></div>
+                <span class="feedback-tier__count">{{ $fbNeeds }}</span>
+                <span class="feedback-tier__name">Needs help</span>
+                <span class="feedback-tier__range">Below 60%</span>
+            </article>
         </div>
-        <div class="stat-card needs">
-            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">{{ $students->where('average_score', '<', 60)->count() }}</span>
-                <span class="stat-label">Needs Help (&lt;60%)</span>
-            </div>
-        </div>
-    </div>
+    </section>
 
     <!-- Students List -->
     <div class="content-card">
@@ -204,55 +248,215 @@
         font-size: 0.9rem;
     }
 
-    /* Stats Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .stat-card {
+    /* Performance overview band */
+    .feedback-performance-overview {
+        margin-bottom: 28px;
+        padding: 22px 24px 24px;
+        border-radius: calc(var(--radius, 8px) + 4px);
         background: var(--bg-card);
-        border-radius: var(--radius);
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
+        border: 1px solid var(--border);
         box-shadow: var(--shadow);
-        border-left: 4px solid transparent;
     }
 
-    .stat-card.excellent { border-left-color: #10b981; }
-    .stat-card.good { border-left-color: #3b82f6; }
-    .stat-card.average { border-left-color: #f59e0b; }
-    .stat-card.needs { border-left-color: #ef4444; }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+    .feedback-performance-overview__head {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--border);
     }
 
-    .stat-card.excellent .stat-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-    .stat-card.good .stat-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-    .stat-card.average .stat-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-    .stat-card.needs .stat-icon { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-    .stat-value {
-        display: block;
-        font-size: 1.5rem;
+    .feedback-performance-overview__title {
+        margin: 0 0 8px;
+        font-size: 1.15rem;
         font-weight: 700;
         color: var(--text-primary);
     }
 
-    .stat-label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
+    .feedback-performance-overview__lede {
+        margin: 0;
+        max-width: 720px;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--text-muted);
+    }
+
+    .feedback-performance-overview__meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .feedback-meta-pill {
+        min-width: 120px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        text-align: center;
+    }
+
+    .feedback-meta-pill--accent {
+        border-color: rgba(79, 70, 229, 0.35);
+        background: linear-gradient(145deg, rgba(79, 70, 229, 0.08), rgba(79, 70, 229, 0.02));
+    }
+
+    .feedback-meta-pill__value {
+        display: block;
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.1;
+    }
+
+    .feedback-meta-pill__label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+    }
+
+    .feedback-tier-bar {
+        margin-bottom: 20px;
+    }
+
+    .feedback-tier-bar__track {
+        display: flex;
+        height: 12px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+    }
+
+    .feedback-tier-bar__seg {
+        display: block;
+        height: 100%;
+        min-width: 0;
+        transition: width 0.35s ease;
+    }
+
+    .feedback-tier-bar__seg--excellent { background: linear-gradient(90deg, #059669, #10b981); }
+    .feedback-tier-bar__seg--good { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+    .feedback-tier-bar__seg--average { background: linear-gradient(90deg, #d97706, #fbbf24); }
+    .feedback-tier-bar__seg--needs { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+    .feedback-tier-bar__legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 20px;
+        margin-top: 10px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    .feedback-tier-bar__legend .fas {
+        margin-right: 4px;
+        font-size: 0.65rem;
+        vertical-align: middle;
+    }
+
+    .feedback-tier-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+
+    @media (max-width: 1100px) {
+        .feedback-tier-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 520px) {
+        .feedback-tier-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .feedback-tier {
+        position: relative;
+        text-align: center;
+        padding: 22px 14px 20px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-tier:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .feedback-tier::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+    }
+
+    .feedback-tier--excellent::before { background: linear-gradient(90deg, #059669, #34d399); }
+    .feedback-tier--good::before { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+    .feedback-tier--average::before { background: linear-gradient(90deg, #b45309, #fbbf24); }
+    .feedback-tier--needs::before { background: linear-gradient(90deg, #b91c1c, #f87171); }
+
+    .feedback-tier--excellent {
+        background: linear-gradient(165deg, rgba(16, 185, 129, 0.12), var(--bg-main) 55%);
+    }
+    .feedback-tier--good {
+        background: linear-gradient(165deg, rgba(59, 130, 246, 0.12), var(--bg-main) 55%);
+    }
+    .feedback-tier--average {
+        background: linear-gradient(165deg, rgba(245, 158, 11, 0.14), var(--bg-main) 55%);
+    }
+    .feedback-tier--needs {
+        background: linear-gradient(165deg, rgba(239, 68, 68, 0.12), var(--bg-main) 55%);
+    }
+
+    .feedback-tier__icon {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 10px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .feedback-tier--excellent .feedback-tier__icon { background: rgba(16, 185, 129, 0.2); color: #059669; }
+    .feedback-tier--good .feedback-tier__icon { background: rgba(59, 130, 246, 0.2); color: #1d4ed8; }
+    .feedback-tier--average .feedback-tier__icon { background: rgba(245, 158, 11, 0.22); color: #b45309; }
+    .feedback-tier--needs .feedback-tier__icon { background: rgba(239, 68, 68, 0.2); color: #b91c1c; }
+
+    .feedback-tier__count {
+        display: block;
+        font-size: 2.1rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+    }
+
+    .feedback-tier__name {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .feedback-tier__range {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
     }
 
     /* Content Card */

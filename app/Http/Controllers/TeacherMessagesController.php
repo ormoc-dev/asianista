@@ -9,7 +9,10 @@ use App\Models\QuestAttempt;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TeacherMessagesController extends MessageInboxController
 {
@@ -23,21 +26,23 @@ class TeacherMessagesController extends MessageInboxController
     }
 
     /**
-     * All student accounts — matches teacher reports (`TeacherReportsController@scores`),
-     * which list every student (any status) when browsing by grade/section.
+     * Students this teacher registered (same scope as registration / reports lists).
      *
      * @return Collection<int, int>
      */
     protected function reportAlignedStudentIdsForMessaging(): Collection
     {
-        static $cache;
+        $teacherId = Auth::id();
 
-        if ($cache !== null) {
-            return $cache;
+        static $cache = [];
+
+        if (isset($cache[$teacherId])) {
+            return $cache[$teacherId];
         }
 
-        return $cache = User::query()
+        return $cache[$teacherId] = User::query()
             ->where('role', 'student')
+            ->where('registered_by_teacher_id', $teacherId)
             ->pluck('id');
     }
 
@@ -106,8 +111,107 @@ class TeacherMessagesController extends MessageInboxController
 
         return $cache[$teacherId] = User::query()
             ->where('role', 'student')
+            ->where('registered_by_teacher_id', $teacherId)
             ->whereIn('id', $merged)
             ->pluck('id');
+    }
+
+    /**
+     * Teachers may message registered students or other teachers only.
+     */
+    public function start(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = Auth::user();
+        $otherUserId = (int) $request->input('user_id');
+
+        if ($otherUserId === $user->id) {
+            return back();
+        }
+
+        $other = User::query()->findOrFail($otherUserId);
+
+        if ($other->role === 'student') {
+            abort_unless(
+                $this->reportAlignedStudentIdsForMessaging()->contains($otherUserId),
+                403,
+                'You can only message students you registered.'
+            );
+        } elseif ($other->role !== 'teacher') {
+            abort(403);
+        }
+
+        $conversation = Conversation::where('is_group', false)
+            ->whereHas('participants', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->whereHas('participants', function ($q) use ($otherUserId) {
+                $q->where('users.id', $otherUserId);
+            })
+            ->first();
+
+        if (! $conversation) {
+            $conversation = DB::transaction(function () use ($user, $otherUserId) {
+                $conv = Conversation::create([
+                    'title' => null,
+                    'is_group' => false,
+                ]);
+
+                $conv->participants()->attach([$user->id, $otherUserId]);
+
+                return $conv;
+            });
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'conversation_id' => $conversation->id,
+            ]);
+        }
+
+        return redirect()->to($this->indexRoute([
+            'conversation' => $conversation->id,
+        ]));
+    }
+
+    protected function filterConversationsForUser(Collection $conversations, User $user): Collection
+    {
+        $allowedStudents = $this->reportAlignedStudentIdsForMessaging()->flip();
+
+        return $conversations->filter(function (Conversation $conversation) use ($user, $allowedStudents) {
+            $pivot = $conversation->participants
+                ->firstWhere('id', $user->id)
+                ?->pivot;
+
+            if (! $pivot) {
+                return false;
+            }
+
+            $visible = false;
+            if (is_null($pivot->deleted_at)) {
+                $visible = true;
+            } else {
+                $last = $conversation->lastMessage;
+                if ($last && $last->created_at->gt($pivot->deleted_at)) {
+                    $visible = true;
+                }
+            }
+
+            if (! $visible) {
+                return false;
+            }
+
+            $other = $conversation->participants->firstWhere('id', '!=', $user->id);
+            if ($other && $other->role === 'student' && ! $allowedStudents->has($other->id)) {
+                return false;
+            }
+
+            return true;
+        })->values();
     }
 
     protected function loadContacts(User $user, string $search): Collection

@@ -31,7 +31,10 @@
 <!-- Quest Attempts -->
 <div class="card">
     <div class="card-header">
-        <h2 class="card-title">Quest History</h2>
+        <div>
+            <h2 class="card-title">Quest History</h2>
+            <p style="margin: 6px 0 0; color: var(--text-muted); font-size: 0.85rem;">Only quests you own are shown. Random-event XP history is limited to draws you ran.</p>
+        </div>
     </div>
     <div class="card-body" style="padding: 0;">
         <div class="table-container">

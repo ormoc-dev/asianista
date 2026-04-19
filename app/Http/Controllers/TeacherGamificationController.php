@@ -7,10 +7,14 @@ use App\Models\Challenge;
 use App\Models\Grade;
 use App\Models\Section;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
 class TeacherGamificationController extends Controller
 {
     public function index(Request $request)
     {
+        $teacherId = (int) Auth::id();
+
         $grades = Grade::orderBy('name')->get();
         $gradeId = $request->query('grade_id');
         $sectionId = $request->query('section_id');
@@ -21,6 +25,7 @@ class TeacherGamificationController extends Controller
         }
 
         $challenges = Challenge::query()
+            ->ownedByTeacher($teacherId)
             ->with(['grade', 'section'])
             ->when($gradeId, function ($q) use ($gradeId, $sectionId) {
                 $q->where(function ($q2) use ($gradeId, $sectionId) {
@@ -37,6 +42,7 @@ class TeacherGamificationController extends Controller
             ->get();
 
         $students = User::where('role', 'student')
+            ->registeredByTeacher($teacherId)
             ->when($gradeId, fn ($q) => $q->where('grade_id', $gradeId))
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->orderBy('xp', 'desc')
@@ -75,12 +81,13 @@ class TeacherGamificationController extends Controller
             return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
         }
 
-        \App\Models\Challenge::create([
+        Challenge::create([
             'title' => $request->title,
             'points' => $request->points,
             'description' => $request->description,
             'grade_id' => $request->grade_id,
             'section_id' => $request->section_id,
+            'teacher_id' => Auth::id(),
         ]);
 
         return redirect()->route('teacher.gamification.index')
@@ -89,7 +96,7 @@ class TeacherGamificationController extends Controller
 
     public function edit($id)
     {
-        $challenge = Challenge::findOrFail($id);
+        $challenge = Challenge::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
         $grades = Grade::orderBy('name')->get();
 
         return view('teacher.gamification.edit', compact('challenge', 'grades'));
@@ -110,7 +117,7 @@ class TeacherGamificationController extends Controller
             return back()->withErrors(['section_id' => 'The section must belong to the selected grade.'])->withInput();
         }
 
-        $challenge = \App\Models\Challenge::findOrFail($id);
+        $challenge = Challenge::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
         $challenge->update([
             'title' => $request->title,
             'points' => $request->points,
@@ -125,7 +132,8 @@ class TeacherGamificationController extends Controller
 
     public function destroy($id)
     {
-        \App\Models\Challenge::destroy($id);
+        $challenge = Challenge::query()->ownedByTeacher((int) Auth::id())->findOrFail($id);
+        $challenge->delete();
         return redirect()->route('teacher.gamification.index')
                          ->with('success', '🗑 Challenge deleted successfully!');
     }

@@ -25,6 +25,7 @@ class RegistrationCode extends Model
         'character',
         'gender',
         'user_id',
+        'teacher_id',
     ];
 
     protected $casts = [
@@ -39,6 +40,11 @@ class RegistrationCode extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     public function grade()
