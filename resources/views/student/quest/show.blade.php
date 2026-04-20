@@ -84,6 +84,7 @@
                 @php
                     $levelQuestions = $orderedQuestions->where('level', $lvl);
                     $totalLvlQuestions = $levelQuestions->count();
+                    $encodedLevelQuestions = e($levelQuestions->values()->toJson());
                     
                     // Get current question object if exists
                     $currentQuestion = $attempt ? $orderedQuestions->where('id', $attempt->current_question_id)->first() : null;
@@ -122,8 +123,13 @@
 
                     $pos = $positions[($lvl - 1) % count($positions)];
                 @endphp
-                <div class="landmark-node" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;" 
-                     @if(!$isLvlLocked) onclick="showLevelDetails({{ $lvl }}, {{ json_encode($levelQuestions->values()) }})" @endif>
+                <div class="landmark-node {{ !$isLvlLocked ? 'js-level-node' : '' }}"
+                     data-left="{{ $pos['left'] }}"
+                     data-top="{{ $pos['top'] }}"
+                     @if(!$isLvlLocked)
+                        data-level="{{ $lvl }}"
+                        data-questions="{{ $encodedLevelQuestions }}"
+                     @endif>
                     <div class="node-icon {{ $isLvlCompleted ? 'finish' : ($isLvlCurrent ? 'active' : 'locked') }}">
                         <i class="fas {{ $isLvlCompleted ? 'fa-check' : ($isLvlCurrent ? 'fa-play' : 'fa-lock') }}"></i>
                     </div>
@@ -147,7 +153,7 @@
                     <span class="progress-percent">{{ round($progressPercent) }}%</span>
                 </div>
                 <div class="action-card-progress">
-                    <div class="progress-fill" style="width: {{ min(100, round($progressPercent, 1)) }}%;"></div>
+                    <div class="progress-fill" data-progress="{{ min(100, (int) round($progressPercent)) }}"></div>
                 </div>
                 <div class="action-card-footer">
                     @php
@@ -215,6 +221,38 @@
         function closeLevelModal() {
             const modal = document.getElementById('levelDetailsModal');
             if (modal) modal.style.display = 'none';
+        }
+
+        function bindLevelNodeClicks() {
+            document.querySelectorAll('.landmark-node[data-left][data-top]').forEach((node) => {
+                node.style.left = `${node.dataset.left}%`;
+                node.style.top = `${node.dataset.top}%`;
+            });
+
+            document.querySelectorAll('.progress-fill[data-progress]').forEach((bar) => {
+                bar.style.width = `${bar.dataset.progress}%`;
+            });
+
+            document.querySelectorAll('.js-level-node').forEach((node) => {
+                if (node.dataset.bound === '1') return;
+                node.dataset.bound = '1';
+                node.addEventListener('click', function () {
+                    const level = parseInt(this.dataset.level || '0', 10);
+                    let questions = [];
+                    try {
+                        questions = JSON.parse(this.dataset.questions || '[]');
+                    } catch (error) {
+                        console.error('Failed to parse level questions:', error);
+                    }
+                    if (level > 0) showLevelDetails(level, questions);
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bindLevelNodeClicks);
+        } else {
+            bindLevelNodeClicks();
         }
         </script>
     </div>
