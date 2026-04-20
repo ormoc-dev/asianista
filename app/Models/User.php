@@ -204,6 +204,18 @@ class User extends Authenticatable
         return self::CHARACTER_CLASSES[$this->character] ?? null;
     }
 
+    /** Max HP pool for this hero class (used for bars and quest caps). */
+    public function maxHpPool(): int
+    {
+        return (int) (($this->getCharacterData() ?? [])['hp'] ?? 100);
+    }
+
+    /** Max AP pool for this hero class (used for bars). */
+    public function maxApPool(): int
+    {
+        return (int) (($this->getCharacterData() ?? [])['ap'] ?? 100);
+    }
+
     /**
      * AP cost when a student uses a hero power during a quest (per use).
      * Tune costs by impact: stronger / defensive powers cost more.

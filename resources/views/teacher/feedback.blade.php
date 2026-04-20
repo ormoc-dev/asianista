@@ -12,6 +12,20 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="alert-error teacher-flash-auto" data-teacher-flash role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            <div>
+                <strong>Could not send feedback.</strong>
+                <ul class="alert-error-list">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <!-- Page Header -->
     <div class="page-header">
         <div>
@@ -55,10 +69,10 @@
 
         <div class="feedback-tier-bar" role="img" aria-label="Distribution of students across performance bands">
             <div class="feedback-tier-bar__track">
-                @if($fbExcellent > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--excellent" style="width: {{ $fbPct($fbExcellent) }}%"></span>@endif
-                @if($fbGood > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--good" style="width: {{ $fbPct($fbGood) }}%"></span>@endif
-                @if($fbAverage > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--average" style="width: {{ $fbPct($fbAverage) }}%"></span>@endif
-                @if($fbNeeds > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--needs" style="width: {{ $fbPct($fbNeeds) }}%"></span>@endif
+                @if($fbExcellent > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--excellent" data-bar-pct="{{ $fbPct($fbExcellent) }}"></span>@endif
+                @if($fbGood > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--good" data-bar-pct="{{ $fbPct($fbGood) }}"></span>@endif
+                @if($fbAverage > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--average" data-bar-pct="{{ $fbPct($fbAverage) }}"></span>@endif
+                @if($fbNeeds > 0)<span class="feedback-tier-bar__seg feedback-tier-bar__seg--needs" data-bar-pct="{{ $fbPct($fbNeeds) }}"></span>@endif
             </div>
             <div class="feedback-tier-bar__legend">
                 <span><i class="fas fa-square" style="color:#10b981"></i> Excellent</span>
@@ -207,7 +221,7 @@
 
                 <div class="form-group">
                     <label for="feedbackMessage">Message</label>
-                    <textarea name="message" id="feedbackMessage" rows="5" placeholder="Write your feedback here..." required></textarea>
+                    <textarea name="message" id="feedbackMessage" rows="5" placeholder="Write your feedback here (at least 10 characters)..." required minlength="10" maxlength="1000"></textarea>
                 </div>
 
                 <div class="form-actions">
@@ -856,6 +870,24 @@
         gap: 8px;
     }
 
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        color: #b91c1c;
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .alert-error-list {
+        margin: 8px 0 0;
+        padding-left: 1.2rem;
+        font-size: 0.9rem;
+    }
+
     /* Empty State */
     .empty-state {
         text-align: center;
@@ -871,6 +903,11 @@
 </style>
 
 <script>
+    document.querySelectorAll('.feedback-tier-bar__seg[data-bar-pct]').forEach(function (el) {
+        var p = el.getAttribute('data-bar-pct');
+        if (p !== null && p !== '') el.style.width = p + '%';
+    });
+
     // Search functionality
     document.getElementById('searchStudent').addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();

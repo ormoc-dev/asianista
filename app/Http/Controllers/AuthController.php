@@ -316,6 +316,10 @@ class AuthController extends Controller
         // Determine final password
         $finalPassword = $request->new_password ?? $request->default_password;
 
+        $classStats = User::CHARACTER_CLASSES[$request->character] ?? null;
+        $initialHp = (int) ($classStats['hp'] ?? 0);
+        $initialAp = (int) ($classStats['ap'] ?? 0);
+
         try {
             // Create the user with character stats
             $user = User::create([
@@ -333,8 +337,8 @@ class AuthController extends Controller
                 'gender'      => $request->gender,
                 'profile_pic' => $profilePic,
                 'status'      => 'pending',
-                'hp'          => 0,
-                'ap'          => 0,
+                'hp'          => $initialHp,
+                'ap'          => $initialAp,
                 'xp'          => 0,
                 'level'       => 1,
                 'registered_by_teacher_id' => $registrationCode->teacher_id,

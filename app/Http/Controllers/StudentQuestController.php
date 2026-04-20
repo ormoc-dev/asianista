@@ -200,10 +200,9 @@ class StudentQuestController extends Controller
         $hpPenalty = $quest->hp_penalty ?? 10;
 
         if ($isCorrect) {
-            // Restore HP on correct answer (regenerate based on character class)
-            $characterData = $user->getCharacterData();
-            $maxHP = 100; // Default max HP
-            $restoreAmount = ceil($maxHP * 0.2); // Restore 20% of max HP
+            // Restore HP on correct answer (cap at this class's max HP pool)
+            $maxHP = $user->maxHpPool();
+            $restoreAmount = max(1, (int) ceil($maxHP * 0.2));
             $newHP = min($maxHP, $user->hp + $restoreAmount);
             $user->update(['hp' => $newHP]);
             

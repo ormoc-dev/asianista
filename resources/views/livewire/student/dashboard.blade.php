@@ -1,10 +1,11 @@
 <div class="rpg-dashboard">
     @php
         $user = Auth::user();
+        $characterData = $user?->getCharacterData();
+        $maxHP = (int) (($characterData ?? [])['hp'] ?? 100);
+        $maxAP = (int) (($characterData ?? [])['ap'] ?? 100);
         $currentHP = $user?->hp ?? 0;
         $currentAP = $user?->ap ?? 0;
-        $maxHP = 100;
-        $maxAP = 100;
         $userXP = $user?->xp ?? 0;
         $userLevel = floor($userXP / 100) + 1;
         $xpForNextLevel = $userLevel * 100;
@@ -12,8 +13,7 @@
         $hpBarPct = min(100, max(0, $maxHP > 0 ? ($currentHP / $maxHP) * 100 : 0));
         $apBarPct = min(100, max(0, $maxAP > 0 ? ($currentAP / $maxAP) * 100 : 0));
         $xpBarPct = min(100, max(0, $xpProgress));
-        $characterData = $user?->getCharacterData();
-        $powers = $characterData['abilities'] ?? [];
+        $powers = ($characterData ?? [])['abilities'] ?? [];
     @endphp
 
    
@@ -31,7 +31,7 @@
                     </div>
                     <div class="character-info">
                         <h2 class="character-name">{{ $user?->name ?? 'Adventurer' }}</h2>
-                        <span class="character-class">{{ $characterData['name'] ?? 'Novice' }}</span>
+                        <span class="character-class">{{ ($characterData ?? [])['name'] ?? 'Novice' }}</span>
                     </div>
                 </div>
 

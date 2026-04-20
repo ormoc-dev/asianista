@@ -103,6 +103,10 @@
                 $currentHP = $user?->hp ?? 0;
                 $currentAP = $user?->ap ?? 0;
                 $characterData = $user?->getCharacterData() ?? [];
+                $maxHP = (int) ($characterData['hp'] ?? 100);
+                $maxAP = (int) ($characterData['ap'] ?? 100);
+                $hpBarPct = $maxHP > 0 ? min(100, max(0, (int) round(($currentHP / $maxHP) * 100))) : 0;
+                $apBarPct = $maxAP > 0 ? min(100, max(0, (int) round(($currentAP / $maxAP) * 100))) : 0;
                 $powers = is_array($characterData) && isset($characterData['abilities']) ? $characterData['abilities'] : [];
                 $currentLevel = $question->level;
                 $usedPowers = $attempt->usedPowers->where('level', $currentLevel)->pluck('power_name')->toArray();
@@ -110,6 +114,7 @@
 
             <!-- HP/AP Stats Card -->
             <div class="stats-card">
+                <div id="hero-stat-max" data-max-hp="{{ $maxHP }}" data-max-ap="{{ $maxAP }}" hidden></div>
                 <h4><i class="fas fa-user-cog"></i> Hero Status</h4>
                 <div class="hero-stats">
                     <div class="hero-stat">
@@ -122,7 +127,7 @@
                                         <stop offset="100%" stop-color="#f87171" />
                                     </linearGradient>
                                 </defs>
-                                <rect class="hp-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayHpGrad)" width="{{ min(100, max(0, (int) round(($currentHP / 100) * 100))) }}" />
+                                <rect class="hp-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayHpGrad)" width="{{ $hpBarPct }}" />
                             </svg>
                         </div>
                         <span class="stat-value js-hp-value">{{ $currentHP }}</span>
@@ -137,7 +142,7 @@
                                         <stop offset="100%" stop-color="#60a5fa" />
                                     </linearGradient>
                                 </defs>
-                                <rect class="ap-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayApGrad)" width="{{ min(100, max(0, (int) round(($currentAP / 100) * 100))) }}" />
+                                <rect class="ap-fill" x="0" y="0" height="8" rx="4" fill="url(#questPlayApGrad)" width="{{ $apBarPct }}" />
                             </svg>
                         </div>
                         <span class="stat-value js-ap-value">{{ $currentAP }}</span>
@@ -1456,11 +1461,20 @@ document.getElementById('quest-answer-form').addEventListener('submit', async fu
     }
 });
 
+function heroStatMax(kind) {
+    const el = document.getElementById('hero-stat-max');
+    if (!el) return 100;
+    const raw = kind === 'ap' ? el.dataset.maxAp : el.dataset.maxHp;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : 100;
+}
+
 function updateHPDisplay(newHP) {
     const hpFill = document.querySelector('rect.hp-fill');
     const hpValue = document.querySelector('.js-hp-value');
+    const max = heroStatMax('hp');
     if (hpFill && hpValue) {
-        hpFill.setAttribute('width', String(Math.min((newHP / 100) * 100, 100)));
+        hpFill.setAttribute('width', String(Math.min((newHP / max) * 100, 100)));
         hpValue.textContent = newHP;
     }
 }
@@ -1468,8 +1482,9 @@ function updateHPDisplay(newHP) {
 function updateAPDisplay(newAP) {
     const apFill = document.querySelector('rect.ap-fill');
     const apValue = document.querySelector('.js-ap-value');
+    const max = heroStatMax('ap');
     if (apFill && apValue) {
-        apFill.setAttribute('width', String(Math.min((newAP / 100) * 100, 100)));
+        apFill.setAttribute('width', String(Math.min((newAP / max) * 100, 100)));
         apValue.textContent = newAP;
     }
 }
