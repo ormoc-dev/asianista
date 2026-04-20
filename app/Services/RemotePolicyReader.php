@@ -8,9 +8,7 @@ use Throwable;
 
 class RemotePolicyReader
 {
-    /**
-     * Reads a remote row (enabled). When host/key unset, skips (local). On transport errors, stale cache or allow.
-     */
+   
     public function accessIsPermitted(): bool
     {
         $host = config('services.remote_policy.host');
