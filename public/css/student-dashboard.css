@@ -8,8 +8,8 @@
     --text-dark: #0b1020;
     --text-muted: #94a3b8;
     --header-bg: rgba(255, 255, 255, 1);
-    --sidebar-bg: #ffffff;
-    --sidebar-border: rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #f7f9fc;
+    --sidebar-border: rgba(15, 23, 42, 0.08);
 }
 
 /* ... existing base styles ... */
@@ -31,7 +31,7 @@ body {
     overflow-x: hidden;
 }
 
-/* SIDEBAR — plain white, aligned with main header */
+/* SIDEBAR — softened neutral panel */
 aside {
     width: 270px;
     background: var(--sidebar-bg);
@@ -47,7 +47,7 @@ aside {
     max-height: 100dvh;
     overflow: hidden;
     border-right: 1px solid var(--sidebar-border);
-    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.04);
+    box-shadow: 3px 0 24px rgba(15, 23, 42, 0.08);
     z-index: 20;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
@@ -157,6 +157,7 @@ nav a {
     font-weight: 500;
     color: #334155;
     border-radius: 12px;
+    border: 1px solid transparent;
     transition: all 0.2s ease;
     white-space: nowrap;
     overflow: hidden;
@@ -186,7 +187,8 @@ aside.collapsed nav a span {
 
 nav a:hover,
 nav a.active {
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(48, 6, 117, 0.08);
+    border-color: rgba(48, 6, 117, 0.18);
     color: var(--text-dark);
 }
 

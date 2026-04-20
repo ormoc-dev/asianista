@@ -216,14 +216,12 @@
         overflow: visible;
         flex-shrink: 0;
         background: #e2e8f0;
-    }
-
-    .chat-avatar img,
-    .thread-avatar img {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1rem;
+        font-weight: 700;
         border: 2px solid #fff;
         box-shadow: var(--shadow);
     }
@@ -686,8 +684,7 @@
                                  data-role="{{ $contact->role }}"
                                  data-my-class="{{ $isMyClass ? '1' : '0' }}">
                                 <div class="chat-avatar">
-                                    <img src="{{ asset('images/' . ($contact->profile_pic ?? 'default-pp.png')) }}"
-                                         alt="{{ $contact->name }}">
+                                    <i class="fas fa-user"></i>
                                     <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
                                 </div>
                                 <div class="chat-text">
@@ -757,8 +754,7 @@
                                data-role="{{ $other->role }}"
                                data-my-class="{{ $isMyClass ? '1' : '0' }}">
                                 <div class="chat-avatar">
-                                    <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
-                                         alt="{{ $other->name }}">
+                                    <i class="fas fa-user"></i>
                                     <span class="chat-status-dot {{ $online ? 'online' : 'offline' }}"></span>
                                 </div>
 
@@ -805,8 +801,7 @@
                             <div class="messages-main-header">
                                 <div class="thread-user">
                                     <div class="thread-avatar">
-                                        <img src="{{ asset('images/' . ($other->profile_pic ?? 'default-pp.png')) }}"
-                                             alt="{{ $other->name }}">
+                                        <i class="fas fa-user"></i>
                                     </div>
                                     <div class="thread-info">
                                         <h3>
@@ -1021,7 +1016,6 @@
     function buildTeacherThreadHtml(conv, messages) {
         const o = conv.other;
         const myClass = conv.is_my_class_student === true || conv.is_my_class_student === 1;
-        const pic = imagesBase + (o.pic || 'default-pp.png');
         let roleBadges = '<span class="badge-role">' + (o.role === 'teacher' ? 'Teacher' : 'Student') + '</span>';
         if (myClass && o.role !== 'teacher') {
             roleBadges += '<span class="badge-role" style="background:#fef3c7;color:#92400e;">My class</span>';
@@ -1042,7 +1036,7 @@
         return (
             '<div class="messages-main-header">' +
             '<div class="thread-user">' +
-            '<div class="thread-avatar"><img src="' + escapeHtml(pic) + '" alt=""></div>' +
+            '<div class="thread-avatar"><i class="fas fa-user"></i></div>' +
             '<div class="thread-info"><h3>' + escapeHtml(o.name) + ' ' + roleBadges + '</h3>' +
             '<div class="status-row"><span class="status-dot"></span><span>' + escapeHtml(statusText) + onlineExtra + '</span></div></div></div>' +
             '<div class="thread-actions">' +
@@ -1139,16 +1133,21 @@
             } else if (c.is_my_class_student) {
                 tag = '<span class="role-tag class-tag">My class</span>';
             }
-            const pic = imagesBase + (o.pic || 'default-pp.png');
             const myClassAttr = c.is_my_class_student ? '1' : '0';
             html += '<a href="' + buildConvUrl(c.id) + '" class="chat-item chat-filter-item ' + active + '" data-role="' + escapeHtml(o.role) + '" data-my-class="' + myClassAttr + '" data-conv-id="' + c.id + '">' +
-                '<div class="chat-avatar"><img src="' + pic + '" alt=""><span class="chat-status-dot ' + dotClass + '"></span></div>' +
+                '<div class="chat-avatar"><i class="fas fa-user"></i><span class="chat-status-dot ' + dotClass + '"></span></div>' +
                 '<div class="chat-text"><div class="chat-name">' + escapeHtml(o.name) + ' ' + tag + '</div>' +
                 '<div class="chat-meta-row"><div class="chat-last">' + escapeHtml(c.preview) + '</div>' +
                 '<div class="chat-time">' + escapeHtml(c.last_time || '') + '</div></div></div>' + unread + '</a>';
         });
         if (!conversations.length) {
             html = '<div style="font-size:0.82rem; color: var(--inbox-muted); padding:8px 4px;">No conversations yet.</div>';
+        }
+        if (list.innerHTML === html) {
+            if (typeof window.__messagesApplyFilter === 'function') {
+                window.__messagesApplyFilter();
+            }
+            return;
         }
         list.innerHTML = html;
         if (typeof window.__messagesApplyFilter === 'function') {
@@ -1199,6 +1198,10 @@
     }
 
     function startPolling() {
+        if (window.__msgPollTimer) {
+            clearInterval(window.__msgPollTimer);
+            window.__msgPollTimer = null;
+        }
         if (pollTimer) clearInterval(pollTimer);
         pollTimer = setInterval(poll, 2500);
         window.__msgPollTimer = pollTimer;
