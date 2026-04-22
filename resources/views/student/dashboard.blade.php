@@ -353,6 +353,49 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
         }
+
+        /* Quest play: edge-to-edge shell over sidebar, header, AI widget */
+        body.quest-play-fullscreen {
+            overflow: hidden;
+        }
+
+        body.quest-play-fullscreen aside,
+        body.quest-play-fullscreen #main-content > header,
+        body.quest-play-fullscreen .ai-floating-btn,
+        body.quest-play-fullscreen .ai-chat-window {
+            display: none !important;
+        }
+
+        body.quest-play-fullscreen #main-content {
+            margin-left: 0 !important;
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        body.quest-play-fullscreen #main-content section {
+            padding: 0 !important;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.quest-play-fullscreen .dashboard-shell {
+            position: fixed;
+            inset: 0;
+            z-index: 2001;
+            width: 100%;
+            height: 100%;
+            max-height: 100dvh;
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .dashboard-shell-1 {
             width: 100%;
             min-height: 80vh;
@@ -1451,7 +1494,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{{ request()->routeIs('student.quest.play') ? 'quest-play-fullscreen' : '' }}">
 
     <!-- SIDEBAR -->
     <aside id="sidebar">

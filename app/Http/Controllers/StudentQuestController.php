@@ -94,7 +94,7 @@ class StudentQuestController extends Controller
         return redirect()->route('student.quest.play', [$quest->id, $attempt->current_question_id]);
     }
 
-    public function play(Quest $quest, QuestQuestion $question = null)
+    public function play(Request $request, Quest $quest, QuestQuestion $question = null)
     {
         $this->authorizeQuestForStudent($quest);
         $attempt = QuestAttempt::where('user_id', Auth::id())
@@ -118,6 +118,10 @@ class StudentQuestController extends Controller
 
         // Ensure user can only play their current or previous questions (no skipping)
         // Simplified for now: just load the question
+        if ($request->ajax()) {
+            return view('student.quest.play-fragment', compact('quest', 'question', 'attempt'));
+        }
+
         return view('student.quest.play', compact('quest', 'question', 'attempt'));
     }
 
@@ -226,6 +230,7 @@ class StudentQuestController extends Controller
                 ]);
                 return response()->json([
                     'success' => true,
+                    'correct' => true,
                     'message' => 'Victory! You restored ' . $restoreAmount . ' HP! Moving to the next challenge.',
                     'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
                     'new_hp' => $newHP
@@ -257,6 +262,7 @@ class StudentQuestController extends Controller
                 $powerBonusMsg = $activePower === 'powerstrike' ? ' (Power Strike doubled your XP!)' : '';
                 return response()->json([
                     'success' => true,
+                    'correct' => true,
                     'message' => "Quest Complete! You earned {$xpReward} XP!{$powerBonusMsg}",
                     'next_url' => route('student.quest.show', $quest->id),
                     'new_hp' => $newHP,
