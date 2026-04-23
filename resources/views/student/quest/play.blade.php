@@ -59,44 +59,16 @@ function isQuestBrowserFullscreen() {
     return !!(target && fs && fs === target);
 }
 
-function questFullscreenGateStorageKey() {
-    const el = document.getElementById('quest-play-config');
-    const id = el && el.dataset && el.dataset.questId ? el.dataset.questId : '0';
-    return 'asianista_quest_fs_gate_' + id;
-}
-
 function setQuestFullscreenGatePageLock(on) {
     const page = document.querySelector('.quest-play-page');
     if (!page) return;
     page.classList.toggle('quest-play-page--fs-gate-open', !!on);
 }
 
-function dismissQuestFullscreenGate() {
-    const gate = document.getElementById('quest-fullscreen-gate');
-    if (gate) {
-        gate.classList.remove('is-open');
-        gate.setAttribute('aria-hidden', 'true');
-    }
-    setQuestFullscreenGatePageLock(false);
-    try {
-        sessionStorage.setItem(questFullscreenGateStorageKey(), '1');
-    } catch (err) { /* ignore */ }
-}
-
 function showQuestFullscreenGateIfNeeded() {
     const gate = document.getElementById('quest-fullscreen-gate');
     if (!gate) return;
     if (isQuestBrowserFullscreen()) {
-        gate.classList.remove('is-open');
-        gate.setAttribute('aria-hidden', 'true');
-        setQuestFullscreenGatePageLock(false);
-        return;
-    }
-    let dismissed = false;
-    try {
-        dismissed = sessionStorage.getItem(questFullscreenGateStorageKey()) === '1';
-    } catch (err) { /* ignore */ }
-    if (dismissed) {
         gate.classList.remove('is-open');
         gate.setAttribute('aria-hidden', 'true');
         setQuestFullscreenGatePageLock(false);
@@ -124,18 +96,18 @@ function initQuestFullscreenListenersOnce() {
     if (initQuestFullscreenListenersOnce._done) return;
     initQuestFullscreenListenersOnce._done = true;
 
+    function onFullscreenChange() {
+        showQuestFullscreenGateIfNeeded();
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.addEventListener('MSFullscreenChange', onFullscreenChange);
+
     document.addEventListener('click', function (e) {
         const enter = e.target && e.target.closest ? e.target.closest('#quest-fs-gate-enter') : null;
-        const skip = e.target && e.target.closest ? e.target.closest('#quest-fs-gate-skip') : null;
         if (enter) {
             e.preventDefault();
-            dismissQuestFullscreenGate();
             requestQuestFullscreenOptional();
-            return;
-        }
-        if (skip) {
-            e.preventDefault();
-            dismissQuestFullscreenGate();
         }
     });
 }

@@ -70,34 +70,22 @@
         <div class="quest-fullscreen-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="quest-fs-gate-title">
             <div class="quest-fullscreen-gate__icon" aria-hidden="true"><i class="fas fa-expand-arrows-alt"></i></div>
             <h2 id="quest-fs-gate-title" class="quest-fullscreen-gate__title">Before you begin this challenge</h2>
-            <p class="quest-fullscreen-gate__lead">For this quest, your school recommends using <strong>fullscreen</strong> so the battle scene and questions fill the screen and you can focus on the task.</p>
-
-            <div class="quest-fullscreen-gate__section">
-                <h3 class="quest-fullscreen-gate__sub">Why fullscreen?</h3>
-                <ul class="quest-fullscreen-gate__list">
-                    <li>You can see the arena, health bars, and answer area clearly without squeezing the layout.</li>
-                    <li>It reduces distractions and accidental clicks outside the challenge.</li>
-                    <li>It matches how many classroom assessments are run—one focused window at a time.</li>
-                </ul>
-            </div>
+            <p class="quest-fullscreen-gate__lead">Your school asks you to use <strong>fullscreen</strong> so the battle and questions fill the screen and you can stay focused.</p>
 
             <div class="quest-fullscreen-gate__section quest-fullscreen-gate__section--rules">
-                <h3 class="quest-fullscreen-gate__sub">Rules &amp; expectations</h3>
+                <h3 class="quest-fullscreen-gate__sub">Rules</h3>
                 <ul class="quest-fullscreen-gate__list">
-                    <li><strong>With fullscreen:</strong> Stay in the challenge until you finish the round or your teacher tells you to stop. Press <kbd>Esc</kbd> only if your teacher allows you to leave fullscreen.</li>
-                    <li><strong>Without fullscreen:</strong> You must keep this <strong>browser tab in front</strong>. Opening search, AI tools, notes, or other sites during the challenge can break honor rules and may be reviewed by your teacher.</li>
-                    <li><strong>Not following these rules</strong> (for example, hiding the quest to look up answers elsewhere) can be treated as an irregular attempt and may affect how your results are counted.</li>
+                    <li>Stay in this challenge until you finish or your teacher tells you to stop.</li>
+                    <li>Keep this tab in front—no search, notes, or AI unless your teacher allows it.</li>
+                    <li>Pressing <kbd>Esc</kbd> leaves fullscreen; this screen comes back until you enter fullscreen again.</li>
                 </ul>
             </div>
 
-            <p class="quest-fullscreen-gate__ack">By choosing an option below, you confirm that you understand and will follow these expectations for this quest.</p>
+            <p class="quest-fullscreen-gate__ack">Enter fullscreen below to continue. Breaking these rules may affect how your attempt is counted.</p>
 
             <div class="quest-fullscreen-gate__actions">
                 <button type="button" id="quest-fs-gate-enter" class="btn-quest-fs-gate btn-quest-fs-gate--primary">
                     <i class="fas fa-expand" aria-hidden="true"></i> Enter fullscreen &amp; continue
-                </button>
-                <button type="button" id="quest-fs-gate-skip" class="btn-quest-fs-gate btn-quest-fs-gate--secondary">
-                    Continue without fullscreen
                 </button>
             </div>
         </div>

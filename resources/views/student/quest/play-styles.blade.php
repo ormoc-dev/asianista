@@ -82,8 +82,8 @@
     .quest-fullscreen-gate__dialog {
         position: relative;
         width: 100%;
-        max-width: 440px;
-        max-height: min(90vh, 640px);
+        max-width: min(92vw, 640px);
+        max-height: min(90vh, 720px);
         overflow-y: auto;
         background: linear-gradient(180deg, #f8fafc 0%, #fff 40%);
         border-radius: 20px;
