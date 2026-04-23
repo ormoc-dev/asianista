@@ -43,6 +43,10 @@
         $qIndexInLevel = $currentLevelQuestions->search(fn ($q) => (int) $q->id === (int) $question->id);
         $qIndexInLevel = $qIndexInLevel === false ? 0 : (int) $qIndexInLevel;
         $questionOrdinalInLevel = $qIndexInLevel + 1;
+        $heroCharacter = strtolower(trim((string) (($user?->character) ?? 'warrior')));
+        if (! in_array($heroCharacter, ['warrior', 'mage', 'healer'], true)) {
+            $heroCharacter = 'warrior';
+        }
     @endphp
     <div id="quest-play-config" hidden
         data-time-seconds="{{ (int) ($quest->time_limit_minutes ? $quest->time_limit_minutes * 60 : 0) }}"
@@ -57,29 +61,44 @@
         data-boss-name="{{ $bossName }}"
         data-student-name="{{ $studentName }}"
         data-boss-max-hp="{{ $bossMaxHp }}"
-        data-boss-current-hp="{{ $bossCurrentHp }}"></div>
-    <div class="play-header">
-        <div class="play-header-left">
-            <a href="{{ route('student.quest.show', $quest->id) }}" class="btn-exit">
-                <i class="fas fa-times"></i> Exit Quest
-            </a>
-            <div class="play-quest-info">
-                <h2>{{ $quest->title }}</h2>
-                <div class="play-quest-meta">
-                    <span class="step-counter">Objective {{ $attempt->quest->questions->pluck('id')->search($question->id) + 1 }} of {{ $attempt->quest->questions->count() }}</span>
-                    <span class="lvl-badge"><i class="fas fa-medal"></i> LVL {{ $question->level }}</span>
-                </div>
-            </div>
-        </div>
+        data-boss-current-hp="{{ $bossCurrentHp }}"
+        data-hero-character="{{ $heroCharacter }}"
+        data-quest-id="{{ (int) $quest->id }}"></div>
 
-        <div class="play-header-right">
-            @if($quest->time_limit_minutes)
-            <div class="timer-display" id="quest-timer">
-                <i class="fas fa-clock"></i> <span id="timer-count">{{ $quest->time_limit_minutes }}:00</span>
+    <div id="quest-fullscreen-gate" class="quest-fullscreen-gate" aria-hidden="true">
+        <div class="quest-fullscreen-gate__backdrop" aria-hidden="true"></div>
+        <div class="quest-fullscreen-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="quest-fs-gate-title">
+            <div class="quest-fullscreen-gate__icon" aria-hidden="true"><i class="fas fa-expand-arrows-alt"></i></div>
+            <h2 id="quest-fs-gate-title" class="quest-fullscreen-gate__title">Before you begin this challenge</h2>
+            <p class="quest-fullscreen-gate__lead">For this quest, your school recommends using <strong>fullscreen</strong> so the battle scene and questions fill the screen and you can focus on the task.</p>
+
+            <div class="quest-fullscreen-gate__section">
+                <h3 class="quest-fullscreen-gate__sub">Why fullscreen?</h3>
+                <ul class="quest-fullscreen-gate__list">
+                    <li>You can see the arena, health bars, and answer area clearly without squeezing the layout.</li>
+                    <li>It reduces distractions and accidental clicks outside the challenge.</li>
+                    <li>It matches how many classroom assessments are run—one focused window at a time.</li>
+                </ul>
             </div>
-            @endif
-            <div class="reward-preview">
-                <span class="reward-item"><i class="fas fa-star"></i> {{ $question->points }} XP</span>
+
+            <div class="quest-fullscreen-gate__section quest-fullscreen-gate__section--rules">
+                <h3 class="quest-fullscreen-gate__sub">Rules &amp; expectations</h3>
+                <ul class="quest-fullscreen-gate__list">
+                    <li><strong>With fullscreen:</strong> Stay in the challenge until you finish the round or your teacher tells you to stop. Press <kbd>Esc</kbd> only if your teacher allows you to leave fullscreen.</li>
+                    <li><strong>Without fullscreen:</strong> You must keep this <strong>browser tab in front</strong>. Opening search, AI tools, notes, or other sites during the challenge can break honor rules and may be reviewed by your teacher.</li>
+                    <li><strong>Not following these rules</strong> (for example, hiding the quest to look up answers elsewhere) can be treated as an irregular attempt and may affect how your results are counted.</li>
+                </ul>
+            </div>
+
+            <p class="quest-fullscreen-gate__ack">By choosing an option below, you confirm that you understand and will follow these expectations for this quest.</p>
+
+            <div class="quest-fullscreen-gate__actions">
+                <button type="button" id="quest-fs-gate-enter" class="btn-quest-fs-gate btn-quest-fs-gate--primary">
+                    <i class="fas fa-expand" aria-hidden="true"></i> Enter fullscreen &amp; continue
+                </button>
+                <button type="button" id="quest-fs-gate-skip" class="btn-quest-fs-gate btn-quest-fs-gate--secondary">
+                    Continue without fullscreen
+                </button>
             </div>
         </div>
     </div>
@@ -91,23 +110,15 @@
                 <div class="battle-arena-bg" style="background-image: url('{{ $battleBgUrl }}');"></div>
                 <div class="battle-arena-vignette" aria-hidden="true"></div>
 
-                <div class="battle-arena-header">
-                    <div class="battle-arena-title">
-                        <strong>{{ $quest->title }}</strong>
-                        <span>Boss battle · Level {{ $question->level }}</span>
-                    </div>
-                </div>
-
                 <div class="battle-fighters-row">
                     <div class="fighter battle-fighter">
                         <div class="fighter-stand fighter-stand--boss fighter-portrait-wrap" id="dragon-sprite">
                             <img src="{{ $bossImageUrl }}" alt="" class="fighter-portrait-img fighter-portrait-boss">
                             <div class="combat-fx combat-fx--boss" id="dragon-fire" aria-hidden="true">
-                                <div class="combat-fx__beam combat-fx__beam--shadow"></div>
-                                <div class="combat-fx__ring combat-fx__ring--violet"></div>
+                                <div class="combat-fx__beam combat-fx__beam--shadow" id="boss-beam"></div>
+                                <div class="combat-fx__ring combat-fx__ring--violet" id="boss-ring"></div>
                             </div>
                         </div>
-                        <div class="fighter-label battle-fighter-label battle-fighter-label--boss">{{ $bossName }}</div>
                     </div>
 
                     <div class="vs-badge battle-vs">VS</div>
@@ -116,11 +127,10 @@
                         <div class="fighter-stand fighter-stand--hero fighter-portrait-wrap" id="hero-sprite">
                             <img src="{{ $studentProfileUrl }}" alt="" class="fighter-portrait-img fighter-portrait-hero">
                             <div class="combat-fx combat-fx--hero" id="hero-fire" aria-hidden="true">
-                                <div class="combat-fx__beam combat-fx__beam--mind"></div>
-                                <div class="combat-fx__ring combat-fx__ring--cyan"></div>
+                                <div class="combat-fx__beam combat-fx__beam--mind" id="hero-beam"></div>
+                                <div class="combat-fx__ring combat-fx__ring--cyan" id="hero-ring"></div>
                             </div>
                         </div>
-                        <div class="fighter-label battle-fighter-label battle-fighter-label--hero">{{ $studentName }}</div>
                     </div>
                 </div>
 
@@ -234,8 +244,30 @@
             </div>
         </div>
 
-        <!-- Sidebar / Visuals -->
+        <!-- Sidebar: mission + stats + powers (scrollable) -->
         <div class="play-sidebar">
+            <div class="play-sidebar-mission">
+                <span class="btn-exit btn-exit--sidebar btn-exit--locked" role="note" tabindex="-1" title="You cannot leave mid-challenge from this screen. Complete the round or finish the quest from the victory flow.">
+                    <i class="fas fa-lock" aria-hidden="true"></i> Exit locked
+                </span>
+                <p class="btn-exit-hint">Stay in this challenge until you continue after a result. Your progress is saved automatically.</p>
+                <h2 class="play-sidebar-mission__title">{{ $quest->title }}</h2>
+                <div class="play-sidebar-mission__meta">
+                    <span class="step-counter">Objective {{ $attempt->quest->questions->pluck('id')->search($question->id) + 1 }} of {{ $attempt->quest->questions->count() }}</span>
+                    <span class="lvl-badge lvl-badge--sidebar"><i class="fas fa-medal"></i> LVL {{ $question->level }}</span>
+                </div>
+                <div class="play-sidebar-mission__actions">
+                    @if($quest->time_limit_minutes)
+                    <div class="timer-display timer-display--sidebar" id="quest-timer">
+                        <i class="fas fa-clock"></i> <span id="timer-count">{{ $quest->time_limit_minutes }}:00</span>
+                    </div>
+                    @endif
+                    <div class="reward-preview reward-preview--sidebar">
+                        <span class="reward-item"><i class="fas fa-star"></i> {{ $question->points }} XP</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- HP/AP Stats Card -->
             <div class="stats-card">
                 <div id="hero-stat-max" data-max-hp="{{ $maxHP }}" data-max-ap="{{ $maxAP }}" hidden></div>

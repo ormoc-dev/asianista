@@ -106,14 +106,39 @@ class StudentQuestController extends Controller
             return redirect()->route('student.quest.show', $quest->id);
         }
 
-        // Check if expired during play (only if not already completed)
-        if ($quest->due_date && \Carbon\Carbon::parse($quest->due_date)->isPast() && $attempt->status !== 'completed') {
+        if ($attempt->status === 'completed') {
+            return redirect()->route('student.quest.show', $quest->id);
+        }
+
+        // Check if expired during play
+        if ($quest->due_date && \Carbon\Carbon::parse($quest->due_date)->isPast()) {
             return redirect()->route('student.quest.show', $quest->id)->with('error', 'The deadline has passed! You can no longer continue this mission.');
         }
 
-        // If no question provided, load the current one from attempt
-        if (!$question) {
-            $question = QuestQuestion::find($attempt->current_question_id);
+        $currentId = (int) $attempt->current_question_id;
+        if (! $currentId || ! $quest->questions()->whereKey($currentId)->exists()) {
+            $firstQuestion = $quest->questions()->orderBy('level')->orderBy('id')->first();
+            if (! $firstQuestion) {
+                return redirect()->route('student.quest.show', $quest->id)->with('error', 'This quest has no challenges yet.');
+            }
+            $attempt->update(['current_question_id' => $firstQuestion->id]);
+            $currentId = (int) $firstQuestion->id;
+        }
+
+        // In-page (AJAX) navigation updates the DB but not the address bar; a full reload must follow saved progress.
+        if ($question) {
+            if (! $quest->questions()->whereKey($question->id)->exists()) {
+                return redirect()->route('student.quest.play', [$quest->id, $currentId]);
+            }
+            if ((int) $question->id !== $currentId) {
+                return redirect()->route('student.quest.play', [$quest->id, $currentId]);
+            }
+        } else {
+            $question = QuestQuestion::find($currentId);
+        }
+
+        if (! $question || ! $quest->questions()->whereKey($question->id)->exists()) {
+            return redirect()->route('student.quest.show', $quest->id)->with('error', 'Challenge not found.');
         }
 
         // Ensure user can only play their current or previous questions (no skipping)

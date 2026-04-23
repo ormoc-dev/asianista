@@ -393,8 +393,18 @@
             border-radius: 0;
             border: none;
             box-shadow: none;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body.quest-play-fullscreen .dashboard-shell #quest-play-mount {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
         .dashboard-shell-1 {
             width: 100%;

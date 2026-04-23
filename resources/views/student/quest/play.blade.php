@@ -18,6 +18,128 @@ function refreshQuestPlayConfig() {
 
 refreshQuestPlayConfig();
 
+let questPlayExitGuardBound = false;
+
+function questPlayExitGuard(ev) {
+    ev.preventDefault();
+    ev.returnValue = ' ';
+}
+
+function bindQuestPlayExitGuard() {
+    if (questPlayExitGuardBound) return;
+    questPlayExitGuardBound = true;
+    window.addEventListener('beforeunload', questPlayExitGuard);
+}
+
+function unbindQuestPlayExitGuard() {
+    if (!questPlayExitGuardBound) return;
+    questPlayExitGuardBound = false;
+    window.removeEventListener('beforeunload', questPlayExitGuard);
+}
+
+function bootQuestPlayExitGuardIfNeeded() {
+    if (document.getElementById('quest-play-mount')) {
+        bindQuestPlayExitGuard();
+    }
+}
+
+function getQuestFullscreenTarget() {
+    const shell = document.querySelector('body.quest-play-fullscreen .dashboard-shell');
+    if (shell) return shell;
+    return document.getElementById('quest-play-mount');
+}
+
+function getBrowserFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+}
+
+function isQuestBrowserFullscreen() {
+    const target = getQuestFullscreenTarget();
+    const fs = getBrowserFullscreenElement();
+    return !!(target && fs && fs === target);
+}
+
+function questFullscreenGateStorageKey() {
+    const el = document.getElementById('quest-play-config');
+    const id = el && el.dataset && el.dataset.questId ? el.dataset.questId : '0';
+    return 'asianista_quest_fs_gate_' + id;
+}
+
+function setQuestFullscreenGatePageLock(on) {
+    const page = document.querySelector('.quest-play-page');
+    if (!page) return;
+    page.classList.toggle('quest-play-page--fs-gate-open', !!on);
+}
+
+function dismissQuestFullscreenGate() {
+    const gate = document.getElementById('quest-fullscreen-gate');
+    if (gate) {
+        gate.classList.remove('is-open');
+        gate.setAttribute('aria-hidden', 'true');
+    }
+    setQuestFullscreenGatePageLock(false);
+    try {
+        sessionStorage.setItem(questFullscreenGateStorageKey(), '1');
+    } catch (err) { /* ignore */ }
+}
+
+function showQuestFullscreenGateIfNeeded() {
+    const gate = document.getElementById('quest-fullscreen-gate');
+    if (!gate) return;
+    if (isQuestBrowserFullscreen()) {
+        gate.classList.remove('is-open');
+        gate.setAttribute('aria-hidden', 'true');
+        setQuestFullscreenGatePageLock(false);
+        return;
+    }
+    let dismissed = false;
+    try {
+        dismissed = sessionStorage.getItem(questFullscreenGateStorageKey()) === '1';
+    } catch (err) { /* ignore */ }
+    if (dismissed) {
+        gate.classList.remove('is-open');
+        gate.setAttribute('aria-hidden', 'true');
+        setQuestFullscreenGatePageLock(false);
+        return;
+    }
+    gate.classList.add('is-open');
+    gate.setAttribute('aria-hidden', 'false');
+    setQuestFullscreenGatePageLock(true);
+}
+
+function requestQuestFullscreenOptional() {
+    const el = getQuestFullscreenTarget();
+    if (!el) return;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (!req) {
+        window.alert('Your browser does not support fullscreen for this page. Try maximizing the window (e.g. F11 on Windows).');
+        return;
+    }
+    req.call(el).catch(function () {
+        window.alert('Fullscreen needs your permission. You can try again from the browser menu or use F11 to maximize.');
+    });
+}
+
+function initQuestFullscreenListenersOnce() {
+    if (initQuestFullscreenListenersOnce._done) return;
+    initQuestFullscreenListenersOnce._done = true;
+
+    document.addEventListener('click', function (e) {
+        const enter = e.target && e.target.closest ? e.target.closest('#quest-fs-gate-enter') : null;
+        const skip = e.target && e.target.closest ? e.target.closest('#quest-fs-gate-skip') : null;
+        if (enter) {
+            e.preventDefault();
+            dismissQuestFullscreenGate();
+            requestQuestFullscreenOptional();
+            return;
+        }
+        if (skip) {
+            e.preventDefault();
+            dismissQuestFullscreenGate();
+        }
+    });
+}
+
 let timeRemaining = parseInt(questPlay.timeSeconds || '0', 10);
 let timerInterval = null;
 let extraTimeAdded = 0;
@@ -213,20 +335,56 @@ function reinitQuestPlayAfterSwap() {
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
     }
+    resetQuestBattleFxDefaults();
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
+    showQuestFullscreenGateIfNeeded();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     bindQuestBgMusicOnce();
+    initQuestFullscreenListenersOnce();
+    bootQuestPlayExitGuardIfNeeded();
     positionPulseAndHud();
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
+    showQuestFullscreenGateIfNeeded();
 });
 
-document.addEventListener('turbolinks:before-visit', function () {
+document.addEventListener('turbolinks:load', function () {
+    bootQuestPlayExitGuardIfNeeded();
+    showQuestFullscreenGateIfNeeded();
+});
+
+document.addEventListener('turbolinks:before-visit', function (event) {
     const a = document.getElementById('quest-bg-music');
     if (a) a.pause();
+
+    const mount = document.getElementById('quest-play-mount');
+    if (!mount || !document.body.classList.contains('quest-play-fullscreen')) {
+        return;
+    }
+
+    const rawUrl = (event.data && event.data.url) || event.url || '';
+    if (!rawUrl) return;
+
+    let staysInQuestPlay = false;
+    try {
+        const u = new URL(rawUrl, window.location.origin);
+        staysInQuestPlay = /\/student\/quest\/\d+\/play(\/|$)/.test(u.pathname);
+    } catch (e) {
+        staysInQuestPlay = false;
+    }
+
+    if (staysInQuestPlay) {
+        return;
+    }
+
+    event.preventDefault();
+    if (window.confirm('You have an active challenge. Leave this screen? Your progress is saved on the server.')) {
+        unbindQuestPlayExitGuard();
+        window.location.href = rawUrl;
+    }
 });
 
 function startTimer() {
@@ -484,6 +642,13 @@ async function navigateAfterQuest(url) {
         window.Turbolinks.clearCache();
     }
     if (!isQuestPlayStepUrl(url)) {
+        if (isQuestBrowserFullscreen()) {
+            const ex = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+            if (ex) {
+                try { ex.call(document); } catch (e) { /* ignore */ }
+            }
+        }
+        unbindQuestPlayExitGuard();
         window.location.href = url;
         return;
     }
@@ -499,14 +664,71 @@ async function navigateAfterQuest(url) {
         const html = await res.text();
         const mount = document.getElementById('quest-play-mount');
         if (!mount) {
+            unbindQuestPlayExitGuard();
             window.location.href = url;
             return;
         }
         mount.innerHTML = html;
         reinitQuestPlayAfterSwap();
+        try {
+            const u = new URL(url, window.location.origin);
+            const path = u.pathname + u.search + u.hash;
+            if (path && path !== window.location.pathname + window.location.search + window.location.hash) {
+                window.history.replaceState({}, '', path);
+            }
+        } catch (e) { /* ignore */ }
     } catch (err) {
         console.error(err);
+        unbindQuestPlayExitGuard();
         window.location.href = url;
+    }
+}
+
+function resetQuestBattleFxDefaults() {
+    const hb = document.getElementById('hero-beam');
+    const hr = document.getElementById('hero-ring');
+    const bb = document.getElementById('boss-beam');
+    const br = document.getElementById('boss-ring');
+    if (hb) hb.className = 'combat-fx__beam combat-fx__beam--mind';
+    if (hr) hr.className = 'combat-fx__ring combat-fx__ring--cyan';
+    if (bb) bb.className = 'combat-fx__beam combat-fx__beam--shadow';
+    if (br) br.className = 'combat-fx__ring combat-fx__ring--violet';
+    document.getElementById('hero-sprite')?.classList.remove('battle-charge-win');
+    document.getElementById('dragon-sprite')?.classList.remove('battle-charge-win');
+}
+
+function applyHeroVictoryCombatFx() {
+    const cfg = document.getElementById('quest-play-config');
+    let c = (cfg && cfg.dataset.heroCharacter ? String(cfg.dataset.heroCharacter) : 'warrior').toLowerCase();
+    if (c !== 'mage' && c !== 'warrior' && c !== 'healer') c = 'warrior';
+    const heroBeam = document.getElementById('hero-beam');
+    const heroRing = document.getElementById('hero-ring');
+    if (!heroBeam || !heroRing) return;
+    const beams = {
+        warrior: 'combat-fx__beam combat-fx__beam--smash',
+        mage: 'combat-fx__beam combat-fx__beam--arcane',
+        healer: 'combat-fx__beam combat-fx__beam--heal-smash'
+    };
+    const rings = {
+        warrior: 'combat-fx__ring combat-fx__ring--ember',
+        mage: 'combat-fx__ring combat-fx__ring--arcane-burst',
+        healer: 'combat-fx__ring combat-fx__ring--life'
+    };
+    heroBeam.className = beams[c];
+    heroRing.className = rings[c];
+}
+
+function applyRandomBossDefeatFx() {
+    const bossBeam = document.getElementById('boss-beam');
+    const bossRing = document.getElementById('boss-ring');
+    if (!bossBeam || !bossRing) return;
+    const smash = Math.random() < 0.5;
+    if (smash) {
+        bossBeam.className = 'combat-fx__beam combat-fx__beam--boss-smash';
+        bossRing.className = 'combat-fx__ring combat-fx__ring--ember';
+    } else {
+        bossBeam.className = 'combat-fx__beam combat-fx__beam--shadow';
+        bossRing.className = 'combat-fx__ring combat-fx__ring--violet';
     }
 }
 
@@ -529,25 +751,71 @@ function showBattle(outcome, message, onContinue) {
 
     if (dragonFire) dragonFire.classList.remove('active');
     if (heroFire) heroFire.classList.remove('active');
-    if (heroSprite) heroSprite.classList.remove('hit');
-    if (dragonSprite) dragonSprite.classList.remove('hit');
+    if (heroSprite) heroSprite.classList.remove('hit', 'battle-charge-win');
+    if (dragonSprite) dragonSprite.classList.remove('hit', 'battle-charge-win');
     if (result) result.className = 'battle-result';
 
     if (outcome === 'victory') {
+        applyHeroVictoryCombatFx();
         if (eyebrow) eyebrow.textContent = 'Round cleared';
         if (badge) badge.innerHTML = '<i class="fas fa-trophy" aria-hidden="true"></i>';
         if (title) title.textContent = 'Victory!';
     } else {
+        applyRandomBossDefeatFx();
         if (eyebrow) eyebrow.textContent = 'Hit taken';
         if (badge) badge.innerHTML = '<i class="fas fa-shield-alt" aria-hidden="true"></i>';
         if (title) title.textContent = 'Defeat';
     }
     if (msg) msg.textContent = message;
     if (nextBtn) {
+        const battleSheetReset = document.getElementById('battle-card');
+        if (battleSheetReset) battleSheetReset.classList.remove('is-loading-next');
+        const nextIcon = nextBtn.querySelector('.btn-battle-action__icon');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('btn-battle-action--loading');
+        if (nextIcon) nextIcon.className = 'fas fa-chevron-right btn-battle-action__icon';
+        const labelContinue = 'Continue';
+        const labelProceed = 'Proceed';
         if (nextBtnLabel) {
-            nextBtnLabel.textContent = outcome === 'victory' ? 'Continue' : 'Try again';
+            nextBtnLabel.textContent = outcome === 'victory' ? labelContinue : labelProceed;
         }
-        nextBtn.onclick = onContinue;
+        nextBtn.onclick = function handleBattleModalNext() {
+            if (!nextBtn || nextBtn.disabled) return;
+            const loadingVictory = 'Continuing…';
+            const loadingDefeat = 'Proceeding…';
+            const battleSheet = document.getElementById('battle-card');
+            nextBtn.disabled = true;
+            nextBtn.classList.add('btn-battle-action--loading');
+            if (battleSheet) battleSheet.classList.add('is-loading-next');
+            if (nextBtnLabel) {
+                nextBtnLabel.textContent = outcome === 'victory' ? loadingVictory : loadingDefeat;
+            }
+            if (nextIcon) nextIcon.className = 'fas fa-spinner fa-spin btn-battle-action__icon';
+
+            function restoreBattleModalBtn() {
+                if (!nextBtn) return;
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('btn-battle-action--loading');
+                if (battleSheet) battleSheet.classList.remove('is-loading-next');
+                if (nextBtnLabel) {
+                    nextBtnLabel.textContent = outcome === 'victory' ? labelContinue : labelProceed;
+                }
+                if (nextIcon) nextIcon.className = 'fas fa-chevron-right btn-battle-action__icon';
+            }
+
+            try {
+                const ret = onContinue();
+                if (ret && typeof ret.then === 'function') {
+                    ret.catch(function () {
+                        restoreBattleModalBtn();
+                    });
+                } else {
+                    restoreBattleModalBtn();
+                }
+            } catch (err) {
+                restoreBattleModalBtn();
+            }
+        };
     }
     if (result) result.classList.add(outcome);
 
@@ -558,11 +826,13 @@ function showBattle(outcome, message, onContinue) {
 
     setTimeout(function () {
         if (outcome === 'defeat') {
+            if (dragonSprite) dragonSprite.classList.add('battle-charge-win');
             if (dragonFire) dragonFire.classList.add('active');
             setTimeout(function () {
                 if (heroSprite) heroSprite.classList.add('hit');
             }, 300);
         } else {
+            if (heroSprite) heroSprite.classList.add('battle-charge-win');
             if (heroFire) heroFire.classList.add('active');
             setTimeout(function () {
                 if (dragonSprite) dragonSprite.classList.add('hit');
@@ -645,6 +915,7 @@ document.addEventListener('submit', async function (e) {
                 document.getElementById('hero-fire')?.classList.remove('active');
                 document.getElementById('hero-sprite')?.classList.remove('hit');
                 document.getElementById('dragon-sprite')?.classList.remove('hit');
+                resetQuestBattleFxDefaults();
             });
         }
     } catch (error) {
