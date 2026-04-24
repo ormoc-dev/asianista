@@ -262,7 +262,7 @@ async function generateLessonContent() {
     const lessonType = document.getElementById('aiLessonType').value;
     
     if (!topic) {
-        alert('Please enter a topic for the lesson.');
+        teacherNotify('Please enter a topic for the lesson.', 'warning');
         return;
     }
     
@@ -335,13 +335,13 @@ async function generateLessonContent() {
             
             document.getElementById('lessonContent').value = content;
             
-            alert('Lesson content generated successfully! Review and edit as needed.');
+            teacherNotify('Lesson content generated successfully! Review and edit as needed.', 'success');
         } else {
-            alert('Failed to generate content: ' + (result.message || 'Unknown error'));
+            teacherNotify('Failed to generate content: ' + (result.message || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while generating content.');
+        teacherNotify('An error occurred while generating content.', 'error');
     } finally {
         btn.disabled = false;
         loading.classList.remove('show');

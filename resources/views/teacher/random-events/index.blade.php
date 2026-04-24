@@ -1168,7 +1168,7 @@ function drawRandomEvent() {
         var sel = document.getElementById('studentSelect');
         payload.student_ids = sel ? Array.from(sel.selectedOptions).map(function (o) { return parseInt(o.value, 10); }) : [];
         if (payload.student_ids.length === 0) {
-            alert('Select at least one student, or choose another recipient option.');
+            teacherNotify('Select at least one student, or choose another recipient option.', 'warning');
             return;
         }
     }
@@ -1211,7 +1211,7 @@ function drawRandomEvent() {
         console.error('Error:', error);
         resetDrawFlowState();
         drawBtn.disabled = false;
-        alert(error.message || 'Failed to draw random event. Please try again.');
+        teacherNotify(error.message || 'Failed to draw random event. Please try again.', 'error');
     });
 }
 

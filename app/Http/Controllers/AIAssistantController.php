@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class AIAssistantController extends Controller
 {
@@ -12,35 +14,71 @@ class AIAssistantController extends Controller
      */
     public function generateQuest(Request $request)
     {
+        $modelKeys = array_keys(config('services.quest_ai.models', []));
+
         $request->validate([
             'topic' => 'required|string|max:255',
-            'difficulty' => 'nullable|string'
+            'difficulty' => 'nullable|string',
+            'total_levels' => 'nullable|integer|min:1|max:30',
+            'ai_model' => ['nullable', 'string', Rule::in($modelKeys)],
         ]);
 
         $topic = $request->input('topic');
         $difficulty = $request->input('difficulty', 'medium');
-        $totalLevels = $request->input('total_levels', 3);
+        $totalLevels = (int) $request->input('total_levels', 3);
+        $modelKey = $request->input('ai_model', config('services.quest_ai.default'));
+
+        if (! isset(config('services.quest_ai.models')[$modelKey])) {
+            $modelKey = config('services.quest_ai.default');
+        }
 
         try {
-            $generatedData = $this->callGroqAPI($topic, $difficulty, $totalLevels);
+            $this->assertQuestAiProviderConfigured($modelKey);
+            $generatedData = $this->generateQuestWithLlm($modelKey, $topic, $difficulty, $totalLevels);
+
             return response()->json([
                 'status' => 'success',
-                'data' => $generatedData
+                'data' => $generatedData,
             ]);
-        } catch (\Exception $e) {
-            Log::error('Groq API Error: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            Log::warning('Quest AI configuration: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'The Neural Link was interrupted.'
+                'message' => $e->getMessage(),
+            ], 503);
+        } catch (\Exception $e) {
+            Log::error('Quest AI Error: '.$e->getMessage(), [
+                'exception' => $e::class,
+            ]);
+            $message = trim($e->getMessage());
+            if ($message === '') {
+                $message = 'The Neural Link was interrupted.';
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $message,
             ], 500);
         }
     }
 
-    private function callGroqAPI($topic, $difficulty, $totalLevels)
+    private function assertQuestAiProviderConfigured(string $modelKey): void
     {
-        $apiKey = env('GROQ_API_KEY');
-        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+        $entry = config('services.quest_ai.models')[$modelKey] ?? null;
+        if (! $entry) {
+            throw new \RuntimeException('Invalid AI model configuration.');
+        }
+        if ($entry['provider'] === 'groq' && empty(env('GROQ_API_KEY'))) {
+            throw new \RuntimeException('Groq is not configured. Add GROQ_API_KEY to your environment, or choose an OpenRouter model.');
+        }
+        if ($entry['provider'] === 'openrouter' && empty(config('services.openrouter.api_key'))) {
+            throw new \RuntimeException('OpenRouter is not configured. Add OPENROUTER_API_KEY to your environment.');
+        }
+    }
 
+    private function generateQuestWithLlm(string $modelKey, string $topic, string $difficulty, int $totalLevels): array
+    {
         $prompt = "You are the 'Neural Quest Forge' in the High Fantasy RPG world of ASIANISTA. 
         Your task is to generate a JSON object for a teacher creating a quest.
         
@@ -77,35 +115,160 @@ class AIAssistantController extends Controller
         
         Return ONLY valid JSON. No conversational text.";
 
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->post($endpoint, [
-            'model' => 'llama-3.3-70b-versatile',
-            'messages' => [
-                ['role' => 'system', 'content' => "You are a helpful assistant that outputs only JSON."],
-                ['role' => 'user', 'content' => $prompt]
-            ],
-            'response_format' => ['type' => 'json_object'],
-            'temperature' => 0.7,
-            'max_tokens' => 1024,
-            'stream' => false
-        ]);
+        $messages = [
+            ['role' => 'system', 'content' => 'You are a helpful assistant that outputs only JSON.'],
+            ['role' => 'user', 'content' => $prompt],
+        ];
 
-        if ($response->failed()) {
-            throw new \Exception('Groq Request Failed: ' . $response->body());
-        }
+        $maxTokens = (int) min(4096, max(1024, 400 + 180 * $totalLevels));
+        $decoded = $this->chatCompletionJsonForQuestForge($modelKey, $messages, $maxTokens);
 
-        $result = $response->json();
-        $textResponse = $result['choices'][0]['message']['content'] ?? '';
-        
-        $decoded = json_decode($textResponse, true);
-
-        if (!$decoded) {
-            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        if (! $decoded) {
+            throw new \Exception('Failed to decode AI response.');
         }
 
         return $decoded;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function decodeJsonFromLlmText(string $text): ?array
+    {
+        $text = trim($text);
+        if (preg_match('/^```(?:json)?\s*([\s\S]*?)\s*```/m', $text, $m)) {
+            $text = trim($m[1]);
+        }
+        $decoded = json_decode($text, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        $start = strpos($text, '{');
+        $end = strrpos($text, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            $slice = substr($text, $start, $end - $start + 1);
+            $decoded = json_decode($slice, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Human-readable errors for LLM HTTP failures (especially OpenRouter free-tier 429s).
+     */
+    private function friendlyLlmHttpMessage(int $status, string $detail): string
+    {
+        $extra = ($detail !== '' && stripos($detail, 'Provider returned error') === false)
+            ? ' ('.$detail.')'
+            : '';
+
+        switch ($status) {
+            case 429:
+                return 'The AI provider is rate-limiting requests (HTTP 429). are often strict: wait 1–2 minutes, try a different model, or add credits at openrouter.ai. '.$extra;
+            case 401:
+                return 'The API key was rejected (HTTP 401). Check OPENROUTER_API_KEY or GROQ_API_KEY in your .env file.'.$extra;
+            case 402:
+                return 'This model or account needs credits (HTTP 402). Add balance on OpenRouter or switch provider.'.$extra;
+            case 403:
+                return 'Access denied by the AI provider (HTTP 403). Check the model name and account permissions.'.$extra;
+            case 502:
+            case 503:
+                return 'The AI provider is temporarily overloaded (HTTP '.$status.'). Try again in a few minutes.'.$extra;
+            default:
+                if ($detail !== '') {
+                    return 'AI request failed (HTTP '.$status.'): '.$detail;
+                }
+
+                return 'AI request failed (HTTP '.$status.').';
+        }
+    }
+
+    /**
+     * @param  array<int, array{role: string, content: string}>  $messages
+     * @return array<string, mixed>|null
+     */
+    private function chatCompletionJsonForQuestForge(string $modelKey, array $messages, int $maxTokens): ?array
+    {
+        $models = config('services.quest_ai.models', []);
+        if (! isset($models[$modelKey])) {
+            throw new \InvalidArgumentException('Invalid quest AI model.');
+        }
+
+        $entry = $models[$modelKey];
+        $provider = $entry['provider'];
+        $model = $entry['model'];
+        $useJsonObject = (bool) ($entry['json_object'] ?? true);
+
+        if ($provider === 'groq') {
+            $apiKey = (string) env('GROQ_API_KEY');
+            $endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+            $headers = [
+                'Authorization' => 'Bearer '.$apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => 0.7,
+                'max_tokens' => $maxTokens,
+                'stream' => false,
+            ];
+            if ($useJsonObject) {
+                $body['response_format'] = ['type' => 'json_object'];
+            }
+        } elseif ($provider === 'openrouter') {
+            $apiKey = (string) config('services.openrouter.api_key');
+            $endpoint = config('services.openrouter.base_url').'/chat/completions';
+            $headers = array_filter([
+                'Authorization' => 'Bearer '.$apiKey,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('services.openrouter.http_referer') ?: null,
+                'X-Title' => config('services.openrouter.app_title') ?: null,
+            ]);
+            $body = [
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => 0.7,
+                'max_tokens' => $maxTokens,
+            ];
+            if ($useJsonObject) {
+                $body['response_format'] = ['type' => 'json_object'];
+            }
+        } else {
+            throw new \RuntimeException('Unknown AI provider.');
+        }
+
+        $client = Http::timeout(120)->withHeaders($headers);
+
+        $response = $client->post($endpoint, $body);
+
+        if ($response->failed() && $provider === 'openrouter' && isset($body['response_format'])) {
+            Log::warning('OpenRouter chat failed with JSON mode; retrying without response_format.', [
+                'status' => $response->status(),
+                'snippet' => mb_substr($response->body(), 0, 500),
+            ]);
+            unset($body['response_format']);
+            $response = $client->post($endpoint, $body);
+        }
+
+        if ($response->failed()) {
+            $status = $response->status();
+            $errBody = $response->json();
+            $detail = is_array($errBody) && isset($errBody['error']['message'])
+                ? trim((string) $errBody['error']['message'])
+                : mb_substr($response->body(), 0, 800);
+
+            throw new \Exception($this->friendlyLlmHttpMessage($status, $detail));
+        }
+
+        $result = $response->json();
+        $textResponse = (string) ($result['choices'][0]['message']['content'] ?? '');
+
+        return $this->decodeJsonFromLlmText($textResponse);
     }
 
     /**
@@ -113,36 +276,57 @@ class AIAssistantController extends Controller
      */
     public function generateQuestion(Request $request)
     {
+        $modelKeys = array_keys(config('services.quest_ai.models', []));
+
         $request->validate([
             'topic' => 'required|string|max:255',
             'type' => 'required|string|in:multiple_choice,identification',
-            'difficulty' => 'nullable|string'
+            'difficulty' => 'nullable|string',
+            'ai_model' => ['nullable', 'string', Rule::in($modelKeys)],
         ]);
 
         $topic = $request->input('topic');
         $type = $request->input('type');
         $difficulty = $request->input('difficulty', 'medium');
+        $modelKey = $request->input('ai_model', config('services.quest_ai.default'));
+
+        if (! isset(config('services.quest_ai.models')[$modelKey])) {
+            $modelKey = config('services.quest_ai.default');
+        }
 
         try {
-            $questionData = $this->callGroqForQuestion($topic, $type, $difficulty);
+            $this->assertQuestAiProviderConfigured($modelKey);
+            $questionData = $this->generateSingleQuestionWithLlm($modelKey, $topic, $type, $difficulty);
+
             return response()->json([
                 'status' => 'success',
-                'data' => $questionData
+                'data' => $questionData,
             ]);
-        } catch (\Exception $e) {
-            Log::error('Groq Question API Error: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            Log::warning('Quest question AI configuration: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'The Neural Realm is unresponsive.'
+                'message' => $e->getMessage(),
+            ], 503);
+        } catch (\Exception $e) {
+            Log::error('Quest question AI Error: '.$e->getMessage(), [
+                'exception' => $e::class,
+            ]);
+            $message = trim($e->getMessage());
+            if ($message === '') {
+                $message = 'The Neural Realm is unresponsive.';
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $message,
             ], 500);
         }
     }
 
-    private function callGroqForQuestion($topic, $type, $difficulty)
+    private function generateSingleQuestionWithLlm(string $modelKey, string $topic, string $type, string $difficulty): array
     {
-        $apiKey = env('GROQ_API_KEY');
-        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
-
         $prompt = "You are the 'Neural Quest Forge' in the High Fantasy RPG world of ASIANISTA. 
         Your task is to generate ONE quest question (challenge) based on the following:
         
@@ -154,7 +338,7 @@ class AIAssistantController extends Controller
         1. Text: Creative RPG-style question/challenge text.
         2. Points: Suggested points (10-50 based on difficulty).
         3. For 'multiple_choice': Return an array of 4 options and the correct answer string.
-        4. For 'identification': Return the correct answer string.
+        4. For 'identification': Return the correct answer string (options can be null or omitted).
         
         JSON structure:
         {
@@ -168,32 +352,15 @@ class AIAssistantController extends Controller
         
         Return ONLY valid JSON. No conversational text.";
 
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->post($endpoint, [
-            'model' => 'llama-3.3-70b-versatile',
-            'messages' => [
-                ['role' => 'system', 'content' => "You are a helpful assistant that outputs only JSON."],
-                ['role' => 'user', 'content' => $prompt]
-            ],
-            'response_format' => ['type' => 'json_object'],
-            'temperature' => 0.7,
-            'max_tokens' => 512,
-            'stream' => false
-        ]);
+        $messages = [
+            ['role' => 'system', 'content' => 'You are a helpful assistant that outputs only JSON.'],
+            ['role' => 'user', 'content' => $prompt],
+        ];
 
-        if ($response->failed()) {
-            throw new \Exception('Groq Request Failed: ' . $response->body());
-        }
+        $decoded = $this->chatCompletionJsonForQuestForge($modelKey, $messages, 768);
 
-        $result = $response->json();
-        $textResponse = $result['choices'][0]['message']['content'] ?? '';
-        
-        $decoded = json_decode($textResponse, true);
-
-        if (!$decoded) {
-            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        if (! $decoded) {
+            throw new \Exception('Failed to decode AI response.');
         }
 
         return $decoded;

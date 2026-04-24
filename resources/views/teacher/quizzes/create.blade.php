@@ -417,7 +417,7 @@ async function generateQuizQuestions() {
     const includeId = document.getElementById('typeId').checked;
     
     if (!topic) {
-        alert('Please enter a topic for the quiz.');
+        teacherNotify('Please enter a topic for the quiz.', 'warning');
         return;
     }
     
@@ -426,7 +426,7 @@ async function generateQuizQuestions() {
     if (includeId) questionTypes.push('identification');
     
     if (questionTypes.length === 0) {
-        alert('Please select at least one question type.');
+        teacherNotify('Please select at least one question type.', 'warning');
         return;
     }
     
@@ -471,13 +471,13 @@ async function generateQuizQuestions() {
                 });
             }
             
-            alert(`Generated ${data.questions ? data.questions.length : 0} questions! Review and edit as needed.`);
+            teacherNotify(`Generated ${data.questions ? data.questions.length : 0} questions! Review and edit as needed.`, 'success');
         } else {
-            alert('Failed to generate questions: ' + (result.message || 'Unknown error'));
+            teacherNotify('Failed to generate questions: ' + (result.message || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while generating questions.');
+        teacherNotify('An error occurred while generating questions.', 'error');
     } finally {
         btn.disabled = false;
         loading.classList.remove('show');

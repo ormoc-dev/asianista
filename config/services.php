@@ -38,4 +38,60 @@ return [
         'cache_key' => env('REMOTE_POLICY_CACHE_KEY', 'rpctx.v1'),
     ],
 
+    /*
+    | OpenRouter (OpenAI-compatible API). Keys: https://openrouter.ai/keys
+    | Base URL must be OpenRouter’s API, e.g. https://openrouter.ai/api/v1
+    */
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'base_url' => rtrim((string) env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'), '/'),
+        'http_referer' => env('OPENROUTER_HTTP_REFERER', (string) env('APP_URL', '')),
+        'app_title' => env('OPENROUTER_APP_TITLE', 'assianista'),
+    ],
+
+    /*
+    | Quest “AI Forge” models (teacher quest create). Keys are sent as ai_model from the browser.
+    | Optional per-model: 'json_object' => false if the model rejects JSON mode.
+    */
+    'quest_ai' => [
+        'default' => env('QUEST_AI_DEFAULT', 'or-llama-33-70b-free'),
+        'models' => [
+            'groq-llama-33' => [
+                'label' => 'Groq AI — Recommended',
+                'provider' => 'groq',
+                'model' => 'llama-3.3-70b-versatile',
+                /* Groq is not in Simple Icons (trademark); use Font Awesome in the picker instead. */
+                'icon_fa' => 'fas fa-bolt',
+            ],
+            'or-nemotron-120b' => [
+                'label' => 'NVIDIA Nemotron 3 Super',
+                'provider' => 'openrouter',
+                'model' => 'nvidia/nemotron-3-super-120b-a12b:free',
+                'brand_slug' => 'nvidia',
+                'json_object' => false,
+            ],
+            'or-gpt-oss-120b' => [
+                'label' => 'CHAT GPT',
+                'provider' => 'openrouter',
+                'model' => 'openai/gpt-oss-20b:free',
+                'brand_slug' => 'openai',
+                'json_object' => false,
+            ],
+            'or-gemma-31b' => [
+                'label' => 'Gemma 4 ',
+                'provider' => 'openrouter',
+                'model' => 'google/gemma-4-31b-it:free',
+                'brand_slug' => 'google',
+                'json_object' => false,
+            ],
+            'or-llama-33-70b-free' => [
+                'label' => 'Meta AI ',
+                'provider' => 'openrouter',
+                'model' => 'meta-llama/llama-3-8b-instruct',
+                'brand_slug' => 'meta',
+                'json_object' => false,
+            ],
+        ],
+    ],
+
 ];

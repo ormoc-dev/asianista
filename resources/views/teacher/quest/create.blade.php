@@ -389,6 +389,95 @@
             max-height: none;
         }
     }
+
+    /* AI model picker (brand logos via Simple Icons CDN) */
+    .quest-ai-model-picker {
+        position: relative;
+        z-index: 2;
+    }
+    .quest-ai-model-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        background: #fff;
+        min-height: 42px;
+    }
+    .quest-ai-model-trigger:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    .quest-ai-model-trigger-inner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+    .quest-ai-model-trigger-inner span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 500;
+    }
+    .quest-ai-model-chevron {
+        flex-shrink: 0;
+        opacity: 0.45;
+        font-size: 0.72rem;
+        transition: transform 0.2s ease;
+    }
+    .quest-ai-model-picker.is-open .quest-ai-model-chevron {
+        transform: rotate(180deg);
+    }
+    .quest-ai-model-menu {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 4px);
+        margin: 0;
+        padding: 6px;
+        list-style: none;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-lg);
+        max-height: 280px;
+        overflow-y: auto;
+        z-index: 1200;
+    }
+    .quest-ai-model-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    .quest-ai-model-option:hover {
+        background: var(--bg-main);
+    }
+    .quest-ai-model-logo {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+        flex-shrink: 0;
+        opacity: 0.9;
+    }
+    .quest-ai-model-logo-fa {
+        width: 22px;
+        min-width: 22px;
+        font-size: 1rem;
+        line-height: 22px;
+        text-align: center;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+    }
 </style>
 @endpush
 
@@ -697,6 +786,11 @@
     </div>
 </form>
 
+@php
+    $questAiModels = config('services.quest_ai.models', []);
+    $questAiDefault = config('services.quest_ai.default');
+@endphp
+
 <!-- AI Modal -->
 <div id="aiModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
     <div class="card" style="width: 100%; max-width: 500px; margin: 20px;">
@@ -704,6 +798,16 @@
             <h2 class="card-title"><i class="fas fa-magic"></i> AI Quest Generator</h2>
         </div>
         <div class="card-body">
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-robot"></i> AI model</label>
+                @include('teacher.quest._ai_model_picker', [
+                    'hiddenId' => 'aiQuestModelSelect',
+                    'questAiModels' => $questAiModels,
+                    'questAiDefault' => $questAiDefault,
+                    'title' => 'Choose which model generates this quest',
+                ])
+                <small class="text-muted" style="display: block; margin-top: 6px; color: var(--text-muted);">OpenRouter models need <code style="font-size: 0.85em;">OPENROUTER_API_KEY</code> in <code style="font-size: 0.85em;">.env</code>.</small>
+            </div>
             <div class="form-group">
                 <label class="form-label">Topic</label>
                 <textarea id="aiTopic" class="form-control" rows="3" placeholder="e.g., Introduction to Algebra, Photosynthesis..."></textarea>
@@ -725,6 +829,15 @@
             <h2 class="card-title"><i class="fas fa-magic"></i> AI Question Forge</h2>
         </div>
         <div class="card-body">
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-robot"></i> AI model</label>
+                @include('teacher.quest._ai_model_picker', [
+                    'hiddenId' => 'aiQuestionModelSelect',
+                    'questAiModels' => $questAiModels,
+                    'questAiDefault' => $questAiDefault,
+                    'title' => 'Choose which model generates this question',
+                ])
+            </div>
             <div class="form-group">
                 <label class="form-label">Topic/Subject</label>
                 <input type="text" id="aiQuestionTopic" class="form-control" placeholder="e.g., Algebra, History, Science...">
@@ -779,6 +892,9 @@
         'questions' => $questInitialQuestions,
         'isEdit' => $questIsEdit,
         'initialSectionId' => $questInitialSectionId,
+        'questAiDefault' => $questAiDefault,
+        'defaultMapAssetUrl' => asset('images/quest_map_bg.png'),
+        'storageUrlPrefix' => rtrim(asset('storage'), '/'),
         'mapPinEditor' => [
             'initialPins' => ($questIsEdit && isset($quest) && is_array($quest->map_pins)) ? array_values($quest->map_pins) : [],
             'schoolDefaultPins' => \App\Models\QuestMapLayout::basePinsForImage(null),
@@ -789,9 +905,11 @@
 {!! json_encode($questScriptBootstrap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}
 </script>
 <script>
+const QUEST_AI_STORAGE_KEY = 'asianista_teacher_quest_ai_model';
 const __questBoot = JSON.parse(document.getElementById('quest-bootstrap-data').textContent);
-const __defaultMapAssetUrl = @json(asset('images/quest_map_bg.png'));
-const __storageUrlPrefix = @json(rtrim(asset('storage'), '/'));
+const __questAiDefault = __questBoot.questAiDefault;
+const __defaultMapAssetUrl = __questBoot.defaultMapAssetUrl;
+const __storageUrlPrefix = __questBoot.storageUrlPrefix;
 let questions = __questBoot.questions;
 const questIsEdit = __questBoot.isEdit;
 const questInitialSectionId = __questBoot.initialSectionId;
@@ -807,6 +925,82 @@ function getQuestTotalLevels() {
     let n = parseInt(v, 10);
     if (Number.isNaN(n)) n = 3;
     return Math.min(30, Math.max(1, n));
+}
+
+function updateQuestAiPickerDisplay(wrap, value) {
+    const hidden = wrap.querySelector('.js-quest-ai-model');
+    const inner = wrap.querySelector('[data-quest-ai-trigger-inner]');
+    const opt = wrap.querySelector('.quest-ai-model-option[data-value="' + value + '"]');
+    if (!hidden || !inner || !opt) return;
+    hidden.value = value;
+    inner.innerHTML = opt.innerHTML;
+}
+
+function setGlobalQuestAiModel(value, skipStorage) {
+    document.querySelectorAll('[data-quest-ai-picker]').forEach(function (wrap) {
+        updateQuestAiPickerDisplay(wrap, value);
+    });
+    if (!skipStorage) {
+        localStorage.setItem(QUEST_AI_STORAGE_KEY, value);
+    }
+}
+
+function closeAllQuestAiPickers() {
+    document.querySelectorAll('[data-quest-ai-picker]').forEach(function (wrap) {
+        const menu = wrap.querySelector('[data-quest-ai-menu]');
+        const trigger = wrap.querySelector('[data-quest-ai-trigger]');
+        if (menu) menu.hidden = true;
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        wrap.classList.remove('is-open');
+    });
+}
+
+function syncQuestAiModelSelects() {
+    const first = document.querySelector('[data-quest-ai-picker]');
+    if (!first) return;
+    let v = localStorage.getItem(QUEST_AI_STORAGE_KEY) || __questAiDefault;
+    const valid = Array.from(first.querySelectorAll('.quest-ai-model-option')).map(function (li) {
+        return li.getAttribute('data-value');
+    });
+    if (valid.indexOf(v) === -1) v = __questAiDefault;
+    if (valid.indexOf(v) === -1 && valid.length) v = valid[0];
+    setGlobalQuestAiModel(v, true);
+}
+
+function initQuestAiModelSelects() {
+    syncQuestAiModelSelects();
+    document.querySelectorAll('[data-quest-ai-picker]').forEach(function (wrap) {
+        const trigger = wrap.querySelector('[data-quest-ai-trigger]');
+        const menu = wrap.querySelector('[data-quest-ai-menu]');
+        if (!trigger || !menu) return;
+        wrap.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+        trigger.addEventListener('click', function () {
+            const willOpen = menu.hidden;
+            closeAllQuestAiPickers();
+            if (willOpen) {
+                menu.hidden = false;
+                trigger.setAttribute('aria-expanded', 'true');
+                wrap.classList.add('is-open');
+            }
+        });
+        menu.querySelectorAll('.quest-ai-model-option').forEach(function (li) {
+            li.addEventListener('click', function () {
+                const v = li.getAttribute('data-value');
+                setGlobalQuestAiModel(v, false);
+                closeAllQuestAiPickers();
+            });
+        });
+    });
+    document.addEventListener('click', function () {
+        closeAllQuestAiPickers();
+    });
+}
+
+function getSelectedQuestAiModel() {
+    const el = document.querySelector('.js-quest-ai-model');
+    return el ? el.value : __questAiDefault;
 }
 
 function expandBasePinsToLevelsFromSchoolBase(base, levelCount) {
@@ -1221,7 +1415,7 @@ function handleMapUpload(input) {
     
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB');
+        teacherNotify('File size must be less than 2MB', 'warning');
         return;
     }
     
@@ -1297,6 +1491,7 @@ function updateLevelDropdowns() {
 }
 
 function openAiQuestionModal() {
+    syncQuestAiModelSelects();
     updateLevelDropdowns();
     document.getElementById('aiQuestionModal').style.display = 'flex';
 }
@@ -1312,7 +1507,7 @@ async function generateQuestionWithAI() {
     const difficulty = document.getElementById('aiQuestionDifficulty').value;
     
     if (!topic) {
-        alert('Please enter a topic');
+        teacherNotify('Please enter a topic', 'warning');
         return;
     }
     
@@ -1328,7 +1523,12 @@ async function generateQuestionWithAI() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
-            body: JSON.stringify({ topic, type, difficulty })
+            body: JSON.stringify({
+                topic,
+                type,
+                difficulty,
+                ai_model: getSelectedQuestAiModel()
+            })
         });
         
         const result = await response.json();
@@ -1351,13 +1551,13 @@ async function generateQuestionWithAI() {
             // Clear modal inputs
             document.getElementById('aiQuestionTopic').value = '';
             
-            alert('Question forged successfully!');
+            teacherNotify('Question forged successfully!', 'success');
         } else {
-            alert('Failed to generate question: ' + (result.message || 'Unknown error'));
+            teacherNotify('Failed to generate question: ' + (result.message || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('AI Question Error:', error);
-        alert('Failed to connect to the Neural Forge');
+        teacherNotify('Failed to connect to the Neural Forge', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1403,7 +1603,7 @@ function addQuestion() {
     const points = document.getElementById('questionPoints').value;
 
     if (!text || !type || !answer) {
-        alert('Please fill in all required fields');
+        teacherNotify('Please fill in all required fields', 'warning');
         return;
     }
 
@@ -1515,6 +1715,7 @@ function loadSections() {
 }
 
 function openAiModal() {
+    syncQuestAiModelSelects();
     document.getElementById('aiModal').style.display = 'flex';
 }
 
@@ -1525,7 +1726,7 @@ function closeAiModal() {
 function generateWithAI() {
     const topic = document.getElementById('aiTopic').value;
     if (!topic) {
-        alert('Please enter a topic');
+        teacherNotify('Please enter a topic', 'warning');
         return;
     }
 
@@ -1540,7 +1741,11 @@ function generateWithAI() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
-        body: JSON.stringify({ topic })
+        body: JSON.stringify({
+            topic,
+            ai_model: getSelectedQuestAiModel(),
+            total_levels: getQuestTotalLevels()
+        })
     })
     .then(res => res.json())
     .then(data => {
@@ -1555,12 +1760,12 @@ function generateWithAI() {
             questions = data.data.challenges || [];
             renderQuestions();
             closeAiModal();
-            alert('Quest generated successfully!');
+            teacherNotify('Quest generated successfully!', 'success');
         } else {
-            alert('Failed to generate quest: ' + (data.message || 'Unknown error'));
+            teacherNotify('Failed to generate quest: ' + (data.message || 'Unknown error'), 'error');
         }
     })
-    .catch(() => alert('Failed to generate quest'))
+    .catch(() => teacherNotify('Failed to generate quest', 'error'))
     .finally(() => {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1573,7 +1778,7 @@ document.getElementById('questForm').addEventListener('submit', function(e) {
     serializeTeacherMapPins();
     if (questions.length === 0) {
         e.preventDefault();
-        alert('Please add at least one question');
+        teacherNotify('Please add at least one question', 'warning');
         nextStep(2);
         return;
     }
@@ -1587,28 +1792,28 @@ document.getElementById('questForm').addEventListener('submit', function(e) {
     const sectionEl = document.getElementById('sectionSelect');
     if (!titleEl || !String(titleEl.value || '').trim()) {
         e.preventDefault();
-        alert('Please enter a quest title (Step 1).');
+        teacherNotify('Please enter a quest title (Step 1).', 'warning');
         nextStep(1);
         titleEl?.focus();
         return;
     }
     if (!descEl || !String(descEl.value || '').trim()) {
         e.preventDefault();
-        alert('Please enter a description (Step 1).');
+        teacherNotify('Please enter a description (Step 1).', 'warning');
         nextStep(1);
         descEl?.focus();
         return;
     }
     if (!gradeEl || !gradeEl.value) {
         e.preventDefault();
-        alert('Please select a grade (Step 3).');
+        teacherNotify('Please select a grade (Step 3).', 'warning');
         nextStep(3);
         gradeEl?.focus();
         return;
     }
     if (!sectionEl || !sectionEl.value) {
         e.preventDefault();
-        alert('Please select a section (Step 3).');
+        teacherNotify('Please select a section (Step 3).', 'warning');
         nextStep(3);
         sectionEl?.focus();
         return;
@@ -1623,6 +1828,7 @@ document.getElementById('questForm').addEventListener('submit', function(e) {
 
 // Initialize level dropdowns on page load
 document.addEventListener('DOMContentLoaded', function() {
+    initQuestAiModelSelects();
     updateLevelDropdowns();
     initTeacherMapPinsEditor();
     if (questIsEdit) {

@@ -567,6 +567,78 @@
             transition: opacity 0.35s ease, transform 0.35s ease;
         }
 
+        /* Client-side toasts (replaces window.alert on teacher pages) */
+        .teacher-toast-host {
+            position: fixed;
+            top: 88px;
+            right: 24px;
+            z-index: 10050;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: min(420px, calc(100vw - 32px));
+            pointer-events: none;
+        }
+
+        .teacher-toast {
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            font-size: 0.9rem;
+            line-height: 1.45;
+            animation: teacherToastIn 0.28s ease;
+        }
+
+        .teacher-toast i.fas {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .teacher-toast--success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .teacher-toast--error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .teacher-toast--warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .teacher-toast--info {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        @keyframes teacherToastIn {
+            from {
+                opacity: 0;
+                transform: translateX(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .teacher-toast-host {
+                top: auto;
+                bottom: 24px;
+                right: 16px;
+                left: 16px;
+                max-width: none;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -1029,6 +1101,56 @@
     </button>
 
     <script>
+        /**
+         * Non-blocking notifications for the teacher area.
+         * @param {string} message
+         * @param {'success'|'error'|'warning'|'info'|'danger'} [type='info'] — danger maps to error styling
+         */
+        window.teacherNotify = function (message, type) {
+            var t = (type || 'info').toLowerCase();
+            if (t === 'danger') t = 'error';
+            if (t !== 'success' && t !== 'error' && t !== 'warning' && t !== 'info') t = 'info';
+
+            var hostId = 'teacher-toast-host';
+            var host = document.getElementById(hostId);
+            if (!host) {
+                host = document.createElement('div');
+                host.id = hostId;
+                host.className = 'teacher-toast-host';
+                host.setAttribute('aria-live', 'polite');
+                document.body.appendChild(host);
+            }
+
+            var icon = 'fa-info-circle';
+            if (t === 'success') icon = 'fa-check-circle';
+            else if (t === 'error') icon = 'fa-exclamation-circle';
+            else if (t === 'warning') icon = 'fa-exclamation-triangle';
+
+            var el = document.createElement('div');
+            el.className = 'teacher-toast teacher-toast--' + t;
+            el.setAttribute('role', t === 'error' ? 'alert' : 'status');
+
+            var ic = document.createElement('i');
+            ic.className = 'fas ' + icon;
+
+            var text = document.createElement('span');
+            text.textContent = message;
+
+            el.appendChild(ic);
+            el.appendChild(text);
+            host.appendChild(el);
+
+            var ms = t === 'error' ? 7000 : 5000;
+            setTimeout(function () {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(8px)';
+                el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 300);
+            }, ms);
+        };
+
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
