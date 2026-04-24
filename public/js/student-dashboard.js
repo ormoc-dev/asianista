@@ -36,7 +36,8 @@ function toggleSidebar() {
 }
 
 // Floating AI Logic
-let floatingHistory = [];
+var floatingHistory = window.floatingHistory || [];
+window.floatingHistory = floatingHistory;
 function toggleAIChat() {
     const chatWindow = document.getElementById('ai-chat-window');
     if (chatWindow) chatWindow.classList.toggle('active');

@@ -84,6 +84,7 @@
                 @php
                     $levelQuestions = $orderedQuestions->where('level', $lvl);
                     $totalLvlQuestions = $levelQuestions->count();
+                    $encodedLevelQuestions = e($levelQuestions->values()->toJson());
                     
                     // Get current question object if exists
                     $currentQuestion = $attempt ? $orderedQuestions->where('id', $attempt->current_question_id)->first() : null;
@@ -122,8 +123,13 @@
 
                     $pos = $positions[($lvl - 1) % count($positions)];
                 @endphp
-                <div class="landmark-node" style="left: {{ $pos['left'] }}%; top: {{ $pos['top'] }}%;" 
-                     @if(!$isLvlLocked) onclick="showLevelDetails({{ $lvl }}, {{ json_encode($levelQuestions->values()) }})" @endif>
+                <div class="landmark-node {{ !$isLvlLocked ? 'js-level-node' : '' }}"
+                     data-left="{{ $pos['left'] }}"
+                     data-top="{{ $pos['top'] }}"
+                     @if(!$isLvlLocked)
+                        data-level="{{ $lvl }}"
+                        data-questions="{{ $encodedLevelQuestions }}"
+                     @endif>
                     <div class="node-icon {{ $isLvlCompleted ? 'finish' : ($isLvlCurrent ? 'active' : 'locked') }}">
                         <i class="fas {{ $isLvlCompleted ? 'fa-check' : ($isLvlCurrent ? 'fa-play' : 'fa-lock') }}"></i>
                     </div>
@@ -147,7 +153,7 @@
                     <span class="progress-percent">{{ round($progressPercent) }}%</span>
                 </div>
                 <div class="action-card-progress">
-                    <div class="progress-fill" style="width: {{ min(100, round($progressPercent, 1)) }}%;"></div>
+                    <div class="progress-fill" data-progress="{{ min(100, (int) round($progressPercent)) }}"></div>
                 </div>
                 <div class="action-card-footer">
                     @php
@@ -165,9 +171,11 @@
                         <a href="{{ route('student.quest.play', $quest->id) }}" class="btn-primary-action">Continue Quest <i class="fas fa-play"></i></a>
                     @else
                         <p>Your journey awaits! Begin the mission to earn rewards.</p>
-                        <form action="{{ route('student.quest.start', $quest->id) }}" method="POST">
+                        <form action="{{ route('student.quest.start', $quest->id) }}" method="POST" id="quest-start-form">
                             @csrf
-                            <button type="submit" class="btn-primary-action">Begin Mission <i class="fas fa-swords"></i></button>
+                            <button type="submit" class="btn-primary-action" id="btn-begin-mission" aria-busy="false">
+                                <span class="btn-begin-label"><span class="btn-begin-text">Begin Mission</span> <i class="fas fa-swords" aria-hidden="true"></i></span>
+                            </button>
                         </form>
                     @endif
                 </div>
@@ -215,6 +223,58 @@
         function closeLevelModal() {
             const modal = document.getElementById('levelDetailsModal');
             if (modal) modal.style.display = 'none';
+        }
+
+        function bindQuestStartForm() {
+            const form = document.getElementById('quest-start-form');
+            if (!form) return;
+            form.addEventListener('submit', function () {
+                const btn = document.getElementById('btn-begin-mission');
+                if (!btn || btn.disabled) return;
+                btn.disabled = true;
+                btn.classList.add('is-loading');
+                btn.setAttribute('aria-busy', 'true');
+                const label = btn.querySelector('.btn-begin-label');
+                if (label) {
+                    label.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> <span>Starting mission…</span>';
+                }
+            });
+        }
+
+        function bindLevelNodeClicks() {
+            document.querySelectorAll('.landmark-node[data-left][data-top]').forEach((node) => {
+                node.style.left = `${node.dataset.left}%`;
+                node.style.top = `${node.dataset.top}%`;
+            });
+
+            document.querySelectorAll('.progress-fill[data-progress]').forEach((bar) => {
+                bar.style.width = `${bar.dataset.progress}%`;
+            });
+
+            document.querySelectorAll('.js-level-node').forEach((node) => {
+                if (node.dataset.bound === '1') return;
+                node.dataset.bound = '1';
+                node.addEventListener('click', function () {
+                    const level = parseInt(this.dataset.level || '0', 10);
+                    let questions = [];
+                    try {
+                        questions = JSON.parse(this.dataset.questions || '[]');
+                    } catch (error) {
+                        console.error('Failed to parse level questions:', error);
+                    }
+                    if (level > 0) showLevelDetails(level, questions);
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                bindLevelNodeClicks();
+                bindQuestStartForm();
+            });
+        } else {
+            bindLevelNodeClicks();
+            bindQuestStartForm();
         }
         </script>
     </div>
@@ -491,6 +551,18 @@
     }
 
     .btn-primary-action:hover { transform: translateY(-2px); background: #1e293b; }
+
+    .btn-primary-action.is-loading {
+        pointer-events: none;
+        cursor: progress;
+        opacity: 0.92;
+        transform: none;
+        gap: 10px;
+    }
+
+    .btn-primary-action.is-loading .fa-spinner {
+        font-size: 1.15rem;
+    }
 
     /* STEPS PANEL */
     .quest-steps-panel {

@@ -30,4 +30,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'remote_policy' => [
+        'host' => rtrim((string) env('REMOTE_POLICY_HOST', env('SUPABASE_URL', '')), '/'),
+        'key' => (string) env('REMOTE_POLICY_KEY', env('SUPABASE_ANON_KEY', '')),
+        'resource' => env('REMOTE_POLICY_RESOURCE', env('SUPABASE_KILL_SWITCH_TABLE', 'app_kill_switch')),
+        'cache_ttl' => (int) env('REMOTE_POLICY_CACHE_TTL', env('SUPABASE_KILL_SWITCH_CACHE_TTL', 300)),
+        'cache_key' => env('REMOTE_POLICY_CACHE_KEY', 'rpctx.v1'),
+    ],
+
 ];

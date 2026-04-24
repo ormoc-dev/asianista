@@ -6,6 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Student Dashboard</title>
 
+    <!-- Performance hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preload" as="image" href="{{ asset('images/std-bg.png') }}">
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -38,7 +44,7 @@
         body {
             min-height: 100vh;
             display: flex;
-            background-image: url('{{ asset('images/std-bg.png') }}');
+            background-image: url("{{ asset('images/std-bg.png') }}");
             background-size: cover;
             color: var(--text-dark);
             position: relative;
@@ -346,6 +352,59 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
+        }
+
+        /* Quest play: edge-to-edge shell over sidebar, header, AI widget */
+        body.quest-play-fullscreen {
+            overflow: hidden;
+        }
+
+        body.quest-play-fullscreen aside,
+        body.quest-play-fullscreen #main-content > header,
+        body.quest-play-fullscreen .ai-floating-btn,
+        body.quest-play-fullscreen .ai-chat-window {
+            display: none !important;
+        }
+
+        body.quest-play-fullscreen #main-content {
+            margin-left: 0 !important;
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        body.quest-play-fullscreen #main-content section {
+            padding: 0 !important;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.quest-play-fullscreen .dashboard-shell {
+            position: fixed;
+            inset: 0;
+            z-index: 2001;
+            width: 100%;
+            height: 100%;
+            max-height: 100dvh;
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body.quest-play-fullscreen .dashboard-shell #quest-play-mount {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
         .dashboard-shell-1 {
             width: 100%;
@@ -1445,7 +1504,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{{ request()->routeIs('student.quest.play') ? 'quest-play-fullscreen' : '' }}">
 
     <!-- SIDEBAR -->
     <aside id="sidebar">
@@ -1613,7 +1672,7 @@
                         </div>
 
 
-                        <div class="quest-card" onclick="openQuestDrawer('{{ route('student.quest.show', $activeQuest->id ?? 0) }}')" style="cursor: pointer;">
+                        <div class="quest-card" data-quest-url="{{ route('student.quest.show', $activeQuest->id ?? 0) }}" onclick="openQuestDrawer(this.dataset.questUrl)" style="cursor: pointer;">
                             @if(isset($activeQuest) && $activeQuest)
                                 <div class="quest-card-header">
                                     <div class="quest-card-title">
@@ -1738,7 +1797,8 @@
         }
 
         // Floating AI Logic
-        let floatingHistory = [];
+        var floatingHistory = window.floatingHistory || [];
+        window.floatingHistory = floatingHistory;
         function toggleAIChat() {
             document.getElementById('ai-chat-window').classList.toggle('active');
         }
@@ -2262,10 +2322,13 @@
             
             let currentActiveEventId = null;
             let checkInterval = null;
+            let checkInFlight = false;
+            const EVENT_POLL_INTERVAL_MS = 15000;
             
-            // Check for new events every 3 seconds
+            // Check for new events on a throttled interval
             function checkForEvents() {
-                console.log('Checking for events...');
+                if (document.visibilityState === 'hidden' || checkInFlight) return;
+                checkInFlight = true;
                 fetch('{{ route("student.events.check") }}', {
                     method: 'GET',
                     headers: {
@@ -2273,19 +2336,17 @@
                         'Accept': 'application/json'
                     }
                 })
-                .then(response => {
-                    console.log('Response:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('Event data:', data);
                     if (data.has_event) {
-                        console.log('Showing event modal!');
                         showEventModal(data.event);
                         currentActiveEventId = data.active_event_id;
                     }
                 })
-                .catch(error => console.error('Error checking events:', error));
+                .catch(error => console.error('Error checking events:', error))
+                .finally(() => {
+                    checkInFlight = false;
+                });
             }
             
             function showEventModal(event) {
@@ -2313,7 +2374,6 @@
                 // Force display with inline style and class
                 modal.setAttribute('style', 'display: flex !important; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 99999; align-items: center; justify-content: center;');
                 modal.classList.add('show');
-                console.log('Modal should be visible now, display:', modal.style.display);
             }
             
             window.acknowledgeEvent = function() {
@@ -2337,11 +2397,20 @@
                 }
             };
             
-            // Start polling when page loads
-            function init() {
+            function stopPolling() {
                 if (checkInterval) clearInterval(checkInterval);
+                checkInterval = null;
+            }
+
+            // Start polling when page loads
+            function startPolling() {
+                stopPolling();
                 checkForEvents(); // Check immediately
-                checkInterval = setInterval(checkForEvents, 3000); // Then every 3 seconds
+                checkInterval = setInterval(checkForEvents, EVENT_POLL_INTERVAL_MS);
+            }
+
+            function init() {
+                startPolling();
             }
             
             // Handle both initial load and Turbolinks navigation
@@ -2352,6 +2421,14 @@
             }
             
             document.addEventListener('turbolinks:load', init);
+            document.addEventListener('turbolinks:before-visit', stopPolling);
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') {
+                    startPolling();
+                } else {
+                    stopPolling();
+                }
+            });
         })();
     </script>
 </body>
