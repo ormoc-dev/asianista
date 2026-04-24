@@ -49,6 +49,10 @@
         $mapImageUrl = str_starts_with($mapImage, 'quest_maps/') 
             ? asset('storage/' . $mapImage) 
             : asset('images/' . $mapImage);
+
+        $levelPins = \App\Models\QuestMapLayout::pinsForQuest($quest);
+        $pathD = \App\Models\QuestMapLayout::svgPathD($levelPins);
+        $pathLen = \App\Models\QuestMapLayout::svgPathLengthApprox($levelPins);
     @endphp
 
     <div class="map-exploration-area">
@@ -56,30 +60,18 @@
             
             <!-- Path System -->
             <svg class="map-svg-layer" viewBox="0 0 1000 600">
-                <path d="M 500 520 L 250 330 L 150 400 L 400 240 L 550 360 L 750 270 L 750 480 L 850 390 L 800 120" 
+                @if($pathD !== '')
+                <path d="{{ $pathD }}"
                       fill="none" stroke="rgba(255, 212, 59, 0.4)" stroke-width="5" stroke-dasharray="12,12" />
-                <path d="M 500 520 L 250 330 L 150 400 L 400 240 L 550 360 L 750 270 L 750 480 L 850 390 L 800 120" 
+                <path d="{{ $pathD }}"
                       fill="none" stroke="var(--accent)" stroke-width="5" 
-                      stroke-dasharray="1000" stroke-dashoffset="{{ 1000 - (1000 * ($progressPercent / 100)) }}"
+                      stroke-dasharray="{{ $pathLen }}" stroke-dashoffset="{{ $pathLen - ($pathLen * ($progressPercent / 100)) }}"
                       style="transition: stroke-dashoffset 1s ease-in-out;" />
+                @endif
             </svg>
 
             <!-- Landmarks (Visual representation of progress) -->
             <div class="interactive-landmarks">
-                @php
-                    $positions = [
-                        ['left' => 50, 'top' => 86, 'icon' => 'fa-mountain', 'name' => 'Gate of Entry'],
-                        ['left' => 25, 'top' => 55, 'icon' => 'fa-water', 'name' => 'Whispering Falls'],
-                        ['left' => 15, 'top' => 66, 'icon' => 'fa-compass', 'name' => 'Compass Grove'],
-                        ['left' => 40, 'top' => 40, 'icon' => 'fa-cloud', 'name' => 'Floating Reaches'],
-                        ['left' => 55, 'top' => 60, 'icon' => 'fa-shoe-prints', 'name' => 'Sky-Isle Steps'],
-                        ['left' => 75, 'top' => 45, 'icon' => 'fa-question', 'name' => 'Mystery Landmark'],
-                        ['left' => 75, 'top' => 80, 'icon' => 'fa-brain', 'name' => 'Trivia Chamber'],
-                        ['left' => 85, 'top' => 65, 'icon' => 'fa-book', 'name' => 'Library of Wisdom'],
-                        ['left' => 80, 'top' => 20, 'icon' => 'fa-crown', 'name' => 'The Observatory'],
-                    ];
-                @endphp
-
                 @for($lvl = 1; $lvl <= $quest->level; $lvl++)
                 @php
                     $levelQuestions = $orderedQuestions->where('level', $lvl);
@@ -121,7 +113,7 @@
                         $isLvlLocked = false;
                     }
 
-                    $pos = $positions[($lvl - 1) % count($positions)];
+                    $pos = $levelPins[$lvl - 1] ?? ['left' => 50, 'top' => 50, 'name' => 'Level '.$lvl];
                 @endphp
                 <div class="landmark-node {{ !$isLvlLocked ? 'js-level-node' : '' }}"
                      data-left="{{ $pos['left'] }}"

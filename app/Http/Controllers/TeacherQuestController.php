@@ -7,6 +7,7 @@ use App\Models\Grade;
 use App\Models\Quest;
 use App\Models\QuestAttempt;
 use App\Models\QuestQuestion;
+use App\Models\QuestMapLayout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,6 +63,7 @@ class TeacherQuestController extends Controller
                     'description' => $quest->description,
                     'difficulty' => $quest->difficulty,
                     'map_image' => $mapPath,
+                    'map_pins' => is_array($quest->map_pins) && count($quest->map_pins) > 0 ? $quest->map_pins : null,
                     'level' => $quest->level,
                     'xp_reward' => $quest->xp_reward,
                     'ab_reward' => $quest->ab_reward,
@@ -206,7 +208,8 @@ class TeacherQuestController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'difficulty' => 'nullable|string',
-            'level' => 'required|integer|min:1',
+            'level' => 'required|integer|min:1|max:30',
+            'map_pins_json' => 'nullable|string|max:65535',
             'xp_reward' => 'nullable|integer',
             'ab_reward' => 'nullable|integer',
             'gp_reward' => 'nullable|integer',
@@ -243,6 +246,7 @@ class TeacherQuestController extends Controller
                 'description' => $request->description,
                 'difficulty' => $request->difficulty,
                 'map_image' => $mapImagePath,
+                'map_pins' => $this->normalizedMapPinsFromRequest($request),
                 'level' => $request->level,
                 'xp_reward' => $request->xp_reward,
                 'ab_reward' => $request->ab_reward,
@@ -287,7 +291,8 @@ class TeacherQuestController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'difficulty' => 'nullable|string',
-            'level' => 'required|integer|min:1',
+            'level' => 'required|integer|min:1|max:30',
+            'map_pins_json' => 'nullable|string|max:65535',
             'xp_reward' => 'nullable|integer',
             'ab_reward' => 'nullable|integer',
             'gp_reward' => 'nullable|integer',
@@ -333,6 +338,7 @@ class TeacherQuestController extends Controller
                 'description' => $request->description,
                 'difficulty' => $request->difficulty,
                 'map_image' => $mapImagePath,
+                'map_pins' => $this->normalizedMapPinsFromRequest($request),
                 'level' => $request->level,
                 'xp_reward' => $request->xp_reward,
                 'ab_reward' => $request->ab_reward,
@@ -401,6 +407,32 @@ class TeacherQuestController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to update the quest. Please try again.');
         }
+    }
+
+    protected function normalizedMapPinsFromRequest(Request $request): ?array
+    {
+        if (! $request->boolean('use_custom_map_pins')) {
+            return null;
+        }
+
+        $raw = $request->input('map_pins_json');
+        if (! is_string($raw)) {
+            return null;
+        }
+
+        $raw = trim($raw);
+        if ($raw === '' || $raw === '[]') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $normalized = QuestMapLayout::normalizePinArray($decoded);
+
+        return count($normalized) > 0 ? $normalized : null;
     }
 
     protected function replicateQuestMapImage(?string $mapImage): ?string

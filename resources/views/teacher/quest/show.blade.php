@@ -553,47 +553,35 @@
                 <img src="{{ asset('images/quest_map_bg.png') }}" alt="RPG Quest Map" class="map-bg">
             @endif
 
-            <!-- Landmarks/Nodes -->
+            <!-- Landmarks/Nodes (positions from quest map_pins / admin layout, same as student map) -->
             @php
-                $positions = [
-                    ['left' => 10, 'top' => 85, 'icon' => 'fa-mountain', 'label' => 'Starting Rock'],
-                    ['left' => 20, 'top' => 65, 'icon' => 'fa-water', 'label' => 'Whispering Waterfalls'],
-                    ['left' => 30, 'top' => 40, 'icon' => 'fa-compass', 'label' => 'Compass Grove'],
-                    ['left' => 42, 'top' => 55, 'icon' => 'fa-cloud', 'label' => 'Floating Reaches'],
-                    ['left' => 55, 'top' => 35, 'icon' => 'fa-shoe-prints', 'label' => 'Sky-Isle Steps'],
-                    ['left' => 68, 'top' => 50, 'icon' => 'fa-question', 'label' => 'The Question Marks'],
-                    ['left' => 75, 'top' => 70, 'icon' => 'fa-brain', 'label' => 'Trivia Chamber'],
-                    ['left' => 85, 'top' => 45, 'icon' => 'fa-book', 'label' => 'Library of Wisdom'],
-                    ['left' => 92, 'top' => 25, 'icon' => 'fa-star', 'label' => 'The Observatory'],
-                    ['left' => 88, 'top' => 15, 'icon' => 'fa-crown', 'label' => 'Victory Summit'],
-                ];
-                
-                // Prepare questions grouped by level for JavaScript
+                $levelPins = \App\Models\QuestMapLayout::pinsForQuest($quest);
+                $pathD = \App\Models\QuestMapLayout::svgPathD($levelPins);
+
                 $questionsByLevel = [];
                 for ($lvl = 1; $lvl <= $quest->level; $lvl++) {
                     $questionsByLevel[$lvl] = $quest->questions->where('level', $lvl)->values()->toArray();
                 }
             @endphp
 
+            @if($pathD !== '')
+            <svg class="map-paths" viewBox="0 0 1000 600" aria-hidden="true">
+                <path d="{{ $pathD }}" fill="none" stroke="rgba(255, 212, 59, 0.45)" stroke-width="5" stroke-dasharray="12,12" />
+            </svg>
+            @endif
+
             <div class="map-nodes">
                 @for($lvl = 1; $lvl <= $quest->level; $lvl++)
                     @php
                         $levelQuestions = $quest->questions->where('level', $lvl);
-                        $positionCount = count($positions);
-                        $positionIndex = ($lvl - 1) % $positionCount;
-                        $basePos = $positions[$positionIndex];
-
-                        // Evenly space all levels on a circle so nodes never stack on the same landmark.
-                        $totalLevels = max(1, (int) $quest->level);
-                        $angle = (2 * M_PI * ($lvl - 1) / $totalLevels) - (M_PI / 2);
-                        $radiusPct = $totalLevels <= 1 ? 0 : 36;
-                        $leftPos = 50 + cos($angle) * $radiusPct;
-                        $topPos = 50 + sin($angle) * $radiusPct;
-                        $leftPos = max(6, min(94, $leftPos));
-                        $topPos = max(10, min(90, $topPos));
+                        $pin = $levelPins[$lvl - 1] ?? ['left' => 50, 'top' => 50, 'name' => 'Level '.$lvl, 'icon' => 'fa-map-marker-alt'];
+                        $leftPos = (float) ($pin['left'] ?? 50);
+                        $topPos = (float) ($pin['top'] ?? 50);
+                        $landmarkName = (string) ($pin['name'] ?? 'Level '.$lvl);
+                        $pinIcon = (string) ($pin['icon'] ?? 'fa-map-marker-alt');
                         $isLast = ($lvl == $quest->level);
                         $isFirst = ($lvl == 1);
-                        $nodeIcon = $isLast ? 'fa-flag-checkered' : ($isFirst ? 'fa-play' : $basePos['icon']);
+                        $nodeIcon = $isLast ? 'fa-flag-checkered' : ($isFirst ? 'fa-play' : $pinIcon);
                     @endphp
                     <div class="map-node {{ $isFirst ? 'node-start' : ($isLast ? 'node-end' : '') }}"
                          data-level="{{ $lvl }}"
@@ -607,7 +595,7 @@
                         </div>
                         <div class="node-label">Level {{ $lvl }}</div>
                         <div class="node-tooltip">
-                            <strong>{{ $basePos['label'] }}</strong><br>
+                            <strong>{{ $landmarkName }}</strong><br>
                             {{ $levelQuestions->count() }} Challenges Found<br>
                             <span style="color: var(--accent)">Worth {{ $levelQuestions->sum('points') }} PTS</span>
                         </div>

@@ -164,11 +164,236 @@
     #mapUploadInput {
         display: none;
     }
+
+    #questSubmitBtn.is-loading {
+        pointer-events: none;
+        opacity: 0.9;
+        cursor: wait;
+    }
+    #questSubmitBtn.is-loading .submit-idle {
+        display: none;
+    }
+    #questSubmitBtn.is-loading .submit-loading {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 10px;
+    }
+    #questSubmitBtn .submit-loading {
+        display: none;
+    }
+
+    /* Custom level positions editor */
+    .teacher-map-pins-editor {
+        margin-top: 16px;
+        padding: 20px 22px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        max-width: 1100px;
+    }
+    .teacher-map-pins-hint {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0 0 14px;
+        padding: 12px 14px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
+    .teacher-map-pins-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+    .teacher-map-pins-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+        gap: 24px;
+        align-items: start;
+    }
+    .teacher-map-pins-grid > * {
+        min-width: 0;
+    }
+    .teacher-map-pins-map-caption {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin: 0 0 8px;
+    }
+    .teacher-map-pins-map-frame {
+        position: relative;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        aspect-ratio: 1000 / 600;
+        max-width: 640px;
+        background: #e2e8f0;
+    }
+    .teacher-map-pins-map-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        cursor: crosshair;
+        vertical-align: top;
+    }
+    .teacher-map-pin-markers-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    .teacher-map-pin-marker {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translate(-50%, -50%);
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        cursor: grab;
+        touch-action: none;
+        pointer-events: auto;
+        user-select: none;
+        -webkit-user-select: none;
+        z-index: 2;
+    }
+    .teacher-map-pin-marker.is-dragging {
+        cursor: grabbing;
+        z-index: 25;
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+        transform: translate(-50%, -50%) scale(1.08);
+    }
+    .teacher-map-pins-list-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        margin: 0 0 10px;
+    }
+    .teacher-map-pins-scroll {
+        max-height: min(52vh, 520px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 10px 8px 10px 6px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+    }
+    .teacher-pin-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .teacher-pin-card {
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .teacher-pin-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .teacher-pin-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: #eef2ff;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .teacher-pin-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+    .teacher-pin-actions .btn {
+        min-width: 36px;
+    }
+    .teacher-pin-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .teacher-pin-fields .teacher-pin-field-wide {
+        grid-column: 1 / -1;
+    }
+    .teacher-pin-field-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+    .teacher-pin-field-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 42px;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        line-height: 1.3;
+        color: var(--text-primary) !important;
+        background: #fff !important;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .teacher-pin-field-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+    .teacher-pin-empty {
+        padding: 22px 16px;
+        text-align: center;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--text-secondary);
+        margin: 0;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        background: #fafafa;
+    }
+    @media (max-width: 900px) {
+        .teacher-map-pins-grid {
+            grid-template-columns: 1fr;
+        }
+        .teacher-map-pins-map-frame {
+            max-width: none;
+        }
+        .teacher-map-pins-scroll {
+            max-height: none;
+        }
+    }
 </style>
 @endpush
 
 @section('content')
-<form id="questForm" method="POST" action="{{ isset($quest) ? route('teacher.quest.update', $quest) : route('teacher.quest.store') }}">
+<form id="questForm" method="POST" action="{{ isset($quest) ? route('teacher.quest.update', $quest) : route('teacher.quest.store') }}" novalidate>
     @csrf
     @if(isset($quest))
         @method('PUT')
@@ -219,7 +444,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Total Levels</label>
-                        <input type="number" name="level" class="form-control" value="{{ old('level', $quest->level ?? 3) }}" min="1" max="10">
+                        <input type="number" name="level" id="questTotalLevelsInput" class="form-control" value="{{ old('level', $quest->level ?? 3) }}" min="1" max="30">
                     </div>
                 </div>
 
@@ -259,6 +484,46 @@
                     <small class="text-muted" style="display: block; margin-top: 8px; color: var(--text-muted);">
                         <i class="fas fa-info-circle"></i> Select a default map or upload your own (JPG, PNG, max 2MB)
                     </small>
+                </div>
+
+                @php
+                    $hasCustomMapPins = isset($quest) && is_array($quest->map_pins ?? null) && count($quest->map_pins) > 0;
+                @endphp
+                <div class="form-group" id="teacherMapPinsSection" style="margin-top: 20px;">
+                    <label class="form-label"><i class="fas fa-location-dot"></i> Level positions on map (optional)</label>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                        Leave off to use the <strong>school default path</strong> for this map (set in Admin → Quest Maps).
+                        Turn on to place your own dots for 3, 5, 10, or more levels — click the map in order (Level 1, 2, 3…).
+                    </p>
+                    <input type="hidden" name="use_custom_map_pins" value="0">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+                        <input type="checkbox" name="use_custom_map_pins" id="useCustomMapPins" value="1"
+                            {{ (string) old('use_custom_map_pins', $hasCustomMapPins ? '1' : '0') === '1' ? 'checked' : '' }}>
+                        <span>Use custom positions for this quest</span>
+                    </label>
+                    <input type="hidden" name="map_pins_json" id="mapPinsJson" value="">
+                    <div id="teacherMapPinsEditor" class="teacher-map-pins-editor" style="display: none;">
+                        <p id="mapPinLevelHint" class="teacher-map-pins-hint"></p>
+                        <div class="teacher-map-pins-toolbar">
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnTeacherPinsSchoolDefault"><i class="fas fa-school"></i> Load school default path</button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnTeacherPinsClear"><i class="fas fa-eraser"></i> Clear points</button>
+                        </div>
+                        <div class="teacher-map-pins-grid">
+                            <div class="teacher-map-pins-map-col">
+                                <p class="teacher-map-pins-map-caption" id="teacherMapPinPlacementHint"><i class="fas fa-crosshairs"></i> Click the map to set each level’s position in order.</p>
+                                <div class="teacher-map-pins-map-frame">
+                                    <img src="{{ asset('images/quest_map_bg.png') }}" alt="" id="teacherMapPinPreview">
+                                    <div id="teacherMapPinMarkers" class="teacher-map-pin-markers-layer" aria-hidden="true"></div>
+                                </div>
+                            </div>
+                            <div class="teacher-map-pins-list-col">
+                                <p class="teacher-map-pins-list-title">Edit points</p>
+                                <div class="teacher-map-pins-scroll">
+                                    <div id="teacherMapPinTableBody" class="teacher-pin-rows"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <label class="form-label">Rewards</label>
@@ -424,8 +689,9 @@
             <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
                 <i class="fas fa-arrow-left"></i> Back
             </button>
-            <button type="submit" class="btn btn-success btn-lg">
-                <i class="fas fa-check"></i> {{ isset($quest) ? 'Update Quest' : 'Create Quest' }}
+            <button type="submit" id="questSubmitBtn" class="btn btn-success btn-lg" aria-busy="false">
+                <span class="submit-idle"><i class="fas fa-check"></i> {{ isset($quest) ? 'Update Quest' : 'Create Quest' }}</span>
+                <span class="submit-loading" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i> Saving…</span>
             </button>
         </div>
     </div>
@@ -513,6 +779,10 @@
         'questions' => $questInitialQuestions,
         'isEdit' => $questIsEdit,
         'initialSectionId' => $questInitialSectionId,
+        'mapPinEditor' => [
+            'initialPins' => ($questIsEdit && isset($quest) && is_array($quest->map_pins)) ? array_values($quest->map_pins) : [],
+            'schoolDefaultPins' => \App\Models\QuestMapLayout::basePinsForImage(null),
+        ],
     ];
 @endphp
 <script type="application/json" id="quest-bootstrap-data">
@@ -520,12 +790,412 @@
 </script>
 <script>
 const __questBoot = JSON.parse(document.getElementById('quest-bootstrap-data').textContent);
+const __defaultMapAssetUrl = @json(asset('images/quest_map_bg.png'));
+const __storageUrlPrefix = @json(rtrim(asset('storage'), '/'));
 let questions = __questBoot.questions;
 const questIsEdit = __questBoot.isEdit;
 const questInitialSectionId = __questBoot.initialSectionId;
 let options = [];
 let currentStep = 1;
 let uploadedMaps = [];
+let teacherMapPins = [];
+let teacherMapPinsActiveIndex = 0;
+let teacherPinPointerDrag = null;
+
+function getQuestTotalLevels() {
+    const v = document.getElementById('questTotalLevelsInput')?.value;
+    let n = parseInt(v, 10);
+    if (Number.isNaN(n)) n = 3;
+    return Math.min(30, Math.max(1, n));
+}
+
+function expandBasePinsToLevelsFromSchoolBase(base, levelCount) {
+    levelCount = Math.max(1, Math.min(30, levelCount));
+    base = (base && base.length) ? base.map(normalizeTeacherPin) : [{ left: 50, top: 50, name: '', icon: 'fa-map-marker-alt' }];
+    const out = [];
+    const n = base.length;
+    for (let i = 1; i <= levelCount; i++) {
+        const idx = i - 1;
+        if (idx < n) {
+            const raw = Object.assign({}, base[idx]);
+            if (!raw.name) raw.name = 'Level ' + i;
+            out.push(normalizeTeacherPin(raw));
+            continue;
+        }
+        const pLast = base[n - 1];
+        const pPrev = n >= 2 ? base[n - 2] : base[0];
+        const steps = idx - n + 1;
+        const dl = (pLast.left - pPrev.left) * 0.12 * steps;
+        const dt = (pLast.top - pPrev.top) * 0.12 * steps;
+        out.push(normalizeTeacherPin({
+            left: Math.min(95, Math.max(5, pLast.left + dl)),
+            top: Math.min(95, Math.max(5, pLast.top + dt)),
+            name: 'Level ' + i,
+            icon: pLast.icon || 'fa-map-marker-alt'
+        }));
+    }
+    return out;
+}
+
+function extrapolateMorePins(currentPins, targetCount) {
+    targetCount = Math.max(1, Math.min(30, targetCount));
+    let base = currentPins.map(normalizeTeacherPin);
+    if (base.length === 0) {
+        const sd = (__questBoot.mapPinEditor?.schoolDefaultPins || []).map(normalizeTeacherPin);
+        return expandBasePinsToLevelsFromSchoolBase(sd, targetCount);
+    }
+    if (targetCount <= base.length) {
+        return base.slice(0, targetCount).map((p, i) => normalizeTeacherPin(Object.assign({}, p, {
+            name: p.name || ('Level ' + (i + 1))
+        })));
+    }
+    const n = base.length;
+    const pLast0 = base[n - 1];
+    const pPrev0 = n >= 2 ? base[n - 2] : base[0];
+    const out = base.slice();
+    for (let idx = n; idx < targetCount; idx++) {
+        const steps = idx - n + 1;
+        const dl = (pLast0.left - pPrev0.left) * 0.12 * steps;
+        const dt = (pLast0.top - pPrev0.top) * 0.12 * steps;
+        out.push(normalizeTeacherPin({
+            left: Math.min(95, Math.max(5, pLast0.left + dl)),
+            top: Math.min(95, Math.max(5, pLast0.top + dt)),
+            name: 'Level ' + (idx + 1),
+            icon: pLast0.icon || 'fa-map-marker-alt'
+        }));
+    }
+    return out;
+}
+
+function syncTeacherPinsToLevelCount() {
+    if (!document.getElementById('useCustomMapPins')?.checked) return;
+    const n = getQuestTotalLevels();
+    if (teacherMapPins.length > n) {
+        teacherMapPins = teacherMapPins.slice(0, n);
+    } else if (teacherMapPins.length < n) {
+        teacherMapPins = extrapolateMorePins(teacherMapPins, n);
+    } else {
+        teacherMapPins = teacherMapPins.map((p, i) => normalizeTeacherPin(Object.assign({}, p, {
+            name: p.name || ('Level ' + (i + 1))
+        })));
+    }
+    if (teacherMapPinsActiveIndex >= teacherMapPins.length) {
+        teacherMapPinsActiveIndex = 0;
+    }
+    updateTeacherMapPinPlacementHint();
+}
+
+function normalizeTeacherPin(p) {
+    return {
+        left: Math.round((Number(p.left) || 0) * 100) / 100,
+        top: Math.round((Number(p.top) || 0) * 100) / 100,
+        name: (p.name != null && String(p.name).trim() !== '') ? String(p.name).trim() : '',
+        icon: (p.icon != null && String(p.icon).trim() !== '') ? String(p.icon).trim() : 'fa-map-marker-alt',
+    };
+}
+
+function getTeacherMapPreviewSrc() {
+    const v = document.getElementById('mapImage').value;
+    if (!v || v === 'default') return __defaultMapAssetUrl;
+    if (v.startsWith('existing:')) {
+        const p = v.slice('existing:'.length).replace(/^\/+/, '');
+        return __storageUrlPrefix + '/' + p;
+    }
+    if (v.startsWith('data:image')) return v;
+    const found = uploadedMaps.find(m => m.id === v);
+    if (found && found.data) return found.data;
+    return __defaultMapAssetUrl;
+}
+
+function refreshTeacherMapPreview() {
+    const img = document.getElementById('teacherMapPinPreview');
+    if (!img) return;
+    img.src = getTeacherMapPreviewSrc();
+}
+
+function updateTeacherMapPinHint() {
+    const el = document.getElementById('mapPinLevelHint');
+    if (!el) return;
+    const n = getQuestTotalLevels();
+    const p = teacherMapPins.length;
+    el.innerHTML = `<strong>Total levels:</strong> ${n} — the editor keeps <strong>${p}</strong> point(s), <strong>one per level</strong> (updates when you change Total levels).<br><span style="font-weight:500;opacity:.95"><strong>Drag</strong> a numbered dot on the map, or <strong>click</strong> the map to place levels in order (cycles). Left % / Top % stay in sync.</span>`;
+}
+
+function updateTeacherMapPinPlacementHint() {
+    const el = document.getElementById('teacherMapPinPlacementHint');
+    if (!el) return;
+    if (!document.getElementById('useCustomMapPins')?.checked) return;
+    const n = getQuestTotalLevels();
+    if (n < 1 || !teacherMapPins.length) {
+        el.innerHTML = '<i class="fas fa-crosshairs"></i> Set <strong>Total levels</strong> above, then click the map to place each level.';
+        return;
+    }
+    const i = teacherMapPinsActiveIndex % n;
+    const nextNum = i + 1;
+    el.innerHTML = `<i class="fas fa-crosshairs"></i> <strong>Click</strong> the map to set <strong>Level ${nextNum}</strong> of ${n} (cycles), or <strong>drag</strong> a numbered dot. You can also edit Left % / Top %.`;
+}
+
+function getTeacherMapPinFrame() {
+    return document.querySelector('.teacher-map-pins-map-frame');
+}
+
+function teacherMapPinPercentFromClient(clientX, clientY) {
+    const frame = getTeacherMapPinFrame();
+    if (!frame) return { left: 0, top: 0 };
+    const r = frame.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return { left: 0, top: 0 };
+    const x = ((clientX - r.left) / r.width) * 100;
+    const y = ((clientY - r.top) / r.height) * 100;
+    return {
+        left: Math.round(Math.min(100, Math.max(0, x)) * 100) / 100,
+        top: Math.round(Math.min(100, Math.max(0, y)) * 100) / 100
+    };
+}
+
+function syncTeacherPinFormInputsFromIndex(i) {
+    if (!teacherMapPins[i]) return;
+    const leftInp = document.querySelector('#teacherMapPinTableBody .tpm-left[data-i="' + i + '"]');
+    const topInp = document.querySelector('#teacherMapPinTableBody .tpm-top[data-i="' + i + '"]');
+    if (leftInp) leftInp.value = teacherMapPins[i].left;
+    if (topInp) topInp.value = teacherMapPins[i].top;
+}
+
+function onTeacherMapPinMarkerPointerDown(e) {
+    if (!document.getElementById('useCustomMapPins')?.checked) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    const dot = e.currentTarget;
+    const idx = parseInt(dot.dataset.pinIndex, 10);
+    if (Number.isNaN(idx) || !teacherMapPins[idx]) return;
+    teacherPinPointerDrag = { index: idx, pointerId: e.pointerId, dotEl: dot };
+    dot.classList.add('is-dragging');
+    dot.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function onTeacherMapPinMarkerPointerMove(e) {
+    if (!teacherPinPointerDrag || teacherPinPointerDrag.pointerId !== e.pointerId) return;
+    const { left, top } = teacherMapPinPercentFromClient(e.clientX, e.clientY);
+    const idx = teacherPinPointerDrag.index;
+    teacherMapPins[idx].left = left;
+    teacherMapPins[idx].top = top;
+    const dot = teacherPinPointerDrag.dotEl;
+    dot.style.left = left + '%';
+    dot.style.top = top + '%';
+    syncTeacherPinFormInputsFromIndex(idx);
+}
+
+function onTeacherMapPinMarkerPointerUp(e) {
+    if (!teacherPinPointerDrag) return;
+    if (e.pointerId !== undefined && teacherPinPointerDrag.pointerId !== e.pointerId) return;
+    const dot = teacherPinPointerDrag.dotEl;
+    try {
+        dot.releasePointerCapture(teacherPinPointerDrag.pointerId);
+    } catch (err) { /* ignore */ }
+    dot.classList.remove('is-dragging');
+    teacherPinPointerDrag = null;
+}
+
+function renderTeacherMapPinMarkers() {
+    const wrap = document.getElementById('teacherMapPinMarkers');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    teacherMapPins.forEach((pin, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'teacher-map-pin-marker';
+        dot.dataset.pinIndex = String(i);
+        dot.textContent = String(i + 1);
+        dot.setAttribute('role', 'button');
+        dot.setAttribute('aria-label', 'Drag to move level ' + (i + 1));
+        dot.style.left = pin.left + '%';
+        dot.style.top = pin.top + '%';
+        dot.addEventListener('pointerdown', onTeacherMapPinMarkerPointerDown);
+        dot.addEventListener('pointermove', onTeacherMapPinMarkerPointerMove);
+        dot.addEventListener('pointerup', onTeacherMapPinMarkerPointerUp);
+        dot.addEventListener('pointercancel', onTeacherMapPinMarkerPointerUp);
+        wrap.appendChild(dot);
+    });
+}
+
+function escapeTeacherAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function renderTeacherMapPinTable() {
+    const tbody = document.getElementById('teacherMapPinTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (teacherMapPins.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'teacher-pin-empty';
+        empty.innerHTML = 'Set <strong>Total levels</strong> and turn on custom positions, or use <strong>Load school default path</strong>.';
+        tbody.appendChild(empty);
+        renderTeacherMapPinMarkers();
+        updateTeacherMapPinHint();
+        updateTeacherMapPinPlacementHint();
+        return;
+    }
+    teacherMapPins.forEach((pin, i) => {
+        const card = document.createElement('div');
+        card.className = 'teacher-pin-card';
+        card.innerHTML = `
+            <div class="teacher-pin-card-top">
+                <span class="teacher-pin-badge">${i + 1}</span>
+                <div class="teacher-pin-actions">
+                    <button type="button" class="btn btn-sm btn-secondary tpm-up" title="Move up" data-i="${i}" ${i === 0 ? 'disabled' : ''}><i class="fas fa-arrow-up"></i></button>
+                    <button type="button" class="btn btn-sm btn-secondary tpm-down" title="Move down" data-i="${i}" ${i === teacherMapPins.length - 1 ? 'disabled' : ''}><i class="fas fa-arrow-down"></i></button>
+                </div>
+            </div>
+            <div class="teacher-pin-fields">
+                <div>
+                    <label class="teacher-pin-field-label">Left %</label>
+                    <input type="number" step="0.1" min="0" max="100" class="teacher-pin-field-input tpm-left" data-i="${i}" value="${pin.left}">
+                </div>
+                <div>
+                    <label class="teacher-pin-field-label">Top %</label>
+                    <input type="number" step="0.1" min="0" max="100" class="teacher-pin-field-input tpm-top" data-i="${i}" value="${pin.top}">
+                </div>
+                <div class="teacher-pin-field-wide">
+                    <label class="teacher-pin-field-label">Label</label>
+                    <input type="text" class="teacher-pin-field-input tpm-name" data-i="${i}" value="${escapeTeacherAttr(pin.name)}" placeholder="e.g. Level ${i + 1}">
+                </div>
+            </div>`;
+        tbody.appendChild(card);
+    });
+    tbody.querySelectorAll('.tpm-left, .tpm-top, .tpm-name').forEach(inp => {
+        inp.addEventListener('change', onTeacherPinFieldChange);
+        inp.addEventListener('input', onTeacherPinFieldChange);
+    });
+    tbody.querySelectorAll('.tpm-up').forEach(b => b.addEventListener('click', () => moveTeacherPin(Number(b.dataset.i), -1)));
+    tbody.querySelectorAll('.tpm-down').forEach(b => b.addEventListener('click', () => moveTeacherPin(Number(b.dataset.i), 1)));
+    renderTeacherMapPinMarkers();
+    updateTeacherMapPinHint();
+    updateTeacherMapPinPlacementHint();
+}
+
+function onTeacherPinFieldChange(e) {
+    const i = Number(e.target.dataset.i);
+    if (Number.isNaN(i) || !teacherMapPins[i]) return;
+    const row = e.target.closest('.teacher-pin-card');
+    const left = row.querySelector('.tpm-left');
+    const top = row.querySelector('.tpm-top');
+    const name = row.querySelector('.tpm-name');
+    teacherMapPins[i].left = Math.min(100, Math.max(0, parseFloat(left.value) || 0));
+    teacherMapPins[i].top = Math.min(100, Math.max(0, parseFloat(top.value) || 0));
+    teacherMapPins[i].name = name.value.trim();
+    left.value = teacherMapPins[i].left;
+    top.value = teacherMapPins[i].top;
+    renderTeacherMapPinMarkers();
+}
+
+function moveTeacherPin(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= teacherMapPins.length) return;
+    const t = teacherMapPins[i];
+    teacherMapPins[i] = teacherMapPins[j];
+    teacherMapPins[j] = t;
+    renderTeacherMapPinTable();
+}
+
+function syncTeacherMapPinsEditorVisibility() {
+    const on = document.getElementById('useCustomMapPins')?.checked;
+    const box = document.getElementById('teacherMapPinsEditor');
+    if (box) box.style.display = on ? 'block' : 'none';
+    if (on) {
+        refreshTeacherMapPreview();
+        updateTeacherMapPinHint();
+    }
+}
+
+function serializeTeacherMapPins() {
+    const hidden = document.getElementById('mapPinsJson');
+    if (!hidden) return;
+    if (!document.getElementById('useCustomMapPins')?.checked) {
+        hidden.value = '';
+        return;
+    }
+    syncTeacherPinsToLevelCount();
+    hidden.value = JSON.stringify(teacherMapPins);
+}
+
+function initTeacherMapPinsEditor() {
+    const img = document.getElementById('teacherMapPinPreview');
+    const useCb = document.getElementById('useCustomMapPins');
+    if (!img || !useCb) return;
+
+    if (__questBoot.mapPinEditor && Array.isArray(__questBoot.mapPinEditor.initialPins) && __questBoot.mapPinEditor.initialPins.length) {
+        teacherMapPins = __questBoot.mapPinEditor.initialPins.map(normalizeTeacherPin);
+    }
+
+    img.addEventListener('click', function (e) {
+        if (!useCb.checked) return;
+        syncTeacherPinsToLevelCount();
+        const n = getQuestTotalLevels();
+        if (n < 1 || teacherMapPins.length === 0) return;
+        const r = img.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        const left = Math.round(Math.min(100, Math.max(0, x)) * 100) / 100;
+        const top = Math.round(Math.min(100, Math.max(0, y)) * 100) / 100;
+        const i = teacherMapPinsActiveIndex % n;
+        const prev = teacherMapPins[i];
+        teacherMapPins[i] = normalizeTeacherPin({
+            left,
+            top,
+            name: (prev && prev.name) ? prev.name : ('Level ' + (i + 1)),
+            icon: (prev && prev.icon) ? prev.icon : 'fa-map-marker-alt'
+        });
+        teacherMapPinsActiveIndex = (i + 1) % n;
+        renderTeacherMapPinTable();
+    });
+
+    useCb.addEventListener('change', function () {
+        syncTeacherMapPinsEditorVisibility();
+        if (useCb.checked) {
+            syncTeacherPinsToLevelCount();
+            teacherMapPinsActiveIndex = 0;
+            renderTeacherMapPinTable();
+        }
+    });
+
+    document.getElementById('btnTeacherPinsSchoolDefault')?.addEventListener('click', function () {
+        const sd = (__questBoot.mapPinEditor?.schoolDefaultPins || []).map(normalizeTeacherPin);
+        teacherMapPins = expandBasePinsToLevelsFromSchoolBase(sd, getQuestTotalLevels());
+        teacherMapPinsActiveIndex = 0;
+        renderTeacherMapPinTable();
+    });
+
+    document.getElementById('btnTeacherPinsClear')?.addEventListener('click', function () {
+        if (!confirm('Reset all positions to the default path for your ' + getQuestTotalLevels() + ' levels?')) return;
+        teacherMapPins = extrapolateMorePins([], getQuestTotalLevels());
+        teacherMapPinsActiveIndex = 0;
+        renderTeacherMapPinTable();
+    });
+
+    const lvlEl = document.getElementById('questTotalLevelsInput');
+    if (lvlEl) {
+        lvlEl.addEventListener('input', function () {
+            updateTeacherMapPinHint();
+            updateTeacherMapPinPlacementHint();
+        });
+        lvlEl.addEventListener('change', function () {
+            if (useCb.checked) {
+                syncTeacherPinsToLevelCount();
+                teacherMapPinsActiveIndex = 0;
+                renderTeacherMapPinTable();
+            }
+        });
+    }
+
+    syncTeacherMapPinsEditorVisibility();
+    if (useCb.checked) {
+        syncTeacherPinsToLevelCount();
+        teacherMapPinsActiveIndex = 0;
+        renderTeacherMapPinTable();
+    } else {
+        refreshTeacherMapPreview();
+    }
+}
 
 function selectMapExisting(element) {
     const path = element.getAttribute('data-existing-path');
@@ -542,6 +1212,7 @@ function selectMap(element, mapValue) {
     });
     element.classList.add('selected');
     document.getElementById('mapImage').value = mapValue;
+    refreshTeacherMapPreview();
 }
 
 function handleMapUpload(input) {
@@ -581,6 +1252,7 @@ function handleMapUpload(input) {
         
         // Store base64 in hidden input for submission
         document.getElementById('mapImage').value = e.target.result;
+        refreshTeacherMapPreview();
     };
     reader.readAsDataURL(file);
     
@@ -895,18 +1567,64 @@ function generateWithAI() {
     });
 }
 
-// Form validation
+// Form validation + submit loading state (do NOT disable the submit button — that can cancel the POST in some browsers)
+let questFormSubmitting = false;
 document.getElementById('questForm').addEventListener('submit', function(e) {
+    serializeTeacherMapPins();
     if (questions.length === 0) {
         e.preventDefault();
         alert('Please add at least one question');
         nextStep(2);
+        return;
+    }
+    if (questFormSubmitting) {
+        e.preventDefault();
+        return;
+    }
+    const titleEl = document.querySelector('#questForm input[name="title"]');
+    const descEl = document.querySelector('#questForm textarea[name="description"]');
+    const gradeEl = document.getElementById('gradeSelect');
+    const sectionEl = document.getElementById('sectionSelect');
+    if (!titleEl || !String(titleEl.value || '').trim()) {
+        e.preventDefault();
+        alert('Please enter a quest title (Step 1).');
+        nextStep(1);
+        titleEl?.focus();
+        return;
+    }
+    if (!descEl || !String(descEl.value || '').trim()) {
+        e.preventDefault();
+        alert('Please enter a description (Step 1).');
+        nextStep(1);
+        descEl?.focus();
+        return;
+    }
+    if (!gradeEl || !gradeEl.value) {
+        e.preventDefault();
+        alert('Please select a grade (Step 3).');
+        nextStep(3);
+        gradeEl?.focus();
+        return;
+    }
+    if (!sectionEl || !sectionEl.value) {
+        e.preventDefault();
+        alert('Please select a section (Step 3).');
+        nextStep(3);
+        sectionEl?.focus();
+        return;
+    }
+    questFormSubmitting = true;
+    const submitBtn = document.getElementById('questSubmitBtn');
+    if (submitBtn) {
+        submitBtn.classList.add('is-loading');
+        submitBtn.setAttribute('aria-busy', 'true');
     }
 });
 
 // Initialize level dropdowns on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateLevelDropdowns();
+    initTeacherMapPinsEditor();
     if (questIsEdit) {
         if (questions.length) {
             renderQuestions();

@@ -26,6 +26,7 @@ use App\Http\Controllers\TargetAudienceController;
 use App\Http\Controllers\StudentMessagesController;
 use App\Http\Controllers\TeacherMessagesController;
 use App\Http\Controllers\AdminUserManagementController;
+use App\Http\Controllers\AdminQuestMapController;
 use App\Http\Controllers\AIAssistantController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\TeacherReportsController;
@@ -116,6 +117,12 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/random-events/{randomEvent}', [App\Http\Controllers\AdminRandomEventController::class, 'destroy'])->name('random-events.destroy');
         Route::patch('/random-events/{randomEvent}/toggle', [App\Http\Controllers\AdminRandomEventController::class, 'toggleActive'])->name('random-events.toggle');
         Route::post('/random-events/generate-ai', [AIAssistantController::class, 'generateRandomEvent'])->name('random-events.generate-ai');
+
+        Route::get('/quest-maps', [AdminQuestMapController::class, 'index'])->name('quest-maps.index');
+        Route::post('/quest-maps', [AdminQuestMapController::class, 'store'])->name('quest-maps.store');
+        Route::delete('/quest-maps/{file}', [AdminQuestMapController::class, 'destroy'])->name('quest-maps.destroy')->where('file', '[a-zA-Z0-9._-]+');
+        Route::get('/quest-maps/layout', [AdminQuestMapController::class, 'editLayout'])->name('quest-maps.layout');
+        Route::put('/quest-maps/layout', [AdminQuestMapController::class, 'updateLayout'])->name('quest-maps.layout.update');
         
         // show
         Route::get('/user-management/{user}', [AdminUserManagementController::class, 'show'])

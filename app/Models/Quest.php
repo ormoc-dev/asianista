@@ -10,9 +10,13 @@ class Quest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'difficulty', 'map_image', 'level', 'xp_reward', 'ab_reward', 'gp_reward',
+        'title', 'description', 'difficulty', 'map_image', 'map_pins', 'level', 'xp_reward', 'ab_reward', 'gp_reward',
         'time_limit_minutes', 'hp_penalty',
         'assign_date', 'due_date', 'grade_id', 'section_id', 'teacher_id'
+    ];
+
+    protected $casts = [
+        'map_pins' => 'array',
     ];
 
     public function questions()

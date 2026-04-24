@@ -589,6 +589,9 @@
                 <a href="{{ route('admin.quizzes') }}" class="nav-link {{ request()->routeIs('admin.quizzes*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i> Quizzes
                 </a>
+                <a href="{{ route('admin.quest-maps.index') }}" class="nav-link {{ request()->routeIs('admin.quest-maps*') ? 'active' : '' }}">
+                    <i class="fas fa-map-location-dot"></i> Quest Maps
+                </a>
             </div>
 
             <div class="nav-section">

@@ -363,21 +363,11 @@
             <!-- Mini Map showing progress -->
             <div class="mini-map-card">
                 @php
-                    $positions = [
-                        ['left' => 50, 'top' => 86],
-                        ['left' => 25, 'top' => 55],
-                        ['left' => 15, 'top' => 66],
-                        ['left' => 40, 'top' => 40],
-                        ['left' => 55, 'top' => 60],
-                        ['left' => 75, 'top' => 45],
-                        ['left' => 75, 'top' => 80],
-                        ['left' => 85, 'top' => 65],
-                        ['left' => 80, 'top' => 20],
-                    ];
                     $currentLvl = $question->level;
                     $totalLvls = $quest->level;
-                    $pos = $positions[($currentLvl - 1) % count($positions)];
-                    $progressPercent = ($currentLvl / $totalLvls) * 100;
+                    $levelPins = \App\Models\QuestMapLayout::pinsForQuest($quest);
+                    $pos = $levelPins[$currentLvl - 1] ?? ($levelPins[0] ?? ['left' => 50, 'top' => 50]);
+                    $progressPercent = $totalLvls > 0 ? ($currentLvl / $totalLvls) * 100 : 0;
                     
                     // Map image
                     $mapImage = $quest->map_image ?? 'quest_map_bg.png';
@@ -393,7 +383,7 @@
                         <span class="particle p2"></span>
                         <span class="particle p3"></span>
                     </div>
-                    <div class="current-node-pulse" data-left="{{ (int) $pos['left'] }}" data-top="{{ (int) $pos['top'] }}"></div>
+                    <div class="current-node-pulse" data-left="{{ sprintf('%.3f', (float) ($pos['left'] ?? 50)) }}" data-top="{{ sprintf('%.3f', (float) ($pos['top'] ?? 50)) }}"></div>
                 </div>
                 <div class="progress-footer">
                     <div class="mini-progress-bar">
