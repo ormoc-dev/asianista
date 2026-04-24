@@ -3,6 +3,17 @@
 @section('title', 'Edit Lesson')
 @section('page-title', 'Edit Lesson')
 
+@push('styles')
+<style>
+    @include('teacher.lessons.partials._ai_lesson_styles')
+</style>
+@endpush
+
+@php
+    $lessonQuestAiModels = config('services.quest_ai.models', []);
+    $lessonQuestAiDefault = config('services.quest_ai.default');
+@endphp
+
 @section('content')
 <div class="card">
     <div class="card-header">
@@ -12,13 +23,20 @@
         </a>
     </div>
     <div class="card-body">
+        @include('teacher.lessons.partials._ai_lesson_panel', [
+            'lessonQuestAiModels' => $lessonQuestAiModels,
+            'lessonQuestAiDefault' => $lessonQuestAiDefault,
+            'grades' => $grades,
+            'aiTopicInitial' => $lesson->title,
+        ])
+
         <form action="{{ route('teacher.lessons.update', $lesson->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('POST')
 
             <div class="form-group">
                 <label class="form-label">Lesson Title</label>
-                <input type="text" name="title" class="form-control" value="{{ $lesson->title }}" required>
+                <input type="text" name="title" id="lessonTitle" class="form-control" value="{{ $lesson->title }}" required>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -44,7 +62,8 @@
 
             <div class="form-group">
                 <label class="form-label">Lesson Content</label>
-                <textarea name="content" class="form-control" rows="8">{{ $lesson->content }}</textarea>
+                <textarea name="content" id="lessonContent" class="form-control" rows="8">{{ $lesson->content }}</textarea>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">Use the AI generator above to refresh or expand content, then save.</p>
             </div>
 
             <div class="form-group">
@@ -69,6 +88,7 @@
 @endsection
 
 @push('scripts')
+@include('teacher.lessons.partials._ai_lesson_scripts', ['lessonQuestAiDefault' => $lessonQuestAiDefault])
 <script>
 function lessonLoadSections(selectedId) {
     const gradeEl = document.getElementById('lessonGradeSelect');
@@ -98,6 +118,15 @@ function lessonLoadSections(selectedId) {
         });
 }
 document.addEventListener('DOMContentLoaded', () => {
+    lessonInitAiModelPicker();
+    const aiGrade = document.getElementById('aiGradeLevel');
+    const initialG = <?php echo json_encode((int) $initialGradeId); ?>;
+    if (aiGrade && initialG > 0) {
+        const want = 'grade' + initialG;
+        if (Array.from(aiGrade.options).some(o => o.value === want)) {
+            aiGrade.value = want;
+        }
+    }
     const g = document.getElementById('lessonGradeSelect');
     const sectionSelect = document.getElementById('lessonSectionSelect');
     if (g && sectionSelect) {

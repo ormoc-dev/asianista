@@ -643,36 +643,57 @@ Return ONLY valid JSON with exactly these keys: title, description, effect, xp_r
      */
     public function generateLessonContent(Request $request)
     {
+        $modelKeys = array_keys(config('services.quest_ai.models', []));
+
         $request->validate([
             'topic' => 'required|string|max:255',
             'grade_level' => 'nullable|string',
-            'lesson_type' => 'nullable|string'
+            'lesson_type' => 'nullable|string',
+            'ai_model' => ['nullable', 'string', Rule::in($modelKeys)],
         ]);
 
         $topic = $request->input('topic');
         $gradeLevel = $request->input('grade_level', 'general');
         $lessonType = $request->input('lesson_type', 'lecture');
+        $modelKey = $request->input('ai_model', config('services.quest_ai.default'));
+
+        if (! isset(config('services.quest_ai.models')[$modelKey])) {
+            $modelKey = config('services.quest_ai.default');
+        }
 
         try {
-            $content = $this->callGroqForLesson($topic, $gradeLevel, $lessonType);
+            $this->assertQuestAiProviderConfigured($modelKey);
+            $content = $this->generateLessonWithLlm($modelKey, $topic, $gradeLevel, $lessonType);
+
             return response()->json([
                 'status' => 'success',
-                'data' => $content
+                'data' => $content,
             ]);
-        } catch (\Exception $e) {
-            Log::error('AI Lesson Generation Error: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            Log::warning('Lesson AI configuration: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to generate lesson content.'
+                'message' => $e->getMessage(),
+            ], 503);
+        } catch (\Exception $e) {
+            Log::error('AI Lesson Generation Error: '.$e->getMessage(), [
+                'exception' => $e::class,
+            ]);
+            $message = trim($e->getMessage());
+            if ($message === '') {
+                $message = 'Failed to generate lesson content.';
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $message,
             ], 500);
         }
     }
 
-    private function callGroqForLesson($topic, $gradeLevel, $lessonType)
+    private function generateLessonWithLlm(string $modelKey, string $topic, string $gradeLevel, string $lessonType): array
     {
-        $apiKey = env('GROQ_API_KEY');
-        $endpoint = "https://api.groq.com/openai/v1/chat/completions";
-
         $prompt = "You are an educational content generator for the ASIANISTA learning platform.
         Create a comprehensive lesson on the following topic:
 
@@ -696,32 +717,15 @@ Return ONLY valid JSON with exactly these keys: title, description, effect, xp_r
 
         Return ONLY valid JSON. No conversational text.";
 
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->post($endpoint, [
-            'model' => 'llama-3.3-70b-versatile',
-            'messages' => [
-                ['role' => 'system', 'content' => "You are a helpful assistant that outputs only JSON."],
-                ['role' => 'user', 'content' => $prompt]
-            ],
-            'response_format' => ['type' => 'json_object'],
-            'temperature' => 0.7,
-            'max_tokens' => 2048,
-            'stream' => false
-        ]);
+        $messages = [
+            ['role' => 'system', 'content' => 'You are a helpful assistant that outputs only JSON.'],
+            ['role' => 'user', 'content' => $prompt],
+        ];
 
-        if ($response->failed()) {
-            throw new \Exception('Groq Request Failed: ' . $response->body());
-        }
+        $decoded = $this->chatCompletionJsonForQuestForge($modelKey, $messages, 2048);
 
-        $result = $response->json();
-        $textResponse = $result['choices'][0]['message']['content'] ?? '';
-
-        $decoded = json_decode($textResponse, true);
-
-        if (!$decoded) {
-            throw new \Exception('Failed to decode AI response: ' . $textResponse);
+        if (! $decoded) {
+            throw new \Exception('Failed to decode AI response.');
         }
 
         return $decoded;
