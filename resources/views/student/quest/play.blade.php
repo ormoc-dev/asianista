@@ -13,7 +13,15 @@ let questPlay = {};
 
 function refreshQuestPlayConfig() {
     const el = document.getElementById('quest-play-config');
-    questPlay = el && el.dataset ? Object.assign({}, el.dataset) : {};
+    if (!el) {
+        questPlay = {};
+        return;
+    }
+    questPlay = Object.assign({}, el.dataset);
+    const fsRaw = el.getAttribute('data-require-fullscreen');
+    if (fsRaw !== null) {
+        questPlay.requireFullscreen = fsRaw;
+    }
 }
 
 refreshQuestPlayConfig();
@@ -66,8 +74,21 @@ function setQuestFullscreenGatePageLock(on) {
 }
 
 function showQuestFullscreenGateIfNeeded() {
+    const cfg = document.getElementById('quest-play-config');
     const gate = document.getElementById('quest-fullscreen-gate');
-    if (!gate) return;
+    if (!gate) {
+        setQuestFullscreenGatePageLock(false);
+        return;
+    }
+    const raw = cfg ? cfg.getAttribute('data-require-fullscreen') : null;
+    const requiresFullscreen = raw === '1' || raw === 'true'
+        || (raw === null && String(questPlay.requireFullscreen || '0') === '1');
+    if (!requiresFullscreen) {
+        gate.classList.remove('is-open');
+        gate.setAttribute('aria-hidden', 'true');
+        setQuestFullscreenGatePageLock(false);
+        return;
+    }
     if (isQuestBrowserFullscreen()) {
         gate.classList.remove('is-open');
         gate.setAttribute('aria-hidden', 'true');
@@ -395,6 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('turbolinks:load', function () {
     bootQuestPlayExitGuardIfNeeded();
+    refreshQuestPlayConfig();
     showQuestFullscreenGateIfNeeded();
 });
 

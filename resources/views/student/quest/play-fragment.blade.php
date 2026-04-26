@@ -68,8 +68,10 @@
         data-boss-max-hp="{{ $bossMaxHp }}"
         data-boss-current-hp="{{ $bossCurrentHp }}"
         data-hero-character="{{ $heroCharacter }}"
+        data-require-fullscreen="{{ ($quest->require_fullscreen ?? false) ? '1' : '0' }}"
         data-quest-id="{{ (int) $quest->id }}"></div>
 
+    @if($quest->require_fullscreen ?? false)
     <div id="quest-fullscreen-gate" class="quest-fullscreen-gate" aria-hidden="true">
         <div class="quest-fullscreen-gate__backdrop" aria-hidden="true"></div>
         <div class="quest-fullscreen-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="quest-fs-gate-title">
@@ -95,6 +97,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <div class="play-content-container">
         <!-- Battle arena + question modal layer -->

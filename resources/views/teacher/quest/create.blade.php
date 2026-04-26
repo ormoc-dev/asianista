@@ -624,6 +624,17 @@
                         <input type="number" name="hp_penalty" class="form-control" value="{{ old('hp_penalty', $quest->hp_penalty ?? 10) }}" min="0" placeholder="HP lost per wrong answer">
                     </div>
                 </div>
+                <div class="form-group" style="margin-top: 18px;">
+                    <input type="hidden" name="require_fullscreen" value="0">
+                    <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600;">
+                        <input type="checkbox" name="require_fullscreen" value="1"
+                            {{ (string) old('require_fullscreen', isset($quest) ? (int) $quest->require_fullscreen : '1') === '1' ? 'checked' : '' }}>
+                        <span><i class="fas fa-expand-arrows-alt"></i> Require fullscreen in student quest play</span>
+                    </label>
+                    <small class="text-muted" style="display: block; margin-top: 8px; color: var(--text-muted);">
+                        If off, students can continue playing without entering browser fullscreen.
+                    </small>
+                </div>
             </div>
         </div>
         

@@ -11,12 +11,13 @@ class Quest extends Model
 
     protected $fillable = [
         'title', 'description', 'difficulty', 'map_image', 'map_pins', 'level', 'xp_reward', 'ab_reward', 'gp_reward',
-        'time_limit_minutes', 'hp_penalty',
+        'time_limit_minutes', 'hp_penalty', 'require_fullscreen',
         'assign_date', 'due_date', 'grade_id', 'section_id', 'teacher_id'
     ];
 
     protected $casts = [
         'map_pins' => 'array',
+        'require_fullscreen' => 'boolean',
     ];
 
     public function questions()
