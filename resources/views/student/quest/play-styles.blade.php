@@ -1457,6 +1457,34 @@
         100% { transform: translate(-50%, -50%) scale(1); }
     }
 
+    .map-hero-marker {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 24px;
+        height: 24px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: rgba(79, 70, 229, 0.95);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        box-shadow: 0 6px 14px rgba(79, 70, 229, 0.35);
+        z-index: 3;
+        transition: left 1.25s cubic-bezier(0.22, 1, 0.36, 1), top 1.25s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s ease;
+    }
+
+    .map-hero-marker.map-hero-marker--walking {
+        animation: mini-map-walk 0.28s linear infinite alternate;
+    }
+
+    @keyframes mini-map-walk {
+        from { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+        to   { transform: translate(-50%, -50%) rotate(5deg) scale(1.05); }
+    }
+
     .mini-progress-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
 
     .hint-card {
@@ -1502,9 +1530,14 @@
 
     .battle-feedback-sheet {
         position: relative;
+        z-index: 2;
         width: 100%;
         max-width: 400px;
         animation: battle-sheet-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .battle-feedback-sheet.battle-feedback-sheet--map-phase {
+        max-width: min(440px, 96vw);
     }
 
     @keyframes battle-sheet-in {
@@ -1644,6 +1677,106 @@
         line-height: 1.55;
         font-weight: 600;
         color: rgba(226, 232, 240, 0.88);
+    }
+
+    .battle-level-transition {
+        position: relative;
+        z-index: 3;
+        border-radius: 22px;
+        background: linear-gradient(160deg, rgba(255,255,255,0.98), rgba(238,242,255,0.96));
+        border: 1px solid rgba(79, 70, 229, 0.2);
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.22);
+        padding: 16px 16px 14px;
+        text-align: center;
+    }
+
+    .battle-level-transition__eyebrow {
+        margin: 0;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6366f1;
+    }
+
+    .battle-level-transition__title {
+        margin: 4px 0 12px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #1e1b4b;
+    }
+
+    .battle-level-transition__map {
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid rgba(79, 70, 229, 0.15);
+        aspect-ratio: 16 / 10;
+        background: #0f172a;
+    }
+
+    .battle-level-transition__map-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.92;
+    }
+
+    .battle-level-pin-active {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #facc15;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.8);
+        animation: battleLevelPulse 1.5s infinite;
+        z-index: 3;
+    }
+
+    .battle-level-hero {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        background: #fff;
+        transform: translate(-50%, -50%);
+        overflow: hidden;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+        z-index: 4;
+        transition: left 1.2s cubic-bezier(0.22, 1, 0.36, 1), top 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .battle-level-hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .battle-level-hero.is-walking {
+        animation: battleHeroWalk 0.26s linear infinite alternate;
+    }
+
+    .battle-level-transition__hint {
+        margin: 10px 0 0;
+        font-size: 0.78rem;
+        color: #4b5563;
+        font-weight: 600;
+    }
+
+    @keyframes battleHeroWalk {
+        from { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+        to { transform: translate(-50%, -50%) rotate(5deg) scale(1.05); }
+    }
+
+    @keyframes battleLevelPulse {
+        0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.75); }
+        70% { box-shadow: 0 0 0 9px rgba(250, 204, 21, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
     }
 
     @media (max-width: 768px) {

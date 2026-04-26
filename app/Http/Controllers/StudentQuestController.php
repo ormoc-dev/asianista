@@ -258,7 +258,10 @@ class StudentQuestController extends Controller
                     'correct' => true,
                     'message' => 'Victory! You restored ' . $restoreAmount . ' HP! Moving to the next challenge.',
                     'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
-                    'new_hp' => $newHP
+                    'new_hp' => $newHP,
+                    'from_level' => (int) $question->level,
+                    'to_level' => (int) $nextQuestion->level,
+                    'level_advanced' => (int) $nextQuestion->level > (int) $question->level,
                 ]);
             } else {
                 // Quest completed successfully - award XP
@@ -334,7 +337,10 @@ class StudentQuestController extends Controller
                 'correct' => false, // But mark as incorrect
                 'message' => $hpDeducted ? "Not quite right. You lost {$hpPenalty} HP! Moving to next challenge." : 'Not quite right. Moving to next challenge.',
                 'next_url' => route('student.quest.play', [$quest->id, $nextQuestion->id]),
-                'new_hp' => $newHP
+                'new_hp' => $newHP,
+                'from_level' => (int) $question->level,
+                'to_level' => (int) $nextQuestion->level,
+                'level_advanced' => (int) $nextQuestion->level > (int) $question->level,
             ]);
         } else {
             // No more questions - quest complete (partial XP for wrong answers)

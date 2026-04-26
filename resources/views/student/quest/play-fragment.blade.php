@@ -40,6 +40,11 @@
         $battleBgFiles = ['battle_bg/bg1.jpg', 'battle_bg/bg2.png', 'battle_bg/bg3.png', 'battle_bg/bg4.png', 'battle_bg/bg5.png'];
         $battleBgSeed = abs(crc32($quest->id . '-' . $question->level . '-' . $question->id));
         $battleBgUrl = asset('images/' . $battleBgFiles[$battleBgSeed % count($battleBgFiles)]);
+        $levelPins = \App\Models\QuestMapLayout::pinsForQuest($quest);
+        $mapImage = $quest->map_image ?? 'quest_map_bg.png';
+        $mapImageUrl = str_starts_with($mapImage, 'quest_maps/')
+            ? asset('storage/' . $mapImage)
+            : asset('images/' . $mapImage);
         $qIndexInLevel = $currentLevelQuestions->search(fn ($q) => (int) $q->id === (int) $question->id);
         $qIndexInLevel = $qIndexInLevel === false ? 0 : (int) $qIndexInLevel;
         $questionOrdinalInLevel = $qIndexInLevel + 1;
@@ -154,6 +159,24 @@
                                 <span class="btn-battle-action__text">Continue</span>
                                 <i class="fas fa-chevron-right btn-battle-action__icon"></i>
                             </button>
+                        </div>
+                        <div class="battle-level-transition" id="battle-level-transition" hidden>
+                            <p class="battle-level-transition__eyebrow">Level Cleared</p>
+                            <h3 class="battle-level-transition__title">Travelling to Next Level...</h3>
+                            <div class="battle-level-transition__map" id="battle-level-transition-map" data-total-levels="{{ max(1, (int) $quest->level) }}">
+                                <img src="{{ $mapImageUrl }}" alt="" class="battle-level-transition__map-img" width="800" height="500" decoding="async">
+                                @foreach($levelPins as $pinIndex => $pin)
+                                    <span class="battle-level-pin" hidden
+                                          data-level="{{ $pinIndex + 1 }}"
+                                          data-left="{{ sprintf('%.3f', (float) ($pin['left'] ?? 50)) }}"
+                                          data-top="{{ sprintf('%.3f', (float) ($pin['top'] ?? 50)) }}"></span>
+                                @endforeach
+                                <span class="battle-level-pin-active" id="battle-level-pin-active"></span>
+                                <span class="battle-level-hero" id="battle-level-hero">
+                                    <img src="{{ $studentProfileUrl }}" alt="Hero avatar">
+                                </span>
+                            </div>
+                            <p class="battle-level-transition__hint">Your hero is moving to the next objective...</p>
                         </div>
                     </div>
                 </div>
@@ -365,23 +388,28 @@
                 @php
                     $currentLvl = $question->level;
                     $totalLvls = $quest->level;
-                    $levelPins = \App\Models\QuestMapLayout::pinsForQuest($quest);
                     $pos = $levelPins[$currentLvl - 1] ?? ($levelPins[0] ?? ['left' => 50, 'top' => 50]);
                     $progressPercent = $totalLvls > 0 ? ($currentLvl / $totalLvls) * 100 : 0;
-                    
-                    // Map image
-                    $mapImage = $quest->map_image ?? 'quest_map_bg.png';
-                    $mapImageUrl = str_starts_with($mapImage, 'quest_maps/') 
-                        ? asset('storage/' . $mapImage) 
-                        : asset('images/' . $mapImage);
                 @endphp
                 <h4>World Progress</h4>
-                <div class="mini-map-visual">
+                <div class="mini-map-visual"
+                     data-quest-id="{{ (int) $quest->id }}"
+                     data-current-level="{{ (int) $currentLvl }}"
+                     data-total-levels="{{ (int) $totalLvls }}">
                     <img src="{{ $mapImageUrl }}" alt="" class="mini-map-bg-img" width="800" height="500" decoding="async">
                     <div class="map-particles">
                         <span class="particle p1"></span>
                         <span class="particle p2"></span>
                         <span class="particle p3"></span>
+                    </div>
+                    @foreach($levelPins as $pinIndex => $pin)
+                        <span class="world-progress-pin" hidden
+                              data-level="{{ $pinIndex + 1 }}"
+                              data-left="{{ sprintf('%.3f', (float) ($pin['left'] ?? 50)) }}"
+                              data-top="{{ sprintf('%.3f', (float) ($pin['top'] ?? 50)) }}"></span>
+                    @endforeach
+                    <div class="map-hero-marker" aria-hidden="true">
+                        <i class="fas fa-walking"></i>
                     </div>
                     <div class="current-node-pulse" data-left="{{ sprintf('%.3f', (float) ($pos['left'] ?? 50)) }}" data-top="{{ sprintf('%.3f', (float) ($pos['top'] ?? 50)) }}"></div>
                 </div>

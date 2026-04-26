@@ -117,6 +117,9 @@ let timerInterval = null;
 let extraTimeAdded = 0;
 let bossCurrentHp = parseInt(questPlay.bossCurrentHp || '0', 10);
 let bossMaxHp = Math.max(1, parseInt(questPlay.bossMaxHp || '1', 10));
+let pendingLevelTransition = null;
+let victoryMapAutoTimer = null;
+let victoryMapTransitionLock = false;
 
 let questMusicBindingsDone = false;
 let questMusicGestureResumeFn = null;
@@ -283,6 +286,58 @@ function positionPulseAndHud() {
     });
 }
 
+function animateMiniMapLevelProgress() {
+    const visual = document.querySelector('.mini-map-visual[data-quest-id]');
+    if (!visual) return;
+
+    const pulse = visual.querySelector('.current-node-pulse');
+    const hero = visual.querySelector('.map-hero-marker');
+    if (!pulse || !hero) return;
+
+    const questId = parseInt(visual.getAttribute('data-quest-id') || '0', 10);
+    const currentLevel = parseInt(visual.getAttribute('data-current-level') || '0', 10);
+    if (!questId || !currentLevel) return;
+
+    const destLeft = parseFloat(pulse.getAttribute('data-left') || '50');
+    const destTop = parseFloat(pulse.getAttribute('data-top') || '50');
+    const key = `questMapLastLevel_${questId}`;
+    const storedLevel = parseInt(sessionStorage.getItem(key) || '0', 10);
+
+    function applyHeroPosition(left, top) {
+        hero.style.left = `${Math.max(0, Math.min(100, left))}%`;
+        hero.style.top = `${Math.max(0, Math.min(100, top))}%`;
+    }
+
+    const shouldAnimate = Number.isFinite(storedLevel) && storedLevel > 0 && currentLevel > storedLevel;
+    if (!shouldAnimate) {
+        applyHeroPosition(destLeft, destTop);
+        sessionStorage.setItem(key, String(currentLevel));
+        return;
+    }
+
+    const prevLevel = storedLevel;
+    const prevPulse = document.querySelector(`.world-progress-pin[data-level="${prevLevel}"]`);
+    const prevLeft = prevPulse ? parseFloat(prevPulse.getAttribute('data-left') || String(destLeft)) : destLeft;
+    const prevTop = prevPulse ? parseFloat(prevPulse.getAttribute('data-top') || String(destTop)) : destTop;
+
+    applyHeroPosition(prevLeft, prevTop);
+    hero.classList.add('map-hero-marker--walking');
+    pulse.style.opacity = '0.35';
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            applyHeroPosition(destLeft, destTop);
+        });
+    });
+
+    setTimeout(function () {
+        hero.classList.remove('map-hero-marker--walking');
+        pulse.style.opacity = '1';
+    }, 1300);
+
+    sessionStorage.setItem(key, String(currentLevel));
+}
+
 function reinitQuestPlayAfterSwap() {
     refreshQuestPlayConfig();
     activePower = null;
@@ -290,12 +345,26 @@ function reinitQuestPlayAfterSwap() {
     extraTimeAdded = 0;
     bossCurrentHp = parseInt(questPlay.bossCurrentHp || '0', 10);
     bossMaxHp = Math.max(1, parseInt(questPlay.bossMaxHp || '1', 10));
+    if (victoryMapAutoTimer) {
+        clearTimeout(victoryMapAutoTimer);
+        victoryMapAutoTimer = null;
+    }
+    victoryMapTransitionLock = false;
+    const nextBtnReset = document.getElementById('modal-next-btn');
+    if (nextBtnReset) nextBtnReset.style.display = '';
+    const sheetReset = document.getElementById('battle-card');
+    if (sheetReset) sheetReset.classList.remove('battle-feedback-sheet--map-phase');
+    const trReset = document.getElementById('battle-level-transition');
+    if (trReset) trReset.hidden = true;
+    const brReset = document.getElementById('battle-result');
+    if (brReset) brReset.hidden = false;
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
     timeRemaining = parseInt(questPlay.timeSeconds || '0', 10);
     positionPulseAndHud();
+    animateMiniMapLevelProgress();
     const hint = document.getElementById('active-power-hint');
     if (hint) hint.classList.remove('show');
     const hintText = document.getElementById('hint-text');
@@ -318,6 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initQuestFullscreenListenersOnce();
     bootQuestPlayExitGuardIfNeeded();
     positionPulseAndHud();
+    animateMiniMapLevelProgress();
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
     showQuestFullscreenGateIfNeeded();
@@ -641,6 +711,8 @@ async function navigateAfterQuest(url) {
             return;
         }
         mount.innerHTML = html;
+        positionPulseAndHud();
+        animateMiniMapLevelProgress();
         reinitQuestPlayAfterSwap();
         try {
             const u = new URL(url, window.location.origin);
@@ -705,6 +777,11 @@ function applyRandomBossDefeatFx() {
 }
 
 function showBattle(outcome, message, onContinue) {
+    if (victoryMapAutoTimer) {
+        clearTimeout(victoryMapAutoTimer);
+        victoryMapAutoTimer = null;
+    }
+
     const questionPanel = document.getElementById('battle-question-panel');
     if (questionPanel) questionPanel.style.display = 'none';
 
@@ -716,6 +793,10 @@ function showBattle(outcome, message, onContinue) {
     const badge = document.getElementById('battle-result-badge');
     const nextBtn = document.getElementById('modal-next-btn');
     const nextBtnLabel = nextBtn ? nextBtn.querySelector('.btn-battle-action__text') : null;
+    const battleResult = document.getElementById('battle-result');
+    const levelTransitionPanel = document.getElementById('battle-level-transition');
+    const battleSheetEl = document.getElementById('battle-card');
+    const showLevelMapAuto = !!(pendingLevelTransition && pendingLevelTransition.levelAdvanced);
     const dragonFire = document.getElementById('dragon-fire');
     const heroFire = document.getElementById('hero-fire');
     const heroSprite = document.getElementById('hero-sprite');
@@ -726,6 +807,9 @@ function showBattle(outcome, message, onContinue) {
     if (heroSprite) heroSprite.classList.remove('hit', 'battle-charge-win');
     if (dragonSprite) dragonSprite.classList.remove('hit', 'battle-charge-win');
     if (result) result.className = 'battle-result';
+    if (battleResult) battleResult.hidden = false;
+    if (levelTransitionPanel) levelTransitionPanel.hidden = true;
+    if (battleSheetEl) battleSheetEl.classList.remove('battle-feedback-sheet--map-phase');
 
     if (outcome === 'victory') {
         applyHeroVictoryCombatFx();
@@ -740,6 +824,11 @@ function showBattle(outcome, message, onContinue) {
     }
     if (msg) msg.textContent = message;
     if (nextBtn) {
+        if (showLevelMapAuto) {
+            nextBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = '';
+        }
         const battleSheetReset = document.getElementById('battle-card');
         if (battleSheetReset) battleSheetReset.classList.remove('is-loading-next');
         const nextIcon = nextBtn.querySelector('.btn-battle-action__icon');
@@ -776,6 +865,24 @@ function showBattle(outcome, message, onContinue) {
             }
 
             try {
+                const shouldShowMapTransition = !!(pendingLevelTransition && pendingLevelTransition.levelAdvanced);
+
+                if (shouldShowMapTransition) {
+                    const runContinue = function () {
+                        const ret = onContinue();
+                        if (ret && typeof ret.then === 'function') {
+                            ret.catch(function () {
+                                restoreBattleModalBtn();
+                            });
+                        }
+                    };
+                    if (victoryMapTransitionLock) {
+                        return;
+                    }
+                    playVictoryLevelTransition(runContinue, restoreBattleModalBtn);
+                    return;
+                }
+
                 const ret = onContinue();
                 if (ret && typeof ret.then === 'function') {
                     ret.catch(function () {
@@ -817,7 +924,110 @@ function showBattle(outcome, message, onContinue) {
             modal.style.display = 'flex';
             modal.setAttribute('aria-hidden', 'false');
         }
+        if (showLevelMapAuto) {
+            victoryMapAutoTimer = setTimeout(function () {
+                victoryMapAutoTimer = null;
+                if (victoryMapTransitionLock) return;
+                playVictoryLevelTransition(function () {
+                    const ret = onContinue();
+                    if (ret && typeof ret.then === 'function') {
+                        ret.catch(function () {});
+                    }
+                }, function () {});
+            }, 1600);
+        }
     }, 950);
+}
+
+function getBattleMapPinPercents(map, level) {
+    const pin = map.querySelector('.battle-level-pin[data-level="' + String(level) + '"]');
+    if (pin) {
+        return {
+            left: parseFloat(pin.getAttribute('data-left') || '50'),
+            top: parseFloat(pin.getAttribute('data-top') || '50'),
+        };
+    }
+    const total = Math.max(1, parseInt(map.getAttribute('data-total-levels') || '1', 10));
+    const lvl = Math.max(1, Math.min(total, level));
+    const t = total > 1 ? (lvl - 1) / (total - 1) : 0.5;
+    return {
+        left: 12 + t * 76,
+        top: 72 - Math.sin(t * Math.PI) * 30,
+    };
+}
+
+function playVictoryLevelTransition(onDone, onAbort) {
+    const resultPanel = document.getElementById('battle-result');
+    const transitionPanel = document.getElementById('battle-level-transition');
+    const map = document.getElementById('battle-level-transition-map');
+    const hero = document.getElementById('battle-level-hero');
+    const activePin = document.getElementById('battle-level-pin-active');
+    const battleSheet = document.getElementById('battle-card');
+    const nextBtnEl = document.getElementById('modal-next-btn');
+    const data = pendingLevelTransition;
+
+    function bailToContinue() {
+        victoryMapTransitionLock = false;
+        if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
+        if (resultPanel) resultPanel.hidden = false;
+        if (transitionPanel) transitionPanel.hidden = true;
+        if (nextBtnEl) nextBtnEl.style.display = '';
+        if (typeof onAbort === 'function') onAbort();
+        if (typeof onDone === 'function') onDone();
+    }
+
+    if (!resultPanel || !transitionPanel || !map || !hero || !activePin || !data) {
+        bailToContinue();
+        return;
+    }
+
+    const fromLevel = Number(data.fromLevel || 0);
+    const toLevel = Number(data.toLevel || 0);
+    if (!fromLevel || !toLevel) {
+        bailToContinue();
+        return;
+    }
+
+    victoryMapTransitionLock = true;
+    const fromPt = getBattleMapPinPercents(map, fromLevel);
+    const toPt = getBattleMapPinPercents(map, toLevel);
+
+    function setPos(el, left, top) {
+        el.style.left = `${Math.max(0, Math.min(100, left))}%`;
+        el.style.top = `${Math.max(0, Math.min(100, top))}%`;
+    }
+
+    if (battleSheet) battleSheet.classList.add('battle-feedback-sheet--map-phase');
+    resultPanel.hidden = true;
+    transitionPanel.hidden = false;
+    const trEyebrow = transitionPanel.querySelector('.battle-level-transition__eyebrow');
+    const trTitle = transitionPanel.querySelector('.battle-level-transition__title');
+    const trHint = transitionPanel.querySelector('.battle-level-transition__hint');
+    const answeredCorrect = data.mapAfterCorrect === true;
+    if (trEyebrow) trEyebrow.textContent = answeredCorrect ? 'Level cleared' : 'Moving forward';
+    if (trTitle) trTitle.textContent = answeredCorrect ? 'Travelling to next level…' : 'Heading to the next area…';
+    if (trHint) {
+        trHint.textContent = answeredCorrect
+            ? 'Your hero is moving to the next objective…'
+            : 'You move on to the next level—keep going!';
+    }
+    setPos(hero, fromPt.left, fromPt.top);
+    setPos(activePin, toPt.left, toPt.top);
+    hero.classList.add('is-walking');
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            setPos(hero, toPt.left, toPt.top);
+        });
+    });
+
+    setTimeout(function () {
+        hero.classList.remove('is-walking');
+        pendingLevelTransition = null;
+        victoryMapTransitionLock = false;
+        if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
+        if (typeof onDone === 'function') onDone();
+    }, 1350);
 }
 
 document.addEventListener('submit', async function (e) {
@@ -850,6 +1060,12 @@ document.addEventListener('submit', async function (e) {
         });
 
         const result = await response.json();
+        pendingLevelTransition = {
+            levelAdvanced: !!result.level_advanced,
+            fromLevel: Number(result.from_level || 0),
+            toLevel: Number(result.to_level || 0),
+            mapAfterCorrect: result.correct !== false,
+        };
 
         if (result.success) {
             if (result.new_hp !== undefined) {
