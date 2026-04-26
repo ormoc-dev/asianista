@@ -264,6 +264,7 @@ Route::prefix('teacher/gamification')->name('teacher.gamification.')->group(func
     Route::get('/', [TeacherGamificationController::class, 'index'])->name('index');
     Route::get('/create', [TeacherGamificationController::class, 'create'])->name('create');
     Route::post('/', [TeacherGamificationController::class, 'store'])->name('store');
+    Route::put('/students/{student}/stats', [TeacherGamificationController::class, 'updateStudentStats'])->name('students.stats.update');
     Route::get('/{id}/edit', [TeacherGamificationController::class, 'edit'])->name('edit');
     Route::put('/{id}', [TeacherGamificationController::class, 'update'])->name('update');
     Route::delete('/{id}', [TeacherGamificationController::class, 'destroy'])->name('destroy');

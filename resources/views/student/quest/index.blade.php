@@ -113,6 +113,25 @@
         background: #059669;
     }
 
+    .btn-start-quest.loading {
+        pointer-events: none;
+        opacity: 0.92;
+    }
+
+    .btn-start-quest .btn-loading-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        display: inline-block;
+        animation: questBtnSpin 0.7s linear infinite;
+    }
+
+    @keyframes questBtnSpin {
+        to { transform: rotate(360deg); }
+    }
+
     .lvl-badge {
         background: rgba(255, 212, 59, 0.2);
         color: var(--accent);
@@ -317,4 +336,20 @@
         }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.btn-start-quest').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (btn.classList.contains('expired') || btn.classList.contains('loading')) {
+                return;
+            }
+
+            btn.classList.add('loading');
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="btn-loading-spinner"></span> Loading adventure...';
+        });
+    });
+});
+</script>
 @endsection

@@ -310,6 +310,68 @@
             color: var(--danger);
         }
 
+        /* Logout confirmation modal */
+        .logout-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10060;
+            padding: 16px;
+        }
+
+        .logout-modal.show {
+            display: flex;
+        }
+
+        .logout-modal-card {
+            width: min(420px, 100%);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .logout-modal-head {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .logout-modal-body {
+            padding: 16px 20px;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .logout-modal-actions {
+            padding: 12px 20px 18px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-loading-spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            border-top-color: #fff;
+            border-radius: 50%;
+            display: inline-block;
+            animation: btnSpin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes btnSpin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Content */
         .content {
             flex: 1;
@@ -1033,7 +1095,7 @@
                         <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
-                        <a href="#" class="dropdown-item danger" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                        <a href="#" class="dropdown-item danger" id="logoutTrigger" onclick="event.preventDefault(); openLogoutModal();">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     </div>
@@ -1066,6 +1128,24 @@
             @yield('content')
         </div>
     </main>
+
+    <div class="logout-modal" id="logoutModal" aria-hidden="true">
+        <div class="logout-modal-card" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+            <div class="logout-modal-head" id="logoutModalTitle">Confirm Logout</div>
+            <div class="logout-modal-body">
+                Are you sure you want to log out from your account?
+            </div>
+            <div class="logout-modal-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="logoutCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="logoutConfirmBtn">
+                    <span class="js-logout-default-text">Logout</span>
+                    <span class="js-logout-loading-text" style="display: none;">
+                        <span class="btn-loading-spinner"></span>Logging out...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Floating AI Widget -->
     <div class="ai-chat-widget" id="aiChatWidget">
@@ -1159,12 +1239,62 @@
             document.getElementById('userDropdown').classList.toggle('show');
         }
 
+        function openLogoutModal() {
+            var modal = document.getElementById('logoutModal');
+            if (!modal) return;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            var dropdown = document.getElementById('userDropdown');
+            if (dropdown) dropdown.classList.remove('show');
+        }
+
+        function closeLogoutModal() {
+            var modal = document.getElementById('logoutModal');
+            if (!modal) return;
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('userDropdown');
             const btn = document.querySelector('.user-btn');
             if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.classList.remove('show');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = document.getElementById('logoutModal');
+            var cancelBtn = document.getElementById('logoutCancelBtn');
+            var confirmBtn = document.getElementById('logoutConfirmBtn');
+            var logoutForm = document.getElementById('logoutForm');
+            if (!modal || !cancelBtn || !confirmBtn || !logoutForm) return;
+
+            cancelBtn.addEventListener('click', closeLogoutModal);
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeLogoutModal();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    closeLogoutModal();
+                }
+            });
+
+            confirmBtn.addEventListener('click', function () {
+                if (confirmBtn.disabled) return;
+                var defaultText = confirmBtn.querySelector('.js-logout-default-text');
+                var loadingText = confirmBtn.querySelector('.js-logout-loading-text');
+
+                confirmBtn.disabled = true;
+                cancelBtn.disabled = true;
+                confirmBtn.setAttribute('aria-busy', 'true');
+                if (defaultText) defaultText.style.display = 'none';
+                if (loadingText) loadingText.style.display = 'inline';
+
+                logoutForm.submit();
+            });
         });
 
         // Close sidebar when clicking outside on mobile

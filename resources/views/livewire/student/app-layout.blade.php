@@ -416,6 +416,43 @@
             font-size: 0.5rem;
             padding: 10px 5px;
         }
+
+        @media (max-width: 768px) {
+            .quest-map-card-body {
+                min-height: 280px;
+                padding: 12px;
+            }
+
+            .embedded-map-section {
+                min-height: 260px;
+            }
+
+            .embedded-map-wrap .map-frame {
+                min-height: 260px !important;
+            }
+
+            #levelDetailsModal .level-details-modal {
+                max-width: calc(100vw - 24px);
+                margin: 12px;
+                padding: 20px;
+                max-height: 85dvh;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quest-map-card-body {
+                min-height: 240px;
+                padding: 10px;
+            }
+
+            .embedded-map-section {
+                min-height: 220px;
+            }
+
+            .embedded-map-wrap .map-frame {
+                min-height: 220px !important;
+            }
+        }
     </style>
 </head>
 <body>

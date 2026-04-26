@@ -137,4 +137,26 @@ class TeacherGamificationController extends Controller
         return redirect()->route('teacher.gamification.index')
                          ->with('success', '🗑 Challenge deleted successfully!');
     }
+
+    public function updateStudentStats(Request $request, User $student)
+    {
+        $teacherId = (int) Auth::id();
+
+        abort_unless(
+            $student->role === 'student' && (int) $student->registered_by_teacher_id === $teacherId,
+            403
+        );
+
+        $validated = $request->validate([
+            'hp' => 'required|integer|min:0|max:9999',
+            'xp' => 'required|integer|min:0|max:999999',
+            'ap' => 'required|integer|min:0|max:9999',
+        ]);
+
+        $student->update($validated);
+
+        return redirect()
+            ->route('teacher.gamification.index', $request->only(['grade_id', 'section_id']))
+            ->with('success', "{$student->full_name}'s HP, XP, and AP were updated.");
+    }
 }

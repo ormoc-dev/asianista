@@ -1,8 +1,25 @@
+function syncMobileSidebarBackdrop() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar || window.innerWidth > 768) {
+        document.body.classList.remove('student-sidebar-open');
+        return;
+    }
+    document.body.classList.toggle('student-sidebar-open', sidebar.classList.contains('mobile-active'));
+}
+
 // Apply persisted sidebar state on every Turbolinks navigation
 function applySidebarState() {
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('main-content');
     if (!sidebar || !main) return;
+
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('collapsed');
+        main.classList.remove('expanded');
+        sidebar.classList.remove('mobile-active');
+        document.body.classList.remove('student-sidebar-open');
+        return;
+    }
 
     const sidebarState = localStorage.getItem('sidebarState');
     if (sidebarState === 'collapsed') {
@@ -25,6 +42,7 @@ function toggleSidebar() {
     
     if (window.innerWidth <= 768) {
         sidebar.classList.toggle('mobile-active');
+        syncMobileSidebarBackdrop();
     } else {
         sidebar.classList.toggle('collapsed');
         main.classList.toggle('expanded');
@@ -34,6 +52,41 @@ function toggleSidebar() {
         localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
     }
 }
+
+let studentDashboardResizeTimer;
+window.addEventListener('resize', function () {
+    clearTimeout(studentDashboardResizeTimer);
+    studentDashboardResizeTimer = setTimeout(function () {
+        const sidebar = document.getElementById('sidebar');
+        const main = document.getElementById('main-content');
+        if (!sidebar || !main) return;
+
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('mobile-active');
+            document.body.classList.remove('student-sidebar-open');
+            applySidebarState();
+        } else {
+            sidebar.classList.remove('collapsed');
+            main.classList.remove('expanded');
+        }
+    }, 150);
+});
+
+document.addEventListener('click', function (e) {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar || window.innerWidth > 768 || !sidebar.classList.contains('mobile-active')) return;
+    if (e.target.closest('#sidebar') || e.target.closest('.toggle-btn')) return;
+    sidebar.classList.remove('mobile-active');
+    syncMobileSidebarBackdrop();
+}, true);
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar || window.innerWidth > 768 || !sidebar.classList.contains('mobile-active')) return;
+    sidebar.classList.remove('mobile-active');
+    syncMobileSidebarBackdrop();
+});
 
 // Floating AI Logic
 var floatingHistory = window.floatingHistory || [];

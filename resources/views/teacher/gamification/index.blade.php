@@ -7,6 +7,20 @@
 <style>
     .gamify-lb-rank { font-weight: 700; width: 24px; display: inline-block; }
     .gamify-lb-rank--top { color: var(--accent); }
+    .btn-loading-spinner {
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        border-top-color: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        animation: btnSpin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+    @keyframes btnSpin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
@@ -48,6 +62,8 @@
     </div>
 </div>
 
+
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
     <!-- Leaderboard -->
     <div class="card">
@@ -61,7 +77,39 @@
                 <img src="{{ asset('images/' . ($student->profile_pic ?? 'default-pp.png')) }}" style="width: 36px; height: 36px; border-radius: 50%;">
                 <div style="flex: 1;">
                     <p style="font-weight: 500; font-size: 0.9rem;">{{ $student->first_name }} {{ $student->last_name }}</p>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                        HP: <strong>{{ (int) $student->hp }}</strong> |
+                        XP: <strong>{{ (int) $student->xp }}</strong> |
+                        AP: <strong>{{ (int) $student->ap }}</strong>
+                    </p>
                 </div>
+                <details>
+                    <summary class="btn btn-sm btn-secondary" style="cursor: pointer; list-style: none;">Edit</summary>
+                    <form method="POST" action="{{ route('teacher.gamification.students.stats.update', $student->id) }}" class="js-stats-form" style="margin-top: 8px; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); min-width: 260px; background: var(--bg-card);">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="grade_id" value="{{ $gradeId }}">
+                        <input type="hidden" name="section_id" value="{{ $sectionId }}">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label" style="margin-bottom: 4px;">HP</label>
+                            <input type="number" name="hp" min="0" max="9999" value="{{ old('hp', (int) $student->hp) }}" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label" style="margin-bottom: 4px;">XP</label>
+                            <input type="number" name="xp" min="0" max="999999" value="{{ old('xp', (int) $student->xp) }}" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label" style="margin-bottom: 4px;">AP</label>
+                            <input type="number" name="ap" min="0" max="9999" value="{{ old('ap', (int) $student->ap) }}" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary js-stats-save-btn">
+                            <span class="js-btn-default-text">Save</span>
+                            <span class="js-btn-loading-text" style="display: none;">
+                                <span class="btn-loading-spinner"></span>Saving...
+                            </span>
+                        </button>
+                    </form>
+                </details>
             </div>
             @empty
             <p style="text-align: center; color: var(--text-muted); padding: 20px;">No students yet</p>
@@ -110,6 +158,21 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.js-stats-form').forEach((form) => {
+        form.addEventListener('submit', () => {
+            const button = form.querySelector('.js-stats-save-btn');
+            if (!button) return;
+
+            const defaultText = button.querySelector('.js-btn-default-text');
+            const loadingText = button.querySelector('.js-btn-loading-text');
+
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            if (defaultText) defaultText.style.display = 'none';
+            if (loadingText) loadingText.style.display = 'inline';
+        });
+    });
+
     const gradeEl = document.getElementById('filterGrade');
     const sectionEl = document.getElementById('filterSection');
     if (!gradeEl || !sectionEl) return;

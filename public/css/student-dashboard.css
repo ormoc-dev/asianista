@@ -2570,12 +2570,27 @@ section {
 }
 
 @media (max-width: 768px) {
+    body.student-sidebar-open {
+        overflow: hidden;
+    }
+
+    body.student-sidebar-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 19;
+        pointer-events: none;
+    }
+
     aside {
         transform: translateX(-100%);
         width: 270px !important;
         max-height: 100vh;
         max-height: 100dvh;
         height: 100%;
+        z-index: 22;
+        box-shadow: 8px 0 32px rgba(15, 23, 42, 0.2);
     }
 
     aside.mobile-active {
@@ -2587,7 +2602,122 @@ section {
     }
 
     header {
-        padding: 10px 15px;
+        padding: 10px 12px;
+        z-index: 21;
+    }
+
+    .header-left {
+        min-width: 0;
+        flex: 1;
+        gap: 10px;
+    }
+
+    header h1 {
+        min-width: 0;
+        font-size: 0.95rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .header-right {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .user-pill {
+        max-width: 42vw;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .user-pill span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    section {
+        padding: 14px 16px;
+    }
+
+    .rpg-dashboard {
+        overflow-x: hidden;
+    }
+
+    .dashboard-grid {
+        gap: 16px;
+    }
+
+    .map-panel {
+        min-height: 320px;
+        height: auto;
+    }
+
+    .map-container {
+        height: auto;
+        min-height: 240px;
+        padding: 12px;
+    }
+
+    .map-container .embedded-map-section {
+        min-height: 260px;
+    }
+
+    .character-panel {
+        max-height: none;
+        min-height: 0;
+    }
+
+    .character-header {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .character-name {
+        font-size: 1.05rem;
+        word-break: break-word;
+    }
+
+    .character-scrollable {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .panel-header {
+        padding: 14px 16px;
+        gap: 10px;
+    }
+
+    .panel-title {
+        font-size: 1rem;
+    }
+
+    .compact-power-name {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .quest-difficulty-badge {
+        top: 12px;
+        right: 12px;
+    }
+
+    .ai-floating-btn {
+        bottom: max(16px, env(safe-area-inset-bottom, 0px));
+        right: max(16px, env(safe-area-inset-right, 0px));
+        width: 52px;
+        height: 52px;
+        font-size: 1.5rem;
+    }
+
+    .ai-chat-window {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        height: min(520px, calc(100dvh - 120px));
+        bottom: max(88px, calc(80px + env(safe-area-inset-bottom, 0px)));
     }
 
     .shell-top {
@@ -2632,5 +2762,36 @@ section {
     
     .quest-rewards {
         flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    section {
+        padding: 12px 12px;
+    }
+
+    .hero-name {
+        font-size: 1.15rem;
+    }
+
+    .hero-stats-bar {
+        padding: 16px;
+        gap: 18px;
+    }
+
+    .map-panel {
+        min-height: 280px;
+    }
+
+    .map-container .embedded-map-section {
+        min-height: 220px;
+    }
+
+    .powers-list {
+        padding: 16px;
+    }
+
+    .user-pill {
+        max-width: 36vw;
     }
 }
