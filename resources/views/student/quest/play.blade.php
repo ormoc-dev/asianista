@@ -100,17 +100,38 @@ function showQuestFullscreenGateIfNeeded() {
     setQuestFullscreenGatePageLock(true);
 }
 
+let questFullscreenRequestInFlight = false;
+
 function requestQuestFullscreenOptional() {
     const el = getQuestFullscreenTarget();
     if (!el) return;
+    if (isQuestBrowserFullscreen()) return;
+    if (questFullscreenRequestInFlight) return;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
     if (!req) {
         window.alert('Your browser does not support fullscreen for this page. Try maximizing the window (e.g. F11 on Windows).');
         return;
     }
-    req.call(el).catch(function () {
+    questFullscreenRequestInFlight = true;
+    const done = function () {
+        questFullscreenRequestInFlight = false;
+    };
+    let result;
+    try {
+        result = req.call(el);
+    } catch (e) {
+        done();
         window.alert('Fullscreen needs your permission. You can try again from the browser menu or use F11 to maximize.');
-    });
+        return;
+    }
+    if (result && typeof result.then === 'function') {
+        result.then(done, function () {
+            done();
+            window.alert('Fullscreen needs your permission. You can try again from the browser menu or use F11 to maximize.');
+        });
+    } else {
+        done();
+    }
 }
 
 function initQuestFullscreenListenersOnce() {
@@ -130,7 +151,7 @@ function initQuestFullscreenListenersOnce() {
             e.preventDefault();
             requestQuestFullscreenOptional();
         }
-    });
+    }, true);
 }
 
 let timeRemaining = parseInt(questPlay.timeSeconds || '0', 10);
@@ -375,6 +396,8 @@ function reinitQuestPlayAfterSwap() {
     if (nextBtnReset) nextBtnReset.style.display = '';
     const sheetReset = document.getElementById('battle-card');
     if (sheetReset) sheetReset.classList.remove('battle-feedback-sheet--map-phase');
+    const modalReset = document.getElementById('quest-feedback-modal');
+    if (modalReset) modalReset.classList.remove('battle-feedback-layer--viewport');
     const trReset = document.getElementById('battle-level-transition');
     if (trReset) trReset.hidden = true;
     const brReset = document.getElementById('battle-result');
@@ -391,7 +414,7 @@ function reinitQuestPlayAfterSwap() {
     const hintText = document.getElementById('hint-text');
     if (hintText) hintText.innerHTML = '';
     const qp = document.getElementById('battle-question-panel');
-    if (qp) qp.style.display = 'block';
+    if (qp) qp.style.display = '';
     const modal = document.getElementById('quest-feedback-modal');
     if (modal) {
         modal.style.display = 'none';
@@ -552,7 +575,31 @@ function canEliminateWrongAnswer() {
     return wrongPool.length >= 1;
 }
 
+function setQuestPowerButtonPending(btn, pending) {
+    if (!btn) return;
+    if (pending) {
+        btn.classList.add('power-btn--loading');
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        if (!btn.querySelector('.power-btn__loading')) {
+            const wrap = document.createElement('span');
+            wrap.className = 'power-btn__loading';
+            wrap.innerHTML = '<span class="power-btn__spinner" aria-hidden="true"></span><span class="power-btn__loading-label">Casting…</span>';
+            btn.appendChild(wrap);
+        }
+    } else {
+        btn.classList.remove('power-btn--loading');
+        btn.removeAttribute('aria-busy');
+        const wrap = btn.querySelector('.power-btn__loading');
+        if (wrap) wrap.remove();
+        if (!btn.classList.contains('used')) {
+            btn.disabled = false;
+        }
+    }
+}
+
 function finalizePowerButton(btn) {
+    setQuestPowerButtonPending(btn, false);
     btn.disabled = true;
     btn.classList.add('used');
     const costEl = btn.querySelector('.power-ap-tag');
@@ -571,6 +618,14 @@ async function usePower(e, powerName, powerDesc) {
     if (pLower === 'arcane analysis' && !canEliminateWrongAnswer()) {
         alert('Arcane Analysis needs at least one incorrect option to eliminate on this question.');
         return;
+    }
+
+    setQuestPowerButtonPending(btn, true);
+    const hintBox = document.getElementById('active-power-hint');
+    const hintText = document.getElementById('hint-text');
+    if (hintBox && hintText) {
+        hintText.innerHTML = '<span class="power-hint-casting"><span class="power-hint-casting__dot"></span> Focusing…</span>';
+        hintBox.classList.add('show');
     }
 
     let data;
@@ -594,20 +649,23 @@ async function usePower(e, powerName, powerDesc) {
             } else {
                 alert(data.error || 'Could not use power.');
             }
+            setQuestPowerButtonPending(btn, false);
+            if (hintBox) hintBox.classList.remove('show');
+            if (hintText) hintText.innerHTML = '';
             return;
         }
     } catch (err) {
         console.error('Power request failed:', err);
         alert('Network error. Please try again.');
+        setQuestPowerButtonPending(btn, false);
+        if (hintBox) hintBox.classList.remove('show');
+        if (hintText) hintText.innerHTML = '';
         return;
     }
 
     if (data.new_ap !== undefined && data.new_ap !== null) {
         updateAPDisplay(Number(data.new_ap));
     }
-
-    const hintBox = document.getElementById('active-power-hint');
-    const hintText = document.getElementById('hint-text');
 
     switch (pLower) {
         case 'spell of insight':
@@ -808,6 +866,7 @@ function showBattle(outcome, message, onContinue) {
     if (questionPanel) questionPanel.style.display = 'none';
 
     const modal = document.getElementById('quest-feedback-modal');
+    if (modal) modal.classList.remove('battle-feedback-layer--viewport');
     const result = document.getElementById('battle-result');
     const title = document.getElementById('battle-title');
     const msg = document.getElementById('battle-message');
@@ -991,6 +1050,8 @@ function playVictoryLevelTransition(onDone, onAbort) {
     function bailToContinue() {
         victoryMapTransitionLock = false;
         if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
+        const modalEl = document.getElementById('quest-feedback-modal');
+        if (modalEl) modalEl.classList.remove('battle-feedback-layer--viewport');
         if (resultPanel) resultPanel.hidden = false;
         if (transitionPanel) transitionPanel.hidden = true;
         if (nextBtnEl) nextBtnEl.style.display = '';
@@ -1020,6 +1081,8 @@ function playVictoryLevelTransition(onDone, onAbort) {
     }
 
     if (battleSheet) battleSheet.classList.add('battle-feedback-sheet--map-phase');
+    const feedbackModal = document.getElementById('quest-feedback-modal');
+    if (feedbackModal) feedbackModal.classList.add('battle-feedback-layer--viewport');
     resultPanel.hidden = true;
     transitionPanel.hidden = false;
     const trEyebrow = transitionPanel.querySelector('.battle-level-transition__eyebrow');
@@ -1048,6 +1111,8 @@ function playVictoryLevelTransition(onDone, onAbort) {
         pendingLevelTransition = null;
         victoryMapTransitionLock = false;
         if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
+        const modalDone = document.getElementById('quest-feedback-modal');
+        if (modalDone) modalDone.classList.remove('battle-feedback-layer--viewport');
         if (typeof onDone === 'function') onDone();
     }, 1350);
 }
@@ -1120,7 +1185,7 @@ document.addEventListener('submit', async function (e) {
                     submitBtn.innerHTML = originalText;
                 }
                 const qp = document.getElementById('battle-question-panel');
-                if (qp) qp.style.display = 'block';
+                if (qp) qp.style.display = '';
                 document.getElementById('dragon-fire')?.classList.remove('active');
                 document.getElementById('hero-fire')?.classList.remove('active');
                 document.getElementById('hero-sprite')?.classList.remove('hit');

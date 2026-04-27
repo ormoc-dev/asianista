@@ -54,12 +54,10 @@ class QuestAttempt extends Model
 
     public function usePower($powerName, $level)
     {
-        if (!$this->hasUsedPower($powerName, $level)) {
-            return $this->usedPowers()->create([
-                'power_name' => $powerName,
-                'level' => $level,
-            ]);
-        }
-        return null;
+        // Caller (e.g. StudentQuestController) already validates; avoid a duplicate exists() query.
+        return $this->usedPowers()->create([
+            'power_name' => $powerName,
+            'level' => $level,
+        ]);
     }
 }

@@ -66,6 +66,12 @@
         justify-content: center;
         padding: 16px;
         box-sizing: border-box;
+        isolation: isolate;
+    }
+
+    /* Above student dashboard modals / overlays (often 9999–99999) so the gate stays clickable */
+    body.quest-play-fullscreen .quest-fullscreen-gate.is-open {
+        z-index: 200000;
     }
 
     .quest-fullscreen-gate.is-open {
@@ -75,12 +81,14 @@
     .quest-fullscreen-gate__backdrop {
         position: absolute;
         inset: 0;
+        z-index: 0;
         background: rgba(15, 23, 42, 0.55);
         backdrop-filter: blur(6px);
     }
 
     .quest-fullscreen-gate__dialog {
         position: relative;
+        z-index: 1;
         width: 100%;
         max-width: min(92vw, 640px);
         max-height: min(90vh, 720px);
@@ -307,6 +315,7 @@
     }
 
     .play-content-container {
+        position: relative;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
         gap: 16px;
@@ -333,9 +342,9 @@
         position: relative;
         width: 100%;
         flex: 0 0 auto;
-        height: clamp(220px, 48vh, 520px);
-  min-height: 220px;
-  max-height: 52vh;
+        height: clamp(220px, 78vh, 520px);
+        min-height: 220px;
+        max-height: 72vh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -350,6 +359,7 @@
         background-repeat: no-repeat;
         background-color: #0f172a;
         z-index: 0;
+       
     }
 
     .battle-arena-vignette {
@@ -590,21 +600,23 @@
 
     /* Question docked under the battle scene (not a modal overlay) */
     .battle-question-panel {
-        /* basis auto — flex-basis 0 collapses this column when height is indefinite (identification / textarea). */
-        flex: 1 1 auto;
-        min-height: 0;
+        /* flex-basis: 0 so this column can shrink below content height and .q-sheet-body scrolls */
+        flex: 1 1 0;
+        /* Floor + flex: min 0 via clamp so MC/ID content is never squeezed to padding-only height */
+        min-height: clamp(10.5rem, 22vh, 26rem);
         width: 100%;
         display: flex;
         flex-direction: column;
         background: #f1f5f9;
         border-top: 3px solid #0f172a;
+        overflow: hidden;
     }
 
     .battle-question-inner {
         display: flex;
         flex-direction: column;
         width: 100%;
-        flex: 1 1 auto;
+        flex: 1 1 0;
         min-height: 0;
         overflow: hidden;
     }
@@ -681,18 +693,24 @@
     .q-sheet-body {
         padding: 10px 14px 12px;
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        flex: 1 1 auto;
+        flex: 1 1 0;
         /* Never use min-height: % here — parent can be unresolved and the sheet collapses to padding-only. */
         min-height: 0;
         overflow-x: hidden;
-        overflow-y: scroll;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-gutter: stable;
         overscroll-behavior: contain;
+        /* Block stacking (not a flex container): nested flex was collapsing MC/ID content to ~0 height in some cases. */
     }
 
     .q-sheet-body .power-active-hint {
         margin-bottom: 14px;
+    }
+
+    .q-sheet-body .power-active-hint:not(.show) {
+        display: none;
+        margin-bottom: 0;
     }
 
     .question-text--sheet {
@@ -774,14 +792,6 @@
 
     .answer-options-area--sheet .tf .option-box i {
         font-size: 1.5rem;
-    }
-
-    .answer-options-area--sheet .text-answer-input textarea {
-        min-height: 72px;
-        padding: 12px 14px;
-        font-size: 0.95rem;
-        margin-bottom: 12px;
-        border-radius: 14px;
     }
 
     .btn-submit-answer--sheet:hover {
@@ -961,6 +971,44 @@
         transition: border-color 0.2s;
     }
     .text-answer-input textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* Form must keep its natural height so identification (textarea) is not flex-squashed to 0; .q-sheet-body scrolls instead */
+    #quest-answer-form.answer-options-area--sheet {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    #quest-answer-form.answer-options-area--sheet .text-answer-input {
+        flex: 0 0 auto;
+    }
+
+    #quest-answer-form.answer-options-area--sheet .text-answer-input textarea {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 96px;
+        max-height: min(44vh, 380px);
+        margin-bottom: 0;
+        padding: 12px 14px;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        font-family: inherit;
+        resize: none;
+        overflow-y: auto;
+    }
+
+    #quest-answer-form.answer-options-area--sheet .text-answer-input textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    #quest-answer-form.answer-options-area--sheet .form-actions--sheet {
+        flex-shrink: 0;
+        margin-top: 0;
+    }
 
     .form-actions { display: flex; justify-content: flex-end; }
 
@@ -1234,6 +1282,42 @@
         transition: all 0.2s;
         text-align: left;
         width: 100%;
+        position: relative;
+    }
+
+    .power-btn.power-btn--loading {
+        pointer-events: none;
+        border-color: #93c5fd;
+        background: #eff6ff;
+    }
+
+    .power-btn__loading {
+        position: absolute;
+        inset: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.94), rgba(239, 246, 255, 0.96));
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: 0.02em;
+    }
+
+    .power-btn__spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(37, 99, 235, 0.22);
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: questPowerBtnSpin 0.65s linear infinite;
+        flex-shrink: 0;
+    }
+
+    @keyframes questPowerBtnSpin {
+        to { transform: rotate(360deg); }
     }
 
     .power-btn:hover {
@@ -1368,6 +1452,27 @@
 
     .power-active-hint strong {
         color: #92400e;
+    }
+
+    .power-hint-casting {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #92400e;
+    }
+
+    .power-hint-casting__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f59e0b;
+        animation: powerHintCastPulse 0.55s ease-in-out infinite alternate;
+    }
+
+    @keyframes powerHintCastPulse {
+        from { opacity: 0.35; transform: scale(0.85); }
+        to { opacity: 1; transform: scale(1.1); }
     }
 
     /* Eliminated option styling for Arcane Analysis */
@@ -1513,12 +1618,19 @@
     .battle-feedback-layer {
         position: absolute;
         inset: 0;
-        z-index: 25;
+        z-index: 50;
         display: none;
         align-items: center;
         justify-content: center;
         padding: 16px;
         box-sizing: border-box;
+    }
+
+    /* Level map: escape dashboard shell / arena column; toggled in JS (fixed CB may be shell if backdrop-filter on ancestor). */
+    .battle-feedback-layer.battle-feedback-layer--viewport {
+        position: fixed;
+        inset: 0;
+        z-index: 10060;
     }
 
     .battle-feedback-backdrop {
@@ -1536,8 +1648,21 @@
         animation: battle-sheet-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    .battle-feedback-sheet.battle-feedback-sheet--map-phase {
-        max-width: min(440px, 96vw);
+    #battle-card.battle-feedback-sheet--map-phase {
+        flex-shrink: 0;
+        width: min(960px, min(94vw, 100%));
+        max-width: min(960px, min(94vw, 100%));
+        box-sizing: border-box;
+    }
+
+    #battle-card.battle-feedback-sheet--map-phase .battle-level-transition__map {
+        height: clamp(300px, min(52vh, 560px), 620px);
+        max-height: min(62vh, 620px);
+    }
+
+    #battle-card.battle-feedback-sheet--map-phase .battle-level-transition__map-img {
+        object-fit: contain;
+        background: radial-gradient(ellipse 80% 70% at 50% 45%, #1e293b 0%, #0f172a 100%);
     }
 
     @keyframes battle-sheet-in {
@@ -1682,12 +1807,14 @@
     .battle-level-transition {
         position: relative;
         z-index: 3;
-        border-radius: 22px;
-        background: linear-gradient(160deg, rgba(255,255,255,0.98), rgba(238,242,255,0.96));
-        border: 1px solid rgba(79, 70, 229, 0.2);
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.22);
-        padding: 16px 16px 14px;
+        border-radius: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 8px 4px 6px;
         text-align: center;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .battle-level-transition__eyebrow {
@@ -1696,23 +1823,27 @@
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #6366f1;
+        color: #fde68a;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
     }
 
     .battle-level-transition__title {
-        margin: 4px 0 12px;
-        font-size: 1.05rem;
+        margin: 4px 0 14px;
+        font-size: 1.12rem;
         font-weight: 800;
-        color: #1e1b4b;
+        color: #f8fafc;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
     }
 
     .battle-level-transition__map {
         position: relative;
         overflow: hidden;
-        border-radius: 14px;
-        border: 1px solid rgba(79, 70, 229, 0.15);
-        aspect-ratio: 16 / 10;
-        background: #0f172a;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        width: 100%;
+        height: clamp(280px, 46vh, 520px);
+        min-height: 260px;
+        background: transparent;
     }
 
     .battle-level-transition__map-img {
@@ -1721,7 +1852,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        opacity: 0.92;
+        opacity: 1;
     }
 
     .battle-level-pin-active {
@@ -1762,10 +1893,11 @@
     }
 
     .battle-level-transition__hint {
-        margin: 10px 0 0;
-        font-size: 0.78rem;
-        color: #4b5563;
+        margin: 12px 0 0;
+        font-size: 0.82rem;
+        color: rgba(248, 250, 252, 0.92);
         font-weight: 600;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
     }
 
     @keyframes battleHeroWalk {

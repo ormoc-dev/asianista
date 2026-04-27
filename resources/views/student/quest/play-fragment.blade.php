@@ -71,34 +71,6 @@
         data-require-fullscreen="{{ ($quest->require_fullscreen ?? false) ? '1' : '0' }}"
         data-quest-id="{{ (int) $quest->id }}"></div>
 
-    @if($quest->require_fullscreen ?? false)
-    <div id="quest-fullscreen-gate" class="quest-fullscreen-gate" aria-hidden="true">
-        <div class="quest-fullscreen-gate__backdrop" aria-hidden="true"></div>
-        <div class="quest-fullscreen-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="quest-fs-gate-title">
-            <div class="quest-fullscreen-gate__icon" aria-hidden="true"><i class="fas fa-expand-arrows-alt"></i></div>
-            <h2 id="quest-fs-gate-title" class="quest-fullscreen-gate__title">Before you begin this challenge</h2>
-            <p class="quest-fullscreen-gate__lead">Your school asks you to use <strong>fullscreen</strong> so the battle and questions fill the screen and you can stay focused.</p>
-
-            <div class="quest-fullscreen-gate__section quest-fullscreen-gate__section--rules">
-                <h3 class="quest-fullscreen-gate__sub">Rules</h3>
-                <ul class="quest-fullscreen-gate__list">
-                    <li>Stay in this challenge until you finish or your teacher tells you to stop.</li>
-                    <li>Keep this tab in front—no search, notes, or AI unless your teacher allows it.</li>
-                    <li>Pressing <kbd>Esc</kbd> leaves fullscreen; this screen comes back until you enter fullscreen again.</li>
-                </ul>
-            </div>
-
-            <p class="quest-fullscreen-gate__ack">Enter fullscreen below to continue. Breaking these rules may affect how your attempt is counted.</p>
-
-            <div class="quest-fullscreen-gate__actions">
-                <button type="button" id="quest-fs-gate-enter" class="btn-quest-fs-gate btn-quest-fs-gate--primary">
-                    <i class="fas fa-expand" aria-hidden="true"></i> Enter fullscreen &amp; continue
-                </button>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <div class="play-content-container">
         <!-- Battle arena + question modal layer -->
         <div class="battle-arena-card">
@@ -145,41 +117,6 @@
                                 <div id="hud-student-hp-fill" class="hud-hp-fill hero" data-width="{{ $hpBarPct }}"></div>
                             </div>
                             <div class="hud-hp-value"><span id="hud-student-hp-value">{{ $hpForBars }}</span> / {{ $maxHP }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Result overlay (inside battle scene only) -->
-                <div id="quest-feedback-modal" class="battle-feedback-layer" aria-hidden="true">
-                    <div class="battle-feedback-backdrop"></div>
-                    <div class="battle-feedback-sheet" id="battle-card">
-                        <div class="battle-result" id="battle-result">
-                            <div class="battle-result__badge" id="battle-result-badge" aria-hidden="true"></div>
-                            <p class="battle-result__eyebrow" id="battle-result-eyebrow">Outcome</p>
-                            <h2 class="battle-result__title" id="battle-title">Victory!</h2>
-                            <p class="battle-result__message" id="battle-message">You slayed the challenge!</p>
-                            <button type="button" id="modal-next-btn" class="btn-battle-action btn-battle-action--result">
-                                <span class="btn-battle-action__text">Continue</span>
-                                <i class="fas fa-chevron-right btn-battle-action__icon"></i>
-                            </button>
-                        </div>
-                        <div class="battle-level-transition" id="battle-level-transition" hidden>
-                            <p class="battle-level-transition__eyebrow">Level Cleared</p>
-                            <h3 class="battle-level-transition__title">Travelling to Next Level...</h3>
-                            <div class="battle-level-transition__map" id="battle-level-transition-map" data-total-levels="{{ max(1, (int) $quest->level) }}">
-                                <img src="{{ $mapImageUrl }}" alt="" class="battle-level-transition__map-img" width="800" height="500" decoding="async">
-                                @foreach($levelPins as $pinIndex => $pin)
-                                    <span class="battle-level-pin" hidden
-                                          data-level="{{ $pinIndex + 1 }}"
-                                          data-left="{{ sprintf('%.3f', (float) ($pin['left'] ?? 50)) }}"
-                                          data-top="{{ sprintf('%.3f', (float) ($pin['top'] ?? 50)) }}"></span>
-                                @endforeach
-                                <span class="battle-level-pin-active" id="battle-level-pin-active"></span>
-                                <span class="battle-level-hero" id="battle-level-hero">
-                                    <img src="{{ $studentProfileUrl }}" alt="Hero avatar">
-                                </span>
-                            </div>
-                            <p class="battle-level-transition__hint">Your hero is moving to the next objective...</p>
                         </div>
                     </div>
                 </div>
@@ -431,5 +368,67 @@
                 <p>Need help? Think about the core principles of ASIANISTA.</p>
             </div>
         </div>
+
+        <div id="quest-feedback-modal" class="battle-feedback-layer" aria-hidden="true">
+            <div class="battle-feedback-backdrop"></div>
+            <div class="battle-feedback-sheet" id="battle-card">
+                <div class="battle-result" id="battle-result">
+                    <div class="battle-result__badge" id="battle-result-badge" aria-hidden="true"></div>
+                    <p class="battle-result__eyebrow" id="battle-result-eyebrow">Outcome</p>
+                    <h2 class="battle-result__title" id="battle-title">Victory!</h2>
+                    <p class="battle-result__message" id="battle-message">You slayed the challenge!</p>
+                    <button type="button" id="modal-next-btn" class="btn-battle-action btn-battle-action--result">
+                        <span class="btn-battle-action__text">Continue</span>
+                        <i class="fas fa-chevron-right btn-battle-action__icon"></i>
+                    </button>
+                </div>
+                <div class="battle-level-transition" id="battle-level-transition" hidden>
+                    <p class="battle-level-transition__eyebrow">Level Cleared</p>
+                    <h3 class="battle-level-transition__title">Travelling to Next Level...</h3>
+                    <div class="battle-level-transition__map" id="battle-level-transition-map" data-total-levels="{{ max(1, (int) $quest->level) }}">
+                        <img src="{{ $mapImageUrl }}" alt="" class="battle-level-transition__map-img" width="800" height="500" decoding="async">
+                        @foreach($levelPins as $pinIndex => $pin)
+                            <span class="battle-level-pin" hidden
+                                  data-level="{{ $pinIndex + 1 }}"
+                                  data-left="{{ sprintf('%.3f', (float) ($pin['left'] ?? 50)) }}"
+                                  data-top="{{ sprintf('%.3f', (float) ($pin['top'] ?? 50)) }}"></span>
+                        @endforeach
+                        <span class="battle-level-pin-active" id="battle-level-pin-active"></span>
+                        <span class="battle-level-hero" id="battle-level-hero">
+                            <img src="{{ $studentProfileUrl }}" alt="Hero avatar">
+                        </span>
+                    </div>
+                    <p class="battle-level-transition__hint">Your hero is moving to the next objective...</p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    @if($quest->require_fullscreen ?? false)
+    <div id="quest-fullscreen-gate" class="quest-fullscreen-gate" aria-hidden="true">
+        <div class="quest-fullscreen-gate__backdrop" aria-hidden="true"></div>
+        <div class="quest-fullscreen-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="quest-fs-gate-title">
+            <div class="quest-fullscreen-gate__icon" aria-hidden="true"><i class="fas fa-expand-arrows-alt"></i></div>
+            <h2 id="quest-fs-gate-title" class="quest-fullscreen-gate__title">Before you begin this challenge</h2>
+            <p class="quest-fullscreen-gate__lead">Your school asks you to use <strong>fullscreen</strong> so the battle and questions fill the screen and you can stay focused.</p>
+
+            <div class="quest-fullscreen-gate__section quest-fullscreen-gate__section--rules">
+                <h3 class="quest-fullscreen-gate__sub">Rules</h3>
+                <ul class="quest-fullscreen-gate__list">
+                    <li>Stay in this challenge until you finish or your teacher tells you to stop.</li>
+                    <li>Keep this tab in front—no search, notes, or AI unless your teacher allows it.</li>
+                    <li>Pressing <kbd>Esc</kbd> leaves fullscreen; this screen comes back until you enter fullscreen again.</li>
+                </ul>
+            </div>
+
+            <p class="quest-fullscreen-gate__ack">Enter fullscreen below to continue. Breaking these rules may affect how your attempt is counted.</p>
+
+            <div class="quest-fullscreen-gate__actions">
+                <button type="button" id="quest-fs-gate-enter" class="btn-quest-fs-gate btn-quest-fs-gate--primary">
+                    <i class="fas fa-expand" aria-hidden="true"></i> Enter fullscreen &amp; continue
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

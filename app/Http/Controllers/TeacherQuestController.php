@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class TeacherQuestController extends Controller
 {
+    /** Decoded image bytes — matches admin quest map file rule (max:5120 KB). */
+    private const QUEST_MAP_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
     public function index()
     {
         $quests = Quest::query()
@@ -227,7 +230,7 @@ class TeacherQuestController extends Controller
             'questions.*.points' => 'required|integer',
             'questions.*.level' => 'required|integer|min:1',
             'questions.*.answer' => 'required|string',
-            'map_image' => 'nullable|string',
+            'map_image' => 'nullable|string|max:8000000',
         ]);
 
         try {
@@ -235,7 +238,7 @@ class TeacherQuestController extends Controller
             
             // Handle map image upload (base64)
             if ($request->filled('map_image') && str_starts_with($request->map_image, 'data:image')) {
-                $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->map_image));
+                $imageData = $this->decodeQuestMapImageFromDataUrl($request->map_image);
                 $fileName = 'quest_maps/' . uniqid() . '.png';
                 Storage::disk('public')->put($fileName, $imageData);
                 $mapImagePath = $fileName;
@@ -278,6 +281,8 @@ class TeacherQuestController extends Controller
             return redirect()->route('teacher.quest')
                 ->with('success', 'Quest created successfully!');
 
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Quest Creation Error: ' . $e->getMessage());
             return redirect()->back()
@@ -312,7 +317,7 @@ class TeacherQuestController extends Controller
             'questions.*.points' => 'required|integer',
             'questions.*.level' => 'required|integer|min:1',
             'questions.*.answer' => 'required|string',
-            'map_image' => 'nullable|string',
+            'map_image' => 'nullable|string|max:8000000',
         ]);
 
         try {
@@ -323,7 +328,7 @@ class TeacherQuestController extends Controller
                     if ($quest->map_image && str_starts_with((string) $quest->map_image, 'quest_maps/')) {
                         Storage::disk('public')->delete($quest->map_image);
                     }
-                    $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->map_image));
+                    $imageData = $this->decodeQuestMapImageFromDataUrl($request->map_image);
                     $fileName = 'quest_maps/' . uniqid() . '.png';
                     Storage::disk('public')->put($fileName, $imageData);
                     $mapImagePath = $fileName;
@@ -406,12 +411,41 @@ class TeacherQuestController extends Controller
 
             return redirect()->route('teacher.quest')
                 ->with('success', 'Quest updated successfully!');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Quest Update Error: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update the quest. Please try again.');
         }
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function decodeQuestMapImageFromDataUrl(string $dataUrl): string
+    {
+        $base64 = preg_replace('#^data:image/\w+;base64,#i', '', $dataUrl);
+        $imageData = base64_decode($base64, true);
+        if ($base64 === '' || $imageData === false) {
+            throw ValidationException::withMessages([
+                'map_image' => ['Invalid map image data. Please upload a JPG, PNG, WebP, or GIF.'],
+            ]);
+        }
+        if (strlen($imageData) > self::QUEST_MAP_UPLOAD_MAX_BYTES) {
+            $mb = (int) round(self::QUEST_MAP_UPLOAD_MAX_BYTES / (1024 * 1024));
+            throw ValidationException::withMessages([
+                'map_image' => ["Map image must be {$mb} MB or smaller."],
+            ]);
+        }
+        if (@getimagesizefromstring($imageData) === false) {
+            throw ValidationException::withMessages([
+                'map_image' => ['The uploaded file must be a valid image.'],
+            ]);
+        }
+
+        return $imageData;
     }
 
     protected function normalizedMapPinsFromRequest(Request $request): ?array

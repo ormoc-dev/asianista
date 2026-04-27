@@ -398,6 +398,10 @@
             flex-direction: column;
             padding: 0;
             box-sizing: border-box;
+            /* Avoid backdrop-filter here: it makes fixed descendants use this box as containing block
+               and can interact badly with fullscreen overlays / hit-testing in some browsers. */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
         }
 
         body.quest-play-fullscreen .dashboard-shell #quest-play-mount {

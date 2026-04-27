@@ -190,7 +190,7 @@ class StudentQuestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Power activated!',
-            'new_ap' => $user->fresh()->ap,
+            'new_ap' => $user->ap,
             'ap_spent' => $apCost,
         ]);
     }

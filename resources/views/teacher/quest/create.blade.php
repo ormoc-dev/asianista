@@ -526,7 +526,7 @@
                     </div>
                     <input type="file" id="mapUploadInput" accept="image/*" onchange="handleMapUpload(this)">
                     <small class="text-muted" style="display: block; margin-top: 8px; color: var(--text-muted);">
-                        <i class="fas fa-info-circle"></i> Select a default map or upload your own (JPG, PNG, max 2MB)
+                        <i class="fas fa-info-circle"></i> Select a default map or upload your own (JPG, PNG, WebP, GIF — max 5&nbsp;MB)
                     </small>
                 </div>
 
@@ -1398,10 +1398,10 @@ function selectMap(element, mapValue) {
 function handleMapUpload(input) {
     const file = input.files[0];
     if (!file) return;
-    
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-        teacherNotify('File size must be less than 2MB', 'warning');
+
+    const maxBytes = 5 * 1024 * 1024; // keep in sync with TeacherQuestController::QUEST_MAP_UPLOAD_MAX_BYTES
+    if (file.size > maxBytes) {
+        teacherNotify('File size must be 5 MB or smaller.', 'warning');
         return;
     }
     
