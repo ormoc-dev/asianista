@@ -370,6 +370,46 @@
         pointer-events: none;
     }
 
+    .battle-referee {
+        position: absolute;
+        top: 8px;
+        left: 10px;
+        z-index: 3;
+        width: clamp(86px, 11vw, 130px);
+        height: clamp(86px, 11vw, 130px);
+        border-radius: 12px;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 0.98;
+    }
+
+    .battle-referee__model {
+        width: 100%;
+        height: 100%;
+        --poster-color: transparent;
+        background: transparent;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    .battle-referee.is-to-center {
+        animation: refereeToCenter 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .battle-referee.is-return {
+        animation: refereeBackLeft 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes refereeToCenter {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(calc(50vw - 50% - 70px), 2px, 0) scale(1.12); }
+    }
+
+    @keyframes refereeBackLeft {
+        from { transform: translate3d(calc(50vw - 50% - 70px), 2px, 0) scale(1.12); }
+        to { transform: translate3d(0, 0, 0) scale(1); }
+    }
+
     .battle-fighters-row {
         position: relative;
         z-index: 2;

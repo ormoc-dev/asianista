@@ -77,6 +77,15 @@
             <div class="battle-arena">
                 <div class="battle-arena-bg" style="background-image: url('{{ $battleBgUrl }}');"></div>
                 <div class="battle-arena-vignette" aria-hidden="true"></div>
+                    <div class="battle-referee" id="battle-referee" aria-hidden="true">
+                        <model-viewer
+                            class="battle-referee__model"
+                            src="{{ asset('images/referee/tiny_planet_friends_3d-tinyplanet-2829.glb') }}"
+                            camera-controls
+                            interaction-prompt="none"
+                            exposure="1"
+                            shadow-intensity="0.8"></model-viewer>
+                    </div>
                     <div id="active-power-hint" class="power-active-hint power-active-hint--arena">
                         <i class="fas fa-magic"></i> <span id="hint-text"></span>
                     </div>

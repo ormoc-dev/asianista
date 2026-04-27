@@ -6,6 +6,7 @@
     @include('student.quest.play-fragment')
 </div>
 @include('student.quest.play-styles')
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 <script>
 let activePower = null;
 let eliminatedOptions = [];
@@ -165,6 +166,8 @@ let victoryMapTransitionLock = false;
 let victoryLevelCountdownTimer = null;
 let victoryMapWalkTimer = null;
 let powerHintHideTimer = null;
+let refereeEnterTimer = null;
+let refereeReturnTimer = null;
 
 let questMusicBindingsDone = false;
 let questMusicGestureResumeFn = null;
@@ -424,6 +427,30 @@ function reinitQuestPlayAfterSwap() {
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
     showQuestFullscreenGateIfNeeded();
+    playRefereeLevelStartAnimation();
+}
+
+function playRefereeLevelStartAnimation() {
+    const referee = document.getElementById('battle-referee');
+    if (!referee) return;
+    if (refereeEnterTimer) {
+        clearTimeout(refereeEnterTimer);
+        refereeEnterTimer = null;
+    }
+    if (refereeReturnTimer) {
+        clearTimeout(refereeReturnTimer);
+        refereeReturnTimer = null;
+    }
+    referee.classList.remove('is-to-center', 'is-return');
+    void referee.offsetWidth;
+    referee.classList.add('is-to-center');
+    refereeEnterTimer = setTimeout(function () {
+        referee.classList.remove('is-to-center');
+        referee.classList.add('is-return');
+        refereeReturnTimer = setTimeout(function () {
+            referee.classList.remove('is-return');
+        }, 1050);
+    }, 1200);
 }
 
 function clearPowerHint() {
@@ -460,6 +487,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bootQuestPlayExitGuardIfNeeded();
     positionPulseAndHud();
     animateMiniMapLevelProgress();
+    playRefereeLevelStartAnimation();
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
     showQuestFullscreenGateIfNeeded();
