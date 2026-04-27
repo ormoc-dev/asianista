@@ -77,6 +77,9 @@
             <div class="battle-arena">
                 <div class="battle-arena-bg" style="background-image: url('{{ $battleBgUrl }}');"></div>
                 <div class="battle-arena-vignette" aria-hidden="true"></div>
+                    <div id="active-power-hint" class="power-active-hint power-active-hint--arena">
+                        <i class="fas fa-magic"></i> <span id="hint-text"></span>
+                    </div>
 
                 <div class="battle-fighters-row">
                     <div class="fighter battle-fighter">
@@ -138,10 +141,6 @@
                     </header>
 
                     <div class="q-sheet-body">
-                        <div id="active-power-hint" class="power-active-hint">
-                            <i class="fas fa-magic"></i> <span id="hint-text"></span>
-                        </div>
-
                         <div class="question-text question-text--sheet">
                             <h3>{!! nl2br(e($question->question)) !!}</h3>
                         </div>
@@ -397,6 +396,9 @@
                         <span class="battle-level-hero" id="battle-level-hero">
                             <img src="{{ $studentProfileUrl }}" alt="Hero avatar">
                         </span>
+                    </div>
+                    <div class="battle-level-transition__countdown-wrap" id="battle-level-countdown-wrap" aria-live="polite" aria-atomic="true" hidden>
+                        <span class="battle-level-transition__countdown" id="battle-level-countdown">5</span>
                     </div>
                     <p class="battle-level-transition__hint">Your hero is moving to the next objective...</p>
                 </div>

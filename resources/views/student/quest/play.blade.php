@@ -162,6 +162,9 @@ let bossMaxHp = Math.max(1, parseInt(questPlay.bossMaxHp || '1', 10));
 let pendingLevelTransition = null;
 let victoryMapAutoTimer = null;
 let victoryMapTransitionLock = false;
+let victoryLevelCountdownTimer = null;
+let victoryMapWalkTimer = null;
+let powerHintHideTimer = null;
 
 let questMusicBindingsDone = false;
 let questMusicGestureResumeFn = null;
@@ -409,10 +412,7 @@ function reinitQuestPlayAfterSwap() {
     timeRemaining = parseInt(questPlay.timeSeconds || '0', 10);
     positionPulseAndHud();
     animateMiniMapLevelProgress();
-    const hint = document.getElementById('active-power-hint');
-    if (hint) hint.classList.remove('show');
-    const hintText = document.getElementById('hint-text');
-    if (hintText) hintText.innerHTML = '';
+    clearPowerHint();
     const qp = document.getElementById('battle-question-panel');
     if (qp) qp.style.display = '';
     const modal = document.getElementById('quest-feedback-modal');
@@ -424,6 +424,34 @@ function reinitQuestPlayAfterSwap() {
     if (timeRemaining > 0) startTimer();
     syncQuestBgMusicUi();
     showQuestFullscreenGateIfNeeded();
+}
+
+function clearPowerHint() {
+    const hint = document.getElementById('active-power-hint');
+    const hintText = document.getElementById('hint-text');
+    if (powerHintHideTimer) {
+        clearTimeout(powerHintHideTimer);
+        powerHintHideTimer = null;
+    }
+    if (hint) hint.classList.remove('show');
+    if (hintText) hintText.innerHTML = '';
+}
+
+function showPowerHint(contentHtml, autoHideMs) {
+    const hint = document.getElementById('active-power-hint');
+    const hintText = document.getElementById('hint-text');
+    if (!hint || !hintText) return;
+    if (powerHintHideTimer) {
+        clearTimeout(powerHintHideTimer);
+        powerHintHideTimer = null;
+    }
+    hintText.innerHTML = contentHtml;
+    hint.classList.add('show');
+    if (Number(autoHideMs) > 0) {
+        powerHintHideTimer = setTimeout(function () {
+            clearPowerHint();
+        }, Number(autoHideMs));
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -621,12 +649,7 @@ async function usePower(e, powerName, powerDesc) {
     }
 
     setQuestPowerButtonPending(btn, true);
-    const hintBox = document.getElementById('active-power-hint');
-    const hintText = document.getElementById('hint-text');
-    if (hintBox && hintText) {
-        hintText.innerHTML = '<span class="power-hint-casting"><span class="power-hint-casting__dot"></span> Focusing…</span>';
-        hintBox.classList.add('show');
-    }
+    showPowerHint('<span class="power-hint-casting"><span class="power-hint-casting__dot"></span> Focusing...</span>', 0);
 
     let data;
     try {
@@ -650,16 +673,14 @@ async function usePower(e, powerName, powerDesc) {
                 alert(data.error || 'Could not use power.');
             }
             setQuestPowerButtonPending(btn, false);
-            if (hintBox) hintBox.classList.remove('show');
-            if (hintText) hintText.innerHTML = '';
+            clearPowerHint();
             return;
         }
     } catch (err) {
         console.error('Power request failed:', err);
         alert('Network error. Please try again.');
         setQuestPowerButtonPending(btn, false);
-        if (hintBox) hintBox.classList.remove('show');
-        if (hintText) hintText.innerHTML = '';
+        clearPowerHint();
         return;
     }
 
@@ -669,46 +690,38 @@ async function usePower(e, powerName, powerDesc) {
 
     switch (pLower) {
         case 'spell of insight':
-            hintText.innerHTML = '<strong>Spell of Insight:</strong> ' + getHintForQuestion();
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Spell of Insight:</strong> ' + getHintForQuestion(), 4800);
             activePower = 'insight';
             break;
         case 'arcane analysis':
             if (eliminateWrongAnswer()) {
-                hintText.innerHTML = '<strong>Arcane Analysis:</strong> One incorrect option has been eliminated!';
-                hintBox.classList.add('show');
+                showPowerHint('<strong>Arcane Analysis:</strong> One incorrect option has been eliminated!', 4800);
                 activePower = 'analysis';
             }
             break;
         case 'time warp':
-            hintText.innerHTML = '<strong>Time Warp:</strong> Extra 30 seconds granted!';
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Time Warp:</strong> Extra 30 seconds granted!', 4800);
             activePower = 'timewarp';
             addExtraTime();
             break;
         case 'power strike':
-            hintText.innerHTML = '<strong>Power Strike:</strong> Next correct answer worth double points!';
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Power Strike:</strong> Next correct answer worth double points!', 4800);
             activePower = 'powerstrike';
             break;
         case 'shield guard':
-            hintText.innerHTML = '<strong>Shield Guard:</strong> Protected from HP loss on next wrong answer!';
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Shield Guard:</strong> Protected from HP loss on next wrong answer!', 4800);
             activePower = 'shield';
             break;
         case 'revive':
-            hintText.innerHTML = '<strong>Revive:</strong> If your next answer is wrong, you will not lose HP (you still move to the next challenge).';
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Revive:</strong> If your next answer is wrong, you will not lose HP (you still move to the next challenge).', 5200);
             activePower = 'revive';
             break;
         case 'focus aura':
-            hintText.innerHTML = '<strong>Focus Aura:</strong> If your next answer is wrong, you will not lose HP (you still move to the next challenge).';
-            hintBox.classList.add('show');
+            showPowerHint('<strong>Focus Aura:</strong> If your next answer is wrong, you will not lose HP (you still move to the next challenge).', 5200);
             activePower = 'focus';
             break;
         default:
-            hintText.innerHTML = '<strong>' + powerName + ':</strong> ' + powerDesc;
-            hintBox.classList.add('show');
+            showPowerHint('<strong>' + powerName + ':</strong> ' + powerDesc, 4800);
     }
 
     finalizePowerButton(btn);
@@ -1041,14 +1054,25 @@ function playVictoryLevelTransition(onDone, onAbort) {
     const resultPanel = document.getElementById('battle-result');
     const transitionPanel = document.getElementById('battle-level-transition');
     const map = document.getElementById('battle-level-transition-map');
+    const mapImg = map ? map.querySelector('.battle-level-transition__map-img') : null;
     const hero = document.getElementById('battle-level-hero');
     const activePin = document.getElementById('battle-level-pin-active');
+    const countdownWrap = document.getElementById('battle-level-countdown-wrap');
+    const countdownEl = document.getElementById('battle-level-countdown');
     const battleSheet = document.getElementById('battle-card');
     const nextBtnEl = document.getElementById('modal-next-btn');
     const data = pendingLevelTransition;
 
     function bailToContinue() {
         victoryMapTransitionLock = false;
+        if (victoryMapWalkTimer) {
+            clearTimeout(victoryMapWalkTimer);
+            victoryMapWalkTimer = null;
+        }
+        if (victoryLevelCountdownTimer) {
+            clearInterval(victoryLevelCountdownTimer);
+            victoryLevelCountdownTimer = null;
+        }
         if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
         const modalEl = document.getElementById('quest-feedback-modal');
         if (modalEl) modalEl.classList.remove('battle-feedback-layer--viewport');
@@ -1059,7 +1083,7 @@ function playVictoryLevelTransition(onDone, onAbort) {
         if (typeof onDone === 'function') onDone();
     }
 
-    if (!resultPanel || !transitionPanel || !map || !hero || !activePin || !data) {
+    if (!resultPanel || !transitionPanel || !map || !hero || !activePin || !countdownEl || !countdownWrap || !data) {
         bailToContinue();
         return;
     }
@@ -1075,9 +1099,45 @@ function playVictoryLevelTransition(onDone, onAbort) {
     const fromPt = getBattleMapPinPercents(map, fromLevel);
     const toPt = getBattleMapPinPercents(map, toLevel);
 
-    function setPos(el, left, top) {
-        el.style.left = `${Math.max(0, Math.min(100, left))}%`;
-        el.style.top = `${Math.max(0, Math.min(100, top))}%`;
+    function getRenderedMapBox() {
+        if (!map) return null;
+        const mapRect = map.getBoundingClientRect();
+        const mapW = mapRect.width || map.clientWidth || 0;
+        const mapH = mapRect.height || map.clientHeight || 0;
+        if (!mapW || !mapH) return null;
+
+        const imgNaturalW = mapImg && mapImg.naturalWidth ? mapImg.naturalWidth : 800;
+        const imgNaturalH = mapImg && mapImg.naturalHeight ? mapImg.naturalHeight : 500;
+        const imgAspect = imgNaturalW / Math.max(1, imgNaturalH);
+        const boxAspect = mapW / Math.max(1, mapH);
+
+        let drawW = mapW;
+        let drawH = mapH;
+        if (imgAspect > boxAspect) {
+            drawW = mapW;
+            drawH = mapW / imgAspect;
+        } else {
+            drawH = mapH;
+            drawW = mapH * imgAspect;
+        }
+
+        return {
+            left: (mapW - drawW) / 2,
+            top: (mapH - drawH) / 2,
+            width: drawW,
+            height: drawH,
+        };
+    }
+
+    function setPos(el, leftPct, topPct) {
+        const box = getRenderedMapBox();
+        if (!box) return;
+        const clampedLeft = Math.max(0, Math.min(100, Number(leftPct)));
+        const clampedTop = Math.max(0, Math.min(100, Number(topPct)));
+        const x = box.left + (clampedLeft / 100) * box.width;
+        const y = box.top + (clampedTop / 100) * box.height;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
     }
 
     if (battleSheet) battleSheet.classList.add('battle-feedback-sheet--map-phase');
@@ -1090,12 +1150,23 @@ function playVictoryLevelTransition(onDone, onAbort) {
     const trHint = transitionPanel.querySelector('.battle-level-transition__hint');
     const answeredCorrect = data.mapAfterCorrect === true;
     if (trEyebrow) trEyebrow.textContent = answeredCorrect ? 'Level cleared' : 'Moving forward';
-    if (trTitle) trTitle.textContent = answeredCorrect ? 'Travelling to next level…' : 'Heading to the next area…';
+    if (trTitle) trTitle.textContent = answeredCorrect ? 'Travelling to next level...' : 'Heading to the next area...';
     if (trHint) {
         trHint.textContent = answeredCorrect
-            ? 'Your hero is moving to the next objective…'
+            ? 'Your hero is moving to the next objective...'
             : 'You move on to the next level—keep going!';
     }
+    if (victoryMapWalkTimer) {
+        clearTimeout(victoryMapWalkTimer);
+        victoryMapWalkTimer = null;
+    }
+    if (victoryLevelCountdownTimer) {
+        clearInterval(victoryLevelCountdownTimer);
+        victoryLevelCountdownTimer = null;
+    }
+
+    map.hidden = false;
+    countdownWrap.hidden = true;
     setPos(hero, fromPt.left, fromPt.top);
     setPos(activePin, toPt.left, toPt.top);
     hero.classList.add('is-walking');
@@ -1106,15 +1177,39 @@ function playVictoryLevelTransition(onDone, onAbort) {
         });
     });
 
-    setTimeout(function () {
+    victoryMapWalkTimer = setTimeout(function () {
+        victoryMapWalkTimer = null;
         hero.classList.remove('is-walking');
-        pendingLevelTransition = null;
-        victoryMapTransitionLock = false;
-        if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
-        const modalDone = document.getElementById('quest-feedback-modal');
-        if (modalDone) modalDone.classList.remove('battle-feedback-layer--viewport');
-        if (typeof onDone === 'function') onDone();
-    }, 1350);
+        map.hidden = true;
+        countdownWrap.hidden = false;
+        if (trTitle) trTitle.textContent = 'Get ready for the next level';
+        if (trHint) trHint.textContent = 'Next level starts in...';
+
+        let secondsLeft = 5;
+        countdownEl.textContent = String(secondsLeft);
+        countdownEl.classList.remove('is-pulse');
+        void countdownEl.offsetWidth;
+        countdownEl.classList.add('is-pulse');
+
+        victoryLevelCountdownTimer = setInterval(function () {
+            secondsLeft -= 1;
+            countdownEl.textContent = String(Math.max(0, secondsLeft));
+            countdownEl.classList.remove('is-pulse');
+            void countdownEl.offsetWidth;
+            countdownEl.classList.add('is-pulse');
+
+            if (secondsLeft <= 0) {
+                clearInterval(victoryLevelCountdownTimer);
+                victoryLevelCountdownTimer = null;
+                pendingLevelTransition = null;
+                victoryMapTransitionLock = false;
+                if (battleSheet) battleSheet.classList.remove('battle-feedback-sheet--map-phase');
+                const modalDone = document.getElementById('quest-feedback-modal');
+                if (modalDone) modalDone.classList.remove('battle-feedback-layer--viewport');
+                if (typeof onDone === 'function') onDone();
+            }
+        }, 1000);
+    }, 2600);
 }
 
 document.addEventListener('submit', async function (e) {

@@ -1454,6 +1454,18 @@
         color: #92400e;
     }
 
+    .power-active-hint--arena {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 4;
+        margin: 0;
+        width: min(92%, 620px);
+        text-align: center;
+        pointer-events: none;
+    }
+
     .power-hint-casting {
         display: inline-flex;
         align-items: center;
@@ -1662,7 +1674,7 @@
 
     #battle-card.battle-feedback-sheet--map-phase .battle-level-transition__map-img {
         object-fit: contain;
-        background: radial-gradient(ellipse 80% 70% at 50% 45%, #1e293b 0%, #0f172a 100%);
+        background: transparent;
     }
 
     @keyframes battle-sheet-in {
@@ -1835,11 +1847,42 @@
         text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
     }
 
+    .battle-level-transition__countdown-wrap {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        min-height: clamp(180px, 34vh, 280px);
+        border-radius: 16px;
+        border: none;
+        background: transparent;
+    }
+
+    .battle-level-transition__countdown {
+        display: inline-block;
+        min-width: 1.2em;
+        line-height: 1;
+        font-size: clamp(3.4rem, 10vw, 6.2rem);
+        font-weight: 900;
+        color: #fef3c7;
+        text-shadow: 0 0 18px rgba(251, 191, 36, 0.35), 0 0 30px rgba(248, 250, 252, 0.2);
+        transform: scale(1);
+    }
+
+    .battle-level-transition__countdown.is-pulse {
+        animation: battleCountdownPulse 0.9s ease;
+    }
+
+    @keyframes battleCountdownPulse {
+        0% { transform: scale(0.84); opacity: 0.7; }
+        45% { transform: scale(1.16); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
     .battle-level-transition__map {
         position: relative;
         overflow: hidden;
         border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
+        
         width: 100%;
         height: clamp(280px, 46vh, 520px);
         min-height: 260px;
@@ -1851,7 +1894,7 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         opacity: 1;
     }
 
