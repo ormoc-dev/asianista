@@ -277,6 +277,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Approve student(s): modal instead of window.confirm (reuses teacher layout .logout-modal styles)
+    let approveStudentModalCallback = null;
+    const approveStudentModal = document.getElementById('approveStudentModal');
+    const approveStudentModalBody = document.getElementById('approveStudentModalBody');
+    const approveStudentModalConfirm = document.getElementById('approveStudentModalConfirm');
+    const approveStudentModalCancel = document.getElementById('approveStudentModalCancel');
+
+    function openApproveStudentModal(message) {
+        if (!approveStudentModal || !approveStudentModalBody) return;
+        approveStudentModalBody.textContent = message;
+        approveStudentModal.classList.add('show');
+        approveStudentModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeApproveStudentModal() {
+        if (!approveStudentModal) return;
+        approveStudentModal.classList.remove('show');
+        approveStudentModal.setAttribute('aria-hidden', 'true');
+        approveStudentModalCallback = null;
+    }
+
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (!form.matches || !form.matches('form.js-approve-confirm')) return;
+        const submitter = e.submitter;
+        if (!submitter || !submitter.classList.contains('js-approve-student-btn')) return;
+        if (form.dataset.approveConfirmed === '1') {
+            delete form.dataset.approveConfirmed;
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const msg = submitter.getAttribute('data-confirm-message') || 'Approve this student?';
+        approveStudentModalCallback = () => {
+            form.dataset.approveConfirmed = '1';
+            form.requestSubmit(submitter);
+        };
+        openApproveStudentModal(msg);
+    }, true);
+
+    if (approveStudentModalConfirm) {
+        approveStudentModalConfirm.addEventListener('click', () => {
+            const cb = approveStudentModalCallback;
+            closeApproveStudentModal();
+            if (cb) cb();
+        });
+    }
+    if (approveStudentModalCancel) {
+        approveStudentModalCancel.addEventListener('click', closeApproveStudentModal);
+    }
+    if (approveStudentModal) {
+        approveStudentModal.addEventListener('click', (e) => {
+            if (e.target === approveStudentModal) closeApproveStudentModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && approveStudentModal.classList.contains('show')) {
+                closeApproveStudentModal();
+            }
+        });
+    }
+
     // Form submit loading state to prevent duplicate CRUD actions
     document.querySelectorAll('.js-loading-form').forEach((form) => {
         form.addEventListener('submit', (event) => {
@@ -387,9 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="checkbox" id="selectAllStudents">
                 Select all students
             </label>
-            <form action="{{ route('teacher.students.approve.bulk') }}" method="POST" id="bulkApproveStudentsForm" style="display: inline;" class="js-loading-form">
+            <form action="{{ route('teacher.students.approve.bulk') }}" method="POST" id="bulkApproveStudentsForm" style="display: inline;" class="js-loading-form js-approve-confirm">
                 @csrf
-                <button type="submit" class="btn btn-sm btn-primary js-loading-button" id="bulkApproveStudentsBtn" data-loading-text="Approving..." disabled onclick="return confirm('Approve selected student(s)?')">
+                <button type="submit" class="btn btn-sm btn-primary js-loading-button js-approve-student-btn" id="bulkApproveStudentsBtn" data-loading-text="Approving..." disabled data-confirm-message="Approve selected student(s)?">
                     <i class="fas fa-check-circle"></i> Approve Selected
                 </button>
             </form>
@@ -449,9 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>{{ $student->created_at->format('M d, Y') }}</td>
                         <td>
                             @if($student->status === 'pending')
-                                <form action="{{ route('teacher.students.approve', $student->id) }}" method="POST" style="display: inline;" class="js-loading-form">
+                                <form action="{{ route('teacher.students.approve', $student->id) }}" method="POST" style="display: inline;" class="js-loading-form js-approve-confirm">
                                     @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary js-loading-button" data-loading-text="Approving..." onclick="return confirm('Approve {{ $student->name }}?')">
+                                    <button type="submit" class="btn btn-sm btn-primary js-loading-button js-approve-student-btn" data-loading-text="Approving..." data-confirm-message="Approve {{ $student->name }}?">
                                         <i class="fas fa-check"></i> Approve
                                     </button>
                                 </form>
@@ -470,6 +531,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="logout-modal" id="approveStudentModal" aria-hidden="true">
+    <div class="logout-modal-card" role="dialog" aria-modal="true" aria-labelledby="approveStudentModalTitle">
+        <div class="logout-modal-head" id="approveStudentModalTitle">Confirm approval</div>
+        <div class="logout-modal-body" id="approveStudentModalBody"></div>
+        <div class="logout-modal-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="approveStudentModalCancel">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" id="approveStudentModalConfirm">
+                <i class="fas fa-check"></i> Approve
+            </button>
         </div>
     </div>
 </div>
