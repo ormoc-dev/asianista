@@ -6,6 +6,7 @@ use App\Models\QuestAttempt;
 use App\Models\QuizAttempt;
 use App\Models\RegistrationCode;
 use App\Models\StudentFeedback;
+use App\Models\MinigameAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,6 +41,54 @@ class StudentController extends Controller
 
     public function aiSupport() {
         return view('student.ai-support.index');
+    }
+
+    public function miniGames()
+    {
+        $student = Auth::user();
+
+        $assignments = MinigameAssignment::query()
+            ->where('is_active', true)
+            ->where('grade_id', $student->grade_id)
+            ->where('section_id', $student->section_id)
+            ->where('teacher_id', $student->registered_by_teacher_id)
+            ->with(['game:id,name,slug,image,type,gamification,best_for', 'teacher:id,name'])
+            ->orderByDesc('starts_at')
+            ->get();
+
+        return view('student/mini-games/index', compact('assignments'));
+    }
+
+    public function playMiniGame(MinigameAssignment $assignment)
+    {
+        $student = Auth::user();
+
+        abort_unless(
+            $assignment->is_active
+            && (int) $assignment->grade_id === (int) $student->grade_id
+            && (int) $assignment->section_id === (int) $student->section_id
+            && (int) $assignment->teacher_id === (int) $student->registered_by_teacher_id,
+            403
+        );
+
+        $assignment->loadMissing('game');
+
+        $game = [
+            'slug' => $assignment->game->slug,
+            'name' => $assignment->game->name,
+            'image' => $assignment->game->image,
+            'type' => $assignment->game->type,
+            'mechanics' => $assignment->game->mechanics,
+            'gamification' => $assignment->game->gamification,
+            'best_for' => $assignment->game->best_for,
+        ];
+
+        return view('mini-games.speed-typing-race', [
+            'layout' => 'student.dashboard',
+            'game' => $game,
+            'isTestMode' => false,
+            'assignedParagraph' => $assignment->paragraph,
+        ]);
     }
 
     public function performance()

@@ -71,13 +71,7 @@
                     <tr>
                         <td>{{ $rank }}</td>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <img src="{{ asset($student->profile_pic ?: 'images/default-pp.png') }}" 
-                                     style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                                <div>
-                                    <div style="font-weight: 500;">{{ $student->first_name }} {{ $student->last_name }}</div>
-                                </div>
-                            </div>
+                            <div style="font-weight: 500;">{{ $student->first_name }} {{ $student->last_name }}</div>
                         </td>
                         <td>{{ $student->grade->name ?? '—' }}</td>
                         <td>{{ $student->section->name ?? '—' }}</td>

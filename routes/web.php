@@ -60,6 +60,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registration', [StudentController::class, 'registration'])->name('registration');
         Route::get('/gamification', [StudentController::class, 'gamification'])->name('gamification');
         Route::get('/ai-support', [StudentController::class, 'aiSupport'])->name('ai-support');
+        Route::get('/mini-games', [StudentController::class, 'miniGames'])->name('mini-games');
+        Route::get('/mini-games/{assignment}/play', [StudentController::class, 'playMiniGame'])->name('mini-games.play');
         Route::get('/performance', [StudentController::class, 'performance'])->name('performance');
         Route::get('/feedback', [StudentController::class, 'feedback'])->name('feedback');
         Route::get('/motivation', [StudentController::class, 'motivation'])->name('motivation');
@@ -78,12 +80,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registration', [TeacherController::class, 'registration'])->name('registration');
         Route::get('/lessons', [TeacherController::class, 'lessons'])->name('lessons');
         Route::get('/quizzes', [TeacherController::class, 'quizzes'])->name('quizzes');
+        Route::get('/mini-games', [TeacherController::class, 'miniGames'])->name('mini-games');
+        Route::get('/mini-games/{slug}', [TeacherController::class, 'playMiniGame'])->name('mini-games.play');
+        Route::post('/mini-games/{slug}/generate-paragraph', [TeacherController::class, 'generateMiniGameParagraph'])->name('mini-games.generate-paragraph');
+        Route::post('/mini-games/{slug}/assign', [TeacherController::class, 'assignMiniGame'])->name('mini-games.assign');
         Route::get('/gamification', [TeacherController::class, 'gamification'])->name('gamification');
         Route::get('/ai-track', [TeacherController::class, 'aiTrack'])->name('ai-track');
         Route::get('/performance', [TeacherController::class, 'performance'])->name('performance');
         Route::get('/feedback', [TeacherController::class, 'feedback'])->name('feedback');
         Route::post('/feedback/send', [TeacherController::class, 'sendFeedback'])->name('feedback.send');
-        Route::get('/reports/student/{id}', [TeacherReportsController::class, 'studentDetail'])->name('reports.student');
+        Route::get('/reports/student/{student}', [TeacherReportsController::class, 'studentDetail'])->name('reports.student');
         // Route::get('/reports', [TeacherController::class, 'reports'])->name('reports'); // Replaced by TeacherReportsController
         Route::get('/content-review', [TeacherController::class, 'contentReview'])->name('content-review');
         Route::get('/ai-support', [TeacherController::class, 'aiSupport'])->name('ai-support');
@@ -104,6 +110,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/lessons/{lesson}', [AdminLessonController::class, 'show'])->name('lessons.show');
         Route::get('/gamification', [AdminController::class, 'gamification'])->name('gamification');
         Route::get('/ai-management', [AdminController::class, 'aiManagement'])->name('ai-management');
+        Route::get('/mini-games', [AdminController::class, 'miniGames'])->name('mini-games');
+        Route::post('/mini-games/{slug}/toggle', [AdminController::class, 'toggleMiniGame'])->name('mini-games.toggle');
+        Route::post('/mini-games/{slug}/update', [AdminController::class, 'updateMiniGame'])->name('mini-games.update');
+        Route::get('/mini-games/{slug}/test', [AdminController::class, 'testMiniGame'])->name('mini-games.test');
         Route::get('/data', [AdminController::class, 'data'])->name('data');
         Route::get('/security', [AdminController::class, 'security'])->name('security');
         

@@ -1542,6 +1542,10 @@
                         <div class="nav-icon"><i class="fas fa-clipboard-check"></i></div>
                         <span>Quizzes</span>
                     </a>
+                    <a href="{{ route('student.mini-games') }}" class="nav-item {{ request()->routeIs('student.mini-games') ? 'active' : '' }}">
+                        <div class="nav-icon"><i class="fas fa-gamepad"></i></div>
+                        <span>Mini Games</span>
+                    </a>
                     <a href="{{ route('student.performance') }}" class="nav-item {{ request()->routeIs('student.performance') ? 'active' : '' }}">
                         <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
                         <span>Performance</span>

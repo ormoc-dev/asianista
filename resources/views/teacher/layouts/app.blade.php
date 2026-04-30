@@ -1017,12 +1017,20 @@
 
             <div class="nav-section">
                 <div class="nav-section-title">Content</div>
+                @php
+                    $hasEnabledMiniGames = \App\Models\MinigameSetting::where('is_enabled', true)->exists();
+                @endphp
                 <a href="{{ route('teacher.lessons.index') }}" class="nav-link {{ request()->routeIs('teacher.lessons*') ? 'active' : '' }}">
                     <i class="fas fa-book-open"></i> Lessons
                 </a>
                 <a href="{{ route('teacher.quizzes') }}" class="nav-link {{ request()->routeIs('teacher.quizzes*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i> Quizzes
                 </a>
+                @if($hasEnabledMiniGames || request()->routeIs('teacher.mini-games*'))
+                    <a href="{{ route('teacher.mini-games') }}" class="nav-link {{ request()->routeIs('teacher.mini-games*') ? 'active' : '' }}">
+                        <i class="fas fa-gamepad"></i> Mini Games
+                    </a>
+                @endif
             </div>
 
             <div class="nav-section">

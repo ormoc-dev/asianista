@@ -592,6 +592,9 @@
                 <a href="{{ route('admin.quest-maps.index') }}" class="nav-link {{ request()->routeIs('admin.quest-maps*') ? 'active' : '' }}">
                     <i class="fas fa-map-location-dot"></i> Quest Maps
                 </a>
+                <a href="{{ route('admin.mini-games') }}" class="nav-link {{ request()->routeIs('admin.mini-games') ? 'active' : '' }}">
+                    <i class="fas fa-gamepad"></i> Mini Games
+                </a>
             </div>
 
             <div class="nav-section">
@@ -655,10 +658,10 @@
                         <a href="#" class="dropdown-item">
                             <i class="fas fa-cog"></i> Settings
                         </a>
-                        <form action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
-                        <a href="#" class="dropdown-item danger" onclick="event.preventDefault(); document.querySelector('form[action=\'{{ route('logout') }}\']').submit();">
+                        <a href="#" class="dropdown-item danger" id="logoutLink">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     </div>
@@ -700,6 +703,16 @@
             if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.classList.remove('show');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const logoutLink = document.getElementById('logoutLink');
+            const logoutForm = document.getElementById('logoutForm');
+            if (!logoutLink || !logoutForm) return;
+            logoutLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                logoutForm.submit();
+            });
         });
 
         // Close sidebar when clicking outside on mobile
