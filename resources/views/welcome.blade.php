@@ -80,13 +80,13 @@
         <a href="#" onclick="selectRole('student')">
           <div class="role-option">
             <img src="{{ asset('images/student_icon.png') }}" alt="Student">
-            <p>Student</p>
+            <p>Student's</p>
           </div>
         </a>
         <a href="#" onclick="selectRole('teacher')">
           <div class="role-option">
             <img src="{{ asset('images/teacher_icon.png') }}" alt="Teacher">
-            <p>Teacher</p>
+            <p>Teacher's</p>
           </div>
         </a>
       </div>
